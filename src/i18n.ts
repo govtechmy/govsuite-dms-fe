@@ -10,9 +10,12 @@ const resources = {
   },
 };
 
+const stored = localStorage.getItem("lang");
+const initialLang = stored === "en" || stored === "ms" ? stored : "en";
+
 i18n.use(initReactI18next).init({
   resources,
-  lng: "en",
+  lng: initialLang,
   fallbackLng: "en",
   interpolation: { escapeValue: false },
 });

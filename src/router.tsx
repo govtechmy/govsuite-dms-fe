@@ -6,7 +6,8 @@ import ErrorPage from "./pages/Error";
 import LayoutMain from "./components/layout/LayoutMain";
 
 export default function AppRoutes() {
-  let lang = localStorage.getItem("lang");
+  const stored = localStorage.getItem("lang");
+  const lang = stored === "en" || stored === "ms" ? stored : "en";
 
   return (
     <Routes>
@@ -28,9 +29,9 @@ export default function AppRoutes() {
 }
 
 function Redirect404Page() {
-  const { lang } = useParams<{ lang: string | any }>();
-  const allowedLangs = ["en", "ms"];
-  let langStorage = localStorage.getItem("lang");
-  const targetLang = allowedLangs.includes(lang) ? lang : langStorage;
+  const { lang } = useParams<{ lang: string | undefined }>();
+  const stored = localStorage.getItem("lang");
+  const fallback = stored === "en" || stored === "ms" ? stored : "en";
+  const targetLang = lang === "en" || lang === "ms" ? lang : fallback;
   return <Navigate to={`/${targetLang}/404`} replace />;
 }
