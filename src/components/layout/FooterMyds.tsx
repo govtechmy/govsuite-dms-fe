@@ -5,14 +5,9 @@ import {
   SiteLinkGroup,
   SiteLink,
   FooterLogo,
-} from "@govtechmy/myds-react/footer";
-import {
-  FacebookIcon,
-  TwitterXIcon,
-  InstagramIcon,
-  YoutubeIcon,
-} from "@govtechmy/myds-react/icon";
-import { Link } from "@govtechmy/myds-react/link";
+} from '@govtechmy/myds-react/footer'
+import { FacebookIcon, TwitterXIcon, InstagramIcon, YoutubeIcon } from '@govtechmy/myds-react/icon'
+import { Link } from '@govtechmy/myds-react/link'
 
 export default function FooterMyds() {
   return (
@@ -37,13 +32,10 @@ export default function FooterMyds() {
             />
           </div>
           <p className="text-txt-black-700 text-body-sm not-prose">
-            Aras 13, 14 & 15, Blok Menara, Menara Usahawan, No. 18, Persiaran
-            Perdana, Presint 2, Pusat Pentadbiran Kerajaan Persekutuan, 62000
-            Putrajaya, Malaysia
+            Aras 13, 14 & 15, Blok Menara, Menara Usahawan, No. 18, Persiaran Perdana, Presint 2,
+            Pusat Pentadbiran Kerajaan Persekutuan, 62000 Putrajaya, Malaysia
           </p>
-          <p className="text-txt-black-900 text-body-sm font-semibold not-prose">
-            Follow us
-          </p>
+          <p className="text-txt-black-900 text-body-sm font-semibold not-prose">Follow us</p>
           <div className="flex gap-3">
             <Link
               href="#"
@@ -129,5 +121,5 @@ export default function FooterMyds() {
         <p>Last updated: 11th March 2025</p>
       </FooterSection>
     </Footer>
-  );
+  )
 }

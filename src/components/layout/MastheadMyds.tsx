@@ -5,12 +5,8 @@ import {
   MastheadTitle,
   MastheadTrigger,
   MastheadSection,
-} from "@govtechmy/myds-react/masthead";
-import {
-  PutrajayaIcon,
-  Lock2Icon,
-  LockFillIcon,
-} from "@govtechmy/myds-react/icon";
+} from '@govtechmy/myds-react/masthead'
+import { PutrajayaIcon, Lock2Icon, LockFillIcon } from '@govtechmy/myds-react/icon'
 
 export default function MastheadMyds() {
   return (
@@ -24,18 +20,17 @@ export default function MastheadMyds() {
           icon={<PutrajayaIcon />}
           title="Official government websites end with .gov.my"
         >
-          If the link does not end with <b>.gov.my</b>, exit the website
-          immediately even if it looks similar.
+          If the link does not end with <b>.gov.my</b>, exit the website immediately even if it
+          looks similar.
         </MastheadSection>
         <MastheadSection
           icon={<Lock2Icon className="inline-block size-3.5" />}
           title="Secure websites use HTTPS"
         >
-          Look for a lock (<LockFillIcon className="inline-block size-3.5" />)
-          or https:// as an added precaution. If not present, do not share any
-          sensitive information.
+          Look for a lock (<LockFillIcon className="inline-block size-3.5" />) or https:// as an
+          added precaution. If not present, do not share any sensitive information.
         </MastheadSection>
       </MastheadContent>
     </Masthead>
-  );
+  )
 }
