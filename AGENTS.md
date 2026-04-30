@@ -120,16 +120,6 @@ Every route is prefixed with `/:lang` (`en` or `ms`). The hierarchy is:
 
 ## Commands
 
-| Task | Command |
-|---|---|
-| Start dev server | `npm run dev` |
-| Build | `npm run build` |
-| Lint | `npm run lint` |
-| Format | `npm run format` |
-| Preview build | `npm run preview` |
-
-## Commands
-
 | Task             | Command           |
 | ---------------- | ----------------- |
 | Start dev server | `npm run dev`     |
