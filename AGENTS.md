@@ -80,8 +80,8 @@ Every route is prefixed with `/:lang` (`en` or `ms`). The hierarchy is:
 
 - Import MYDS components via their **subpath** — e.g. `@govtechmy/myds-react/button`, `@govtechmy/myds-react/navbar`. Do not use a barrel import.
 - Always reach for a MYDS component before building a custom one.
-- Functional components only; named exports for all components and utilities.
-- Default export only at the page level (`src/pages/`) and in `router.tsx` / `App.tsx`.
+- Functional components only; named exports for shared/utility components and hooks.
+- Default export for standalone component files (`src/pages/`, `src/components/layout/`, `LangWrapper.tsx`, `router.tsx`, `App.tsx`).
 - File naming: PascalCase for components (`MyComponent.tsx`), camelCase for everything else (`formatDate.ts`).
 
 ---
@@ -117,6 +117,16 @@ Every route is prefixed with `/:lang` (`en` or `ms`). The hierarchy is:
 - **Do not** duplicate language-switching or route-validation logic that already exists.
 
 ---
+
+## Commands
+
+| Task | Command |
+|---|---|
+| Start dev server | `npm run dev` |
+| Build | `npm run build` |
+| Lint | `npm run lint` |
+| Format | `npm run format` |
+| Preview build | `npm run preview` |
 
 ## Commands
 
