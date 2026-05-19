@@ -1,5 +1,5 @@
 import { CrossIcon, HamburgerMenuIcon, JataNegaraIcon } from '@govtechmy/myds-react/icon'
-import { Navbar, NavbarLogo } from '@govtechmy/myds-react/navbar'
+import { Navbar } from '@govtechmy/myds-react/navbar'
 import { Tag } from '@govtechmy/myds-react/tag'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/AuthStore'
@@ -12,9 +12,7 @@ export function NavbarMydsLogin() {
     <Navbar>
       <div className="flex gap-2.5 items-center justify-center">
         <JataNegaraIcon />
-        <NavbarLogo className="gap-0" src={''} alt={''}>
-          GOVSuiteDMS
-        </NavbarLogo>
+        <div className="text-lg leading-[26px] font-semibold font-heading">GOVSuiteDMS</div>
         <Tag variant="primary">ADMIN</Tag>
       </div>
     </Navbar>
@@ -32,9 +30,7 @@ export function NavbarMyds() {
       <Navbar className="z-10">
         <div className="flex gap-2.5 items-center justify-center">
           <JataNegaraIcon />
-          <NavbarLogo className="gap-0" src={''} alt={''}>
-            GOVSuiteDMS
-          </NavbarLogo>
+          <div className="text-lg leading-[26px] font-semibold font-heading">GOVSuiteDMS</div>
           <Tag variant="primary">ADMIN</Tag>
         </div>
 

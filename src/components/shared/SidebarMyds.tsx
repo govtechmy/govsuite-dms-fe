@@ -105,7 +105,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
 
   const getItemClasses = (active: boolean) => {
     if (active) {
-      return 'bg-rdmkd-primary-100 text-rdmkd-primary-600 font-medium'
+      return 'bg-primary-100 text-primary-600 font-medium'
     }
     return 'text-txt-black-900 hover:bg-otl-gray-100'
   }
@@ -142,38 +142,62 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
     return (
       <div
         key={item.id}
-        className={`cursor-pointer flex items-center py-2 rounded-lg m-2 ${
-          isCollapsed ? 'justify-center' : 'gap-2 pl-4'
+        className={`cursor-pointer flex items-center py-2 pl-4 rounded-lg ${
+          isCollapsed ? '' : 'mr-6'
         } ${getItemClasses(isMenuItemActive(item))}`}
         onClick={() => handleMenuClick(item)}
       >
-        <IconComponent className="size-6" />
-        {!isCollapsed && <span>{item.label}</span>}
+        <IconComponent className="size-5 flex-shrink-0" />
+        <span
+          className={`whitespace-nowrap transition-opacity duration-300 overflow-hidden ${
+            isCollapsed ? 'w-0 opacity-0 ml-0' : 'opacity-100 ml-2'
+          }`}
+        >
+          {item.label}
+        </span>
       </div>
     )
   }
 
   return (
     <aside
-      className={`flex flex-col transition-all duration-800 text-body-md font-body lg:h-[calc(100vh-100px)] lg:border lg:border-otl-gray-300 lg:border-t-0 lg:border-b-0 ${
+      className={`flex flex-col transition-all duration-300 text-body-sm font-normal font-body lg:h-[calc(100vh-100px)] lg:border lg:border-otl-gray-300 lg:border-t-0 lg:border-b-0 ${
         isCollapsed ? 'lg:w-[56px] lg:border-l' : 'lg:w-[230px] lg:border-l-0'
       }`}
     >
-      <div className="flex flex-col gap-1 flex-1 overflow-y-auto pt-4 min-h-0">
-        {menuItems.filter((item) => isMenuItemVisible(item)).map((item) => renderMenuItem(item))}
+      <div className="flex flex-col gap-1 flex-1 overflow-y-auto pt-6 min-h-0">
+        {menuItems
+          .filter((item) => isMenuItemVisible(item))
+          .slice(0, 4)
+          .map((item) => renderMenuItem(item))}
+
+        <div
+          className={`border-b border-otl-divider pt-3 mb-3 w-9/12 mx-auto flex items-center justify-center`}
+        ></div>
+
+        {menuItems
+          .filter((item) => isMenuItemVisible(item))
+          .slice(4)
+          .map((item) => renderMenuItem(item))}
       </div>
 
       <div
-        className={`hidden lg:flex items-center cursor-pointer p-2 pb-8 mt-auto flex-shrink-0 ${isCollapsed ? 'justify-center' : 'gap-2 pl-4'}`}
+        className="hidden lg:flex items-center cursor-pointer p-2 pl-4 pb-8 mt-auto flex-shrink-0"
         onClick={() => setIsCollapsed(!isCollapsed)}
         title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
       >
         {isCollapsed ? (
-          <ArrowForwardIcon className="transition-transform" />
+          <ArrowForwardIcon className="flex-shrink-0" />
         ) : (
-          <ArrowBackIcon className="transition-transform" />
+          <ArrowBackIcon className="flex-shrink-0" />
         )}
-        {!isCollapsed && <span>Sembunyi</span>}
+        <span
+          className={`whitespace-nowrap transition-opacity duration-300 overflow-hidden ${
+            isCollapsed ? 'w-0 opacity-0 ml-0' : 'opacity-100 ml-2'
+          }`}
+        >
+          Sembunyi
+        </span>
       </div>
     </aside>
   )

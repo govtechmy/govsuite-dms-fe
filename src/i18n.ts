@@ -11,12 +11,12 @@ const resources = {
 }
 
 const stored = localStorage.getItem('lang')
-const initialLang = stored === 'en' || stored === 'ms' ? stored : 'en'
+const initialLang = stored === 'en' || stored === 'ms' ? stored : 'ms'
 
 i18n.use(initReactI18next).init({
   resources,
   lng: initialLang,
-  fallbackLng: 'en',
+  fallbackLng: 'ms',
   interpolation: { escapeValue: false },
 })
 
