@@ -55,7 +55,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="relative flex w-full min-h-full px-[24px] py-[32px] overflow-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
+      <div className="relative flex w-full min-h-full px-[24px] lg:px-[36px] py-[32px] overflow-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
         <Mask className="absolute inset-0 xl:w-full h-2/3 pointer-events-none" />
         <div className="flex max-lg:flex-col items-center justify-center gap-12 w-full z-10">
           <div className="w-full lg:max-w-[600px] flex flex-col gap-6">
