@@ -11,7 +11,6 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { logout } from '../../services/auth.svc'
-import { useAuthStore } from '../../store/AuthStore'
 
 // ✅ Define types
 interface User {
@@ -71,26 +70,9 @@ export default function UserLogin({ userMobile }: UserMobileProps) {
     }
   }
 
-  const handleLogoutClick = async () => {
-    // setShowLogoutConfirm(true)
-    // setOpen(false)
-    try {
-      const myDigitalLogoutUrl = await logout()
-
-      // Clear local auth state first
-      useAuthStore.getState().logout()
-
-      if (myDigitalLogoutUrl) {
-        window.location.href = myDigitalLogoutUrl
-      } else {
-        navigate(`/${lang}/login`)
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-      useAuthStore.getState().logout()
-      navigate(`/${lang}/login`)
-    }
-
+  const handleLogoutClick = () => {
+    logout()
+    navigate(`/${lang}/login`)
     setOpen(false)
   }
 

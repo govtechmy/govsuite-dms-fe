@@ -12,45 +12,24 @@ import Mask from '@/assets/bg-svg/Mask'
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>(' ')
-  const [showKetuaForm, setShowKetuaForm] = useState(false)
   const [icNumber, seticNumber] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
 
-  const handleLogin = async (credentials?: { icNumber: string; password: string }) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
     setError(' ')
     setIsLoading(true)
 
     try {
-      if (credentials) {
-        await login(credentials)
-        const lang = localStorage.getItem('lang') ?? 'ms'
-        setTimeout(() => {
-          setShowKetuaForm(false)
-          navigate(`/${lang}/`)
-        }, 1500)
-      } else {
-        const authUrl = await login()
-        if (authUrl) {
-          window.location.href = authUrl
-        } else {
-          setError('Failed to get authentication URL.')
-        }
-      }
+      await login({ ic: icNumber, password: password })
+      const lang = localStorage.getItem('lang') ?? 'ms'
+      navigate(`/${lang}/`)
     } catch (error) {
       setIsLoading(false)
-      if (credentials) {
-        setError('Gagal log masuk. Sila semak icNumber dan kata laluan.')
-      } else {
-        console.error('Login error:', error)
-        setError('Gagal log masuk. Sila cuba semula.')
-      }
+      setError('Gagal log masuk. Sila semak Nombor IC dan kata laluan.')
+      console.error('Login error:', error)
     }
-  }
-
-  const handleKetuaLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await handleLogin({ icNumber, password })
   }
 
   return (
@@ -105,8 +84,7 @@ export default function LoginPage() {
             setPassword={setPassword}
             isLoading={isLoading}
             error={error}
-            handleKetuaLogin={handleKetuaLogin}
-            showKetuaForm={showKetuaForm}
+            handleLogin={handleLogin}
           />
         </div>
       </div>
@@ -121,8 +99,7 @@ interface LoginUiProps {
   setPassword: React.Dispatch<React.SetStateAction<string>>
   isLoading: boolean
   error: string
-  handleKetuaLogin: (e: React.FormEvent) => void
-  showKetuaForm: boolean
+  handleLogin: (e: React.FormEvent) => void
 }
 
 function LoginUi({
@@ -132,21 +109,18 @@ function LoginUi({
   setPassword,
   isLoading,
   error,
-  handleKetuaLogin,
-  showKetuaForm,
+  handleLogin,
 }: LoginUiProps) {
   const [showPassword, setShowPassword] = useState(false)
   return (
-    <div
-      className={`max-w-[457px] w-full z-10 border border-otl-gray-200 p-8 rounded-lg shadow-card bg-bg-white ${showKetuaForm ? 'min-h-[400px]' : ''}`}
-    >
+    <div className="max-w-[457px] w-full z-10 border border-otl-gray-200 p-8 rounded-lg shadow-card bg-bg-white">
       <div className="flex gap-3 items-center pb-6 justify-center">
         <LockIcon />
         <div className="font-body font-semibold text-body-lg">Log Masuk</div>
       </div>
 
-      <form onSubmit={handleKetuaLogin} className="flex flex-col gap-6 w-full">
-        <div className="flex w-full flex-col gap-4">
+      <form onSubmit={handleLogin} className="flex flex-col gap-6 w-full">
+        <div className="flexll flex-col gap-4">
           <div className="flex w-full flex-col gap-1.5">
             <div className="text-txt-black-700 text-body-md font-medium">No Kad Pengenalan</div>
             <div className="text-txt-black-500 text-body-sm font-normal">

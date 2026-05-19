@@ -8,7 +8,7 @@ export default function LayoutMain() {
     <div className="flex flex-col">
       <div className="sticky top-0 z-50">
         <MastheadMyds />
-        <NavbarMyds />\
+        <NavbarMyds />
       </div>
 
       <div className="mx-auto px-4.5 flex w-full relative md:px-6 max-w-screen-xl">
