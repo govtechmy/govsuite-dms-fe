@@ -1,21 +1,21 @@
 import {
   ArrowBackIcon,
   ArrowForwardIcon,
-  BookIcon,
-  DatabaseIcon,
   DocumentFilledIcon,
+  FolderIcon,
   GridIcon,
+  HeartIcon,
+  QuestionCircleIcon,
+  SearchIcon,
   SettingIcon,
-  UserGroupIcon,
+  UploadIcon,
 } from '@govtechmy/myds-react/icon'
 import React from 'react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ROLE_PERMISSIONS, USER_ROLES, type UserRole } from '../../models/userRoles'
-import BarChart from '@/assets/Icons/BarChart'
 
 interface SidebarProps {
-  mobileSidebar?: string
   onclick?: () => void
 }
 
@@ -37,50 +37,57 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
     activeStates: [''],
   },
   {
-    id: 'data-teras',
-    label: 'Data Teras',
-    icon: DatabaseIcon,
-    path: 'data-teras',
-    activeStates: ['data-teras'],
+    id: 'katalog-dokumen',
+    label: 'Katalog Dokumen',
+    icon: FolderIcon,
+    path: 'katalog-dokumen',
+    activeStates: ['katalog-dokumen'],
   },
   {
-    id: 'data-koleksi',
-    label: 'Koleksi',
-    icon: DocumentFilledIcon,
-    path: 'data-koleksi',
-    activeStates: ['data-koleksi'],
+    id: 'muatnaik-dokumen',
+    label: 'Muat Naik Dokumen',
+    icon: UploadIcon,
+    path: 'muatnaik-dokumen',
+    activeStates: ['muatnaik-dokumen'],
   },
   {
-    id: 'statistik-teras',
-    label: 'Statistik',
-    icon: BarChart,
-    path: 'statistik-teras',
-    activeStates: ['statistik-teras'],
+    id: 'carian-dokumen',
+    label: 'Carian Dokumen',
+    icon: SearchIcon,
+    path: 'carian-dokumen',
+    activeStates: ['carian-dokumen'],
   },
   {
-    id: 'tetapan-admin',
-    label: 'Tetapan Pentadbir',
+    id: 'kegemaran',
+    label: 'Kegemaran',
+    icon: HeartIcon,
+    path: 'kegemaran',
+    activeStates: ['kegemaran'],
+  },
+  {
+    id: 'pengurusan',
+    label: 'Pengurusan',
     icon: SettingIcon,
-    path: 'tetapan-admin',
-    activeStates: ['tetapan-admin'],
+    path: 'pengurusan',
+    activeStates: ['pengurusan'],
   },
   {
-    id: 'urus-pengguna',
-    label: 'Urus Pengguna',
-    icon: UserGroupIcon,
-    path: 'urus-pengguna',
-    activeStates: ['urus-pengguna'],
+    id: 'log-aktiviti',
+    label: 'Log Aktiviti',
+    icon: DocumentFilledIcon,
+    path: 'log-aktiviti',
+    activeStates: ['log-aktiviti'],
   },
   {
-    id: 'manual-pengguna',
-    label: 'Manual Pengguna',
-    icon: BookIcon,
-    path: 'manual-pengguna',
-    activeStates: ['manual-pengguna'],
+    id: 'bantuan',
+    label: 'Bantuan',
+    icon: QuestionCircleIcon,
+    path: 'bantuan',
+    activeStates: ['bantuan'],
   },
 ]
 
-export default function SidebarMyds({ mobileSidebar, onclick }: SidebarProps) {
+export default function SidebarMyds({ onclick }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [userRole, setUserRole] = useState<UserRole>('PUBLIC')
 
@@ -148,32 +155,25 @@ export default function SidebarMyds({ mobileSidebar, onclick }: SidebarProps) {
 
   return (
     <aside
-      className={` ${
-        mobileSidebar
-          ? ''
-          : 'hidden md:flex h-[calc(100vh-100px)] border border-otl-gray-300 border-t-0 border-b-0 flex-col transition-all duration-800 text-body-md font-body'
-      }  
-      ${isCollapsed ? 'w-[56px] border-l' : 'w-[230px] border-l-0'}`}
+      className={`flex flex-col transition-all duration-800 text-body-md font-body lg:h-[calc(100vh-100px)] lg:border lg:border-otl-gray-300 lg:border-t-0 lg:border-b-0 ${
+        isCollapsed ? 'lg:w-[56px] lg:border-l' : 'lg:w-[230px] lg:border-l-0'
+      }`}
     >
       <div className="flex flex-col gap-1 flex-1 overflow-y-auto pt-4 min-h-0">
         {menuItems.filter((item) => isMenuItemVisible(item)).map((item) => renderMenuItem(item))}
       </div>
 
       <div
-        className={`flex items-center cursor-pointer p-2 pb-8 mt-auto flex-shrink-0 ${isCollapsed ? 'justify-center' : 'gap-2 pl-4'}`}
+        className={`hidden lg:flex items-center cursor-pointer p-2 pb-8 mt-auto flex-shrink-0 ${isCollapsed ? 'justify-center' : 'gap-2 pl-4'}`}
         onClick={() => setIsCollapsed(!isCollapsed)}
         title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
       >
-        {!mobileSidebar && (
-          <>
-            {isCollapsed ? (
-              <ArrowForwardIcon className="transition-transform" />
-            ) : (
-              <ArrowBackIcon className="transition-transform" />
-            )}
-            {!isCollapsed && <span>Sembunyi</span>}
-          </>
+        {isCollapsed ? (
+          <ArrowForwardIcon className="transition-transform" />
+        ) : (
+          <ArrowBackIcon className="transition-transform" />
         )}
+        {!isCollapsed && <span>Sembunyi</span>}
       </div>
     </aside>
   )

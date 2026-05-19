@@ -12,7 +12,7 @@ export default function LayoutMain() {
       </div>
 
       <div className="mx-auto px-4.5 flex w-full relative md:px-6 max-w-screen-xl">
-        <div className="sticky top-[100px] h-[calc(100vh-100px)] overflow-y-hidden">
+        <div className="hidden lg:block sticky top-[100px] h-[calc(100vh-100px)] overflow-y-hidden">
           <SidebarMyds />
         </div>
         <div className="flex-1 h-[calc(100vh-100px)] overflow-y-auto scrollbar-hide">

@@ -35,8 +35,8 @@ export const login = async (data: { ic: string; password: string }) => {
     const mockUser = {
       id: '1',
       email: 'user@example.com',
-      name: 'User Name',
-      role: 'admin',
+      name: 'Mohd Muzakkir Zamani',
+      role: 'KETUA_PENYELENGGARA',
     }
 
     useAuthStore.getState().login(mockToken, mockRefreshToken, mockUser)

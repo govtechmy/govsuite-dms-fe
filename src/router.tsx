@@ -8,15 +8,24 @@ import LoginPage from './pages/Login'
 import LayoutMain from './components/layout/LayoutMain'
 import HomePage from './pages/Home'
 import ErrorPage from './pages/Error'
+import KatalogDokumenPage from './pages/KatalogDokumen'
+import MuatNaikDokumenPage from './pages/MuatNaikDokumen'
+import CarianDokumenPage from './pages/CarianDokumen'
+import KegemaranPage from './pages/Kegemaran'
+import PenguruanPage from './pages/Pengurusan'
+import LogAktivitiPage from './pages/LogAktiviti'
+import BantuanPage from './pages/Bantuan'
 
 // Route-to-permission mapping
 const ROUTE_PERMISSIONS: Record<string, string> = {
   '': 'paparan-utama',
-  'data-teras': 'data-teras',
-  'data-koleksi': 'data-koleksi',
-  'statistik-teras': 'statistik-teras',
-  'urus-pengguna': 'urus-pengguna',
-  'manual-pengguna': 'manual-pengguna',
+  'katalog-dokumen': 'katalog-dokumen',
+  'muatnaik-dokumen': 'muatnaik-dokumen',
+  'carian-dokumen': 'carian-dokumen',
+  kegemaran: 'kegemaran',
+  pengurusan: 'pengurusan',
+  'log-aktiviti': 'log-aktiviti',
+  bantuan: 'bantuan',
 }
 
 function ProtectedRoute({
@@ -72,12 +81,67 @@ export default function AppRoutes() {
           <Route
             index
             element={
-              <ProtectedRoute routeKey="paparan-utama">
+              <ProtectedRoute routeKey="">
                 <HomePage />
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="katalog-dokumen"
+            element={
+              <ProtectedRoute routeKey="katalog-dokumen">
+                <KatalogDokumenPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="muatnaik-dokumen"
+            element={
+              <ProtectedRoute routeKey="muatnaik-dokumen">
+                <MuatNaikDokumenPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="carian-dokumen"
+            element={
+              <ProtectedRoute routeKey="carian-dokumen">
+                <CarianDokumenPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="kegemaran"
+            element={
+              <ProtectedRoute routeKey="kegemaran">
+                <KegemaranPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pengurusan"
+            element={
+              <ProtectedRoute routeKey="pengurusan">
+                <PenguruanPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="log-aktiviti"
+            element={
+              <ProtectedRoute routeKey="log-aktiviti">
+                <LogAktivitiPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="bantuan"
+            element={
+              <ProtectedRoute routeKey="bantuan">
+                <BantuanPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="404"
             element={
