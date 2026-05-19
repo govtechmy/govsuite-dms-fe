@@ -14,11 +14,15 @@
   "dependencies": {
     "@govtechmy/myds-react": "^1.0.0",
     "@govtechmy/myds-style": "^1.0.0",
+    "@radix-ui/react-select": "^2.2.6",
+    "axios": "^1.16.1",
+    "class-variance-authority": "^0.7.1",
     "i18next": "^25.4.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-i18next": "^15.7.3",
-    "react-router-dom": "^7.8.2"
+    "react-router-dom": "^7.8.2",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

@@ -1,45 +1,24 @@
-import { useTranslation } from 'react-i18next'
-import i18n from '../../i18n'
-import FooterMyds from './FooterMyds'
+import { Outlet } from 'react-router-dom'
 import MastheadMyds from './MastheadMyds'
-import NavbarMyds from './NavbarMyds'
-import { Outlet, useNavigate } from 'react-router-dom'
-import { Button } from '@govtechmy/myds-react/button'
+import { NavbarMyds } from './NavbarMyds'
+import SidebarMyds from '../shared/SidebarMyds'
 
 export default function LayoutMain() {
-  const navigate = useNavigate()
-
-  const toggleLangEn = () => {
-    localStorage.setItem('lang', 'en')
-    i18n.changeLanguage('en')
-    const currentPath = window.location.pathname
-    const newPath = currentPath.replace(/^\/(en|ms)/, `/en`)
-    navigate(newPath)
-  }
-
-  const toggleLangMs = () => {
-    localStorage.setItem('lang', 'ms')
-    i18n.changeLanguage('ms')
-    const currentPath = window.location.pathname
-    const newPath = currentPath.replace(/^\/(en|ms)/, `/ms`)
-    navigate(newPath)
-  }
-
-  const { t } = useTranslation()
-
   return (
-    <>
-      <MastheadMyds></MastheadMyds>
-      <NavbarMyds></NavbarMyds>
-      <div className="bg-bg-warning-50">
-        <Button onClick={toggleLangMs}>Toggle this to ms</Button>
-        <Button onClick={toggleLangEn}>Toggle this to en</Button>
-        <h1>{t('welcome')} sini</h1>
+    <div className="flex flex-col">
+      <div className="sticky top-0 z-50">
+        <MastheadMyds />
+        <NavbarMyds />\
       </div>
 
-      {/* use outlet instead of children to tell where to render child routes for the current route hierarchy. */}
-      <Outlet></Outlet>
-      <FooterMyds></FooterMyds>
-    </>
+      <div className="mx-auto px-4.5 flex w-full relative md:px-6 max-w-screen-xl">
+        <div className="sticky top-[100px] h-[calc(100vh-100px)] overflow-y-hidden">
+          <SidebarMyds />
+        </div>
+        <div className="flex-1 h-[calc(100vh-100px)] overflow-y-auto scrollbar-hide">
+          <Outlet />
+        </div>
+      </div>
+    </div>
   )
 }

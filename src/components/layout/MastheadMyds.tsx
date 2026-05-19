@@ -1,12 +1,12 @@
+import { Lock2Icon, LockFillIcon, PutrajayaIcon } from '@govtechmy/myds-react/icon'
 import {
   Masthead,
-  MastheadHeader,
   MastheadContent,
+  MastheadHeader,
+  MastheadSection,
   MastheadTitle,
   MastheadTrigger,
-  MastheadSection,
 } from '@govtechmy/myds-react/masthead'
-import { PutrajayaIcon, Lock2Icon, LockFillIcon } from '@govtechmy/myds-react/icon'
 
 export default function MastheadMyds() {
   return (

@@ -1,0 +1,216 @@
+import { Button } from '@govtechmy/myds-react/button'
+import { Input } from '@govtechmy/myds-react/input'
+import { Spinner } from '@govtechmy/myds-react/spinner'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { login } from '../services/auth.svc'
+import LockIcon from '@/assets/Icons/LockIcon'
+import { Eye, EyeOff } from '@/assets/Icons/Eye'
+import { CheckCircleIcon } from '@govtechmy/myds-react/icon'
+import Mask from '@/assets/bg-svg/Mask'
+
+export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string>(' ')
+  const [showKetuaForm, setShowKetuaForm] = useState(false)
+  const [icNumber, seticNumber] = useState('')
+  const [password, setPassword] = useState('')
+  const navigate = useNavigate()
+
+  const handleLogin = async (credentials?: { icNumber: string; password: string }) => {
+    setError(' ')
+    setIsLoading(true)
+
+    try {
+      if (credentials) {
+        await login(credentials)
+        const lang = localStorage.getItem('lang') ?? 'ms'
+        setTimeout(() => {
+          setShowKetuaForm(false)
+          navigate(`/${lang}/`)
+        }, 1500)
+      } else {
+        const authUrl = await login()
+        if (authUrl) {
+          window.location.href = authUrl
+        } else {
+          setError('Failed to get authentication URL.')
+        }
+      }
+    } catch (error) {
+      setIsLoading(false)
+      if (credentials) {
+        setError('Gagal log masuk. Sila semak icNumber dan kata laluan.')
+      } else {
+        console.error('Login error:', error)
+        setError('Gagal log masuk. Sila cuba semula.')
+      }
+    }
+  }
+
+  const handleKetuaLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await handleLogin({ icNumber, password })
+  }
+
+  return (
+    <>
+      <div className="relative flex w-full min-h-full px-[24px] py-[32px] overflow-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
+        <Mask className="absolute inset-0 xl:w-full h-2/3 pointer-events-none" />
+        <div className="flex max-lg:flex-col items-center justify-center gap-12 w-full z-10">
+          <div className="w-full lg:max-w-[600px] flex flex-col gap-6">
+            <div className="w-full flex justify-center lg:justify-start">
+              <img
+                className="w-[103.4483px] h-[80.6897px] max-sm:w-[65.9px] max-sm:h-[51.6px]"
+                src="/jata-negara.png"
+                alt="Jata Negara"
+              />
+            </div>
+
+            <div className="text-center font-body font-semibold tracking-[4px] lg:text-start text-primary-700 max-sm:text-sm">
+              MESYUARAT KABINET MALAYSIA
+            </div>
+            <h1 className="text-heading-md text-center lg:text-start font-heading font-semibold max-sm:text-heading-sm">
+              GOVSuiteDMS
+            </h1>
+            <div className="flex flex-col text-body-md text-center lg:text-start text-txt-black-700 font-body gap-2 max-sm:px-0 max-lg:px-16  max-sm:text-body-sm">
+              <p> Anda boleh cari rekod mesyuarat (MJM, MBKM, KSUKP, JKPPN).</p>
+              <p>
+                Klik hasil carian untuk lihat preview, termasuk info tarikh, bilangan mesyuarat,
+                senarai kehadiran, rumusan AI, dan maklum balas (jika ada).
+              </p>
+            </div>
+            <div className="flex max-lg:justify-center max-lg:items-center max-sm:text-body-sm">
+              <div className="flex flex-col">
+                <div className="flex gap-2 items-center p-2">
+                  <CheckCircleIcon className="text-txt-success shrink-0" />
+                  <p>Carian Dokumen (Tahun, Keyword, penapis)</p>
+                </div>
+                <div className="flex gap-2 items-center p-2">
+                  <CheckCircleIcon className="text-txt-success shrink-0" />
+                  <p>Carian AI (instant preview + highlight + Next/Prev)</p>
+                </div>
+                <div className="flex gap-2 items-center p-2">
+                  <CheckCircleIcon className="text-txt-success shrink-0" />
+                  <p>Dashboard Unit (Unit L, UP, K, H, M, J, IO)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <LoginUi
+            icNumber={icNumber}
+            seticNumber={seticNumber}
+            password={password}
+            setPassword={setPassword}
+            isLoading={isLoading}
+            error={error}
+            handleKetuaLogin={handleKetuaLogin}
+            showKetuaForm={showKetuaForm}
+          />
+        </div>
+      </div>
+    </>
+  )
+}
+
+interface LoginUiProps {
+  icNumber: string
+  seticNumber: React.Dispatch<React.SetStateAction<string>>
+  password: string
+  setPassword: React.Dispatch<React.SetStateAction<string>>
+  isLoading: boolean
+  error: string
+  handleKetuaLogin: (e: React.FormEvent) => void
+  showKetuaForm: boolean
+}
+
+function LoginUi({
+  icNumber,
+  seticNumber,
+  password,
+  setPassword,
+  isLoading,
+  error,
+  handleKetuaLogin,
+  showKetuaForm,
+}: LoginUiProps) {
+  const [showPassword, setShowPassword] = useState(false)
+  return (
+    <div
+      className={`max-w-[457px] w-full z-10 border border-otl-gray-200 p-8 rounded-lg shadow-card bg-bg-white ${showKetuaForm ? 'min-h-[400px]' : ''}`}
+    >
+      <div className="flex gap-3 items-center pb-6 justify-center">
+        <LockIcon />
+        <div className="font-body font-semibold text-body-lg">Log Masuk</div>
+      </div>
+
+      <form onSubmit={handleKetuaLogin} className="flex flex-col gap-6 w-full">
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex w-full flex-col gap-1.5">
+            <div className="text-txt-black-700 text-body-md font-medium">No Kad Pengenalan</div>
+            <div className="text-txt-black-500 text-body-sm font-normal">
+              Sila masukkan no kad pengenalan tanpa tanda ‘-’
+            </div>
+            <Input
+              id="ic"
+              type="string"
+              placeholder="123456789000"
+              value={icNumber}
+              onChange={(e) => seticNumber(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div className="flex w-full flex-col gap-1.5">
+            <div className="text-txt-black-700 text-body-md font-medium">Kata Laluan</div>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Masukkan kata laluan anda"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                className=""
+              >
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Sembunyikan kata laluan' : 'Papar kata laluan'}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-black-400 hover:text-txt-black-700 focus:outline-none"
+                  tabIndex={0}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </Input>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Button
+            type="submit"
+            variant="primary-fill"
+            className="w-full items-center justify-center"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Spinner className="w-5 h-5 mr-2" />
+                Log Masuk...
+              </>
+            ) : (
+              'Log Masuk'
+            )}
+          </Button>
+
+          {error && error.trim() && (
+            <p className="text-txt-danger text-body-sm text-center">{error}</p>
+          )}
+        </div>
+      </form>
+    </div>
+  )
+}
