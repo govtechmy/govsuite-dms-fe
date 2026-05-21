@@ -1,4 +1,9 @@
-import { CrossIcon, HamburgerMenuIcon, JataNegaraIcon } from '@govtechmy/myds-react/icon'
+import {
+  CrossIcon,
+  HamburgerMenuIcon,
+  JataNegaraIcon,
+  WarningIcon,
+} from '@govtechmy/myds-react/icon'
 import { Navbar } from '@govtechmy/myds-react/navbar'
 import { Tag } from '@govtechmy/myds-react/tag'
 import { useState } from 'react'
@@ -6,6 +11,7 @@ import { useAuthStore } from '../../store/AuthStore'
 import SidebarMyds from './SidebarMyds'
 import UserLogin from '../shared/UserLogin'
 import { Button } from '@govtechmy/myds-react/button'
+import LogoutConfirmModal from '../shared/LogoutConfirmModal'
 
 export function NavbarMydsLogin() {
   return (
@@ -21,11 +27,21 @@ export function NavbarMydsLogin() {
 
 export function NavbarMyds() {
   const [open, setOpen] = useState(false)
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const logout = useAuthStore((state) => state.logout)
 
   return (
     <div className="relative">
+      <LogoutConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={() => {
+          setLogoutModalOpen(false)
+          logout()
+        }}
+        iconPasser={<WarningIcon className="text-txt-danger size-[42px]" />}
+      />
       {/* Top Navbar */}
       <Navbar className="z-10">
         <div className="flex gap-2.5 items-center justify-center">
@@ -38,7 +54,7 @@ export function NavbarMyds() {
         {isAuthenticated && (
           <div className="hidden lg:flex lg:flex-row lg:gap-4 lg:items-center">
             <UserLogin />
-            <Button variant="default-outline" onClick={logout}>
+            <Button variant="default-outline" onClick={() => setLogoutModalOpen(true)}>
               Log Keluar
             </Button>
           </div>
@@ -89,7 +105,7 @@ export function NavbarMyds() {
               <UserLogin />
               <Button
                 variant="default-outline"
-                onClick={logout}
+                onClick={() => setLogoutModalOpen(true)}
                 className="w-full items-center justify-center"
               >
                 Log Keluar
