@@ -3,7 +3,7 @@ import { Navbar } from '@govtechmy/myds-react/navbar'
 import { Tag } from '@govtechmy/myds-react/tag'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/AuthStore'
-import SidebarMyds from '../shared/SidebarMyds'
+import SidebarMyds from './SidebarMyds'
 import UserLogin from '../shared/UserLogin'
 import { Button } from '@govtechmy/myds-react/button'
 

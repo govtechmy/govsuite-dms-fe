@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import MastheadMyds from './MastheadMyds'
 import { NavbarMyds } from './NavbarMyds'
-import SidebarMyds from '../shared/SidebarMyds'
+import SidebarMyds from './SidebarMyds'
 
 export default function LayoutMain() {
   return (
