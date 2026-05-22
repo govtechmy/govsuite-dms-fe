@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# Development files
+.vscode
+.idea
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Git
+.git
+.gitignore
+.husky
+
+# Documentation
+README.md
+AGENTS.md
+*.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage
+.nyc_output
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CI/CD
+.github
+.gitlab-ci.yml
