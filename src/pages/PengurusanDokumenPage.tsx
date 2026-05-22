@@ -79,13 +79,15 @@ export default function PengurusanDokumenPage() {
   return (
     <div className="p-6">
       <div className="mb-8 flex items-center justify-between">
-        {/* <h1 className="text-xl font-semibold text-gray-900">Pengurusan Dokumen</h1> */}
-
-        <h1 className="font-['Poppins'] text-[20px] font-[600] leading-[28px] text-[#18181B]">
+        <h1 className="font-['Poppins'] text-heading-2xs font-semibold text-txt-black-900">
           Pengurusan Dokumen
         </h1>
 
-        <Button type="button" variant="primary-fill" className="gap-2 rounded-lg">
+        <Button
+          type="button"
+          variant="primary-fill"
+          className="h-8 rounded-[8px] text-body-sm font-medium"
+        >
           + Tambah Tetapan
         </Button>
       </div>
@@ -106,24 +108,24 @@ export default function PengurusanDokumenPage() {
                   <FolderIcon isOpen={isOpen} />
 
                   <div className="flex items-center gap-2">
-                    <h2 className="whitespace-nowrap text-lg font-semibold text-[#1A1A1A]">
+                    <h2 className="whitespace-nowrap text-body-lg font-semibold text-txt-black-900">
                       {unit.name}
                     </h2>
 
                     {unit.items.length > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2F66F6] px-1.5 text-[11px] font-semibold text-white">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-[20px] bg-primary-600 px-1 text-body-sm font-medium text-white">
                         {unit.items.length}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex-1 border-t border-dashed border-[#D9D9D9]" />
+                  <div className="flex-1 border-t border-dashed border-outline-grey" />
                 </div>
               </AccordionTrigger>
 
               <AccordionContent className="pt-5">
                 {unit.items.length === 0 ? (
-                  <p className="py-5 text-center text-sm text-gray-500">
+                  <p className="py-5 text-center text-body-sm font-medium text-txt-black-500">
                     Tiada tetapan ditemui bagi unit ini
                   </p>
                 ) : (
@@ -133,13 +135,11 @@ export default function PengurusanDokumenPage() {
                         key={unit.name + '-' + title}
                         className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
                       >
-                        {/* <h3 className="text-base font-semibold text-gray-900">{title}</h3> */}
+                        <h3 className="text-body-md font-medium text-txt-black-900">{title}</h3>
 
-                        <h3 className="font-['Inter'] text-[16px] font-[500] leading-[24px] text-[#18181B]">
-                          {title}
-                        </h3>
-
-                        <p className="mt-1 text-sm text-gray-500">Kemaskini terakhir 01/01/2024</p>
+                        <p className="mt-1 text-body-sm text-txt-black-500">
+                          Kemaskini terakhir 01/01/2024
+                        </p>
 
                         <div className="mt-4">
                           <AnnounceBarTag variant={active ? 'success' : 'default'}>
