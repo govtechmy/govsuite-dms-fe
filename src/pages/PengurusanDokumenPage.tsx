@@ -73,7 +73,7 @@ const units = [
   },
 ]
 
-export default function PengurusanPage() {
+export default function PengurusanDokumenPage() {
   const [openUnits, setOpenUnits] = useState<string[]>(['Unit L', 'Unit UP', 'Unit K'])
 
   return (
