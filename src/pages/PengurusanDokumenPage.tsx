@@ -79,7 +79,7 @@ export default function PengurusanDokumenPage() {
   return (
     <div className="p-6">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="font-['Poppins'] text-heading-2xs font-semibold text-txt-black-900">
+        <h1 className="text-heading-2xs font-semibold font-heading text-txt-black-900">
           Pengurusan Dokumen
         </h1>
 
@@ -108,18 +108,18 @@ export default function PengurusanDokumenPage() {
                   <FolderIcon isOpen={isOpen} />
 
                   <div className="flex items-center gap-2">
-                    <h2 className="whitespace-nowrap text-body-lg font-semibold text-txt-black-900">
+                    <h2 className="whitespace-nowrap text-body-lg font-semibold font-body text-txt-black-900">
                       {unit.name}
                     </h2>
 
                     {unit.items.length > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-[20px] bg-primary-600 px-1 text-body-sm font-medium text-white">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-[20px] bg-primary-600 font-body px-1 text-body-sm font-medium text-white">
                         {unit.items.length}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex-1 border-t border-dashed border-outline-grey" />
+                  <div className="flex-1 border-t border-dashed border-otl-gray-200" />
                 </div>
               </AccordionTrigger>
 
