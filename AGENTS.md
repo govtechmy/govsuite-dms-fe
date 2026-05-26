@@ -135,7 +135,7 @@ Every route is prefixed with `/:lang` (`en` or `ms`). The hierarchy is:
 - Read the relevant existing code before making changes.
 - Follow the established file and folder structure exactly.
 - Add translation keys to **both** locale files for every new string.
-- Run `npm run lint` and `npm run format` before finishing.
+- Run `pnpm run lint` and `pnpm run format` before finishing.
 - Keep each component focused on a single responsibility.
 - Account for loading, empty, error, and disabled states in every component.
 - Use semantic HTML and accessible labels, roles, and keyboard-friendly interactions.
@@ -218,10 +218,10 @@ Risks, assumptions, or recommended follow-up improvements.
 
 ## Commands
 
-| Task             | Command           |
-| ---------------- | ----------------- |
-| Start dev server | `npm run dev`     |
-| Build            | `npm run build`   |
-| Lint             | `npm run lint`    |
-| Format           | `npm run format`  |
-| Preview build    | `npm run preview` |
+| Task             | Command            |
+| ---------------- | ------------------ |
+| Start dev server | `pnpm run dev`     |
+| Build            | `pnpm run build`   |
+| Lint             | `pnpm run lint`    |
+| Format           | `pnpm run format`  |
+| Preview build    | `pnpm run preview` |
