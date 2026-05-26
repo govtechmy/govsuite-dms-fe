@@ -16,7 +16,14 @@ export default function SimpleBarChart({ data }: SimpleBarChartProps) {
           <XAxis
             dataKey="name"
             stroke="#64748B"
-            tick={{ fill: '#64748B', fontFamily: 'Inter', fontSize: 12, fontWeight: 300, dy: 10 }}
+            tick={{
+              fill: '#64748B',
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: 300,
+              dy: 10,
+              className: 'hidden sm:block',
+            }}
             axisLine={false}
             tickLine={false}
           />
