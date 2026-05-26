@@ -12,8 +12,7 @@ import KatalogDokumenPage from './pages/KatalogDokumen'
 import MuatNaikDokumenPage from './pages/MuatNaikDokumen'
 import CarianDokumenPage from './pages/CarianDokumen'
 import KegemaranPage from './pages/Kegemaran'
-// import PenguruanPage from './pages/Pengurusan'
-import PengurusanDokumenPage from './pages/PengurusanDokumenPage'
+import PengurusanDokumenPage from './pages/PengurusanDokumen'
 import LogAktivitiPage from './pages/LogAktiviti'
 import BantuanPage from './pages/Bantuan'
 
@@ -119,15 +118,6 @@ export default function AppRoutes() {
               </ProtectedRoute>
             }
           />
-          {/* <Route
-            path="pengurusan"
-            element={
-              <ProtectedRoute routeKey="pengurusan">
-                <PenguruanPage />
-              </ProtectedRoute>
-            }
-          /> */}
-
           <Route
             path="pengurusan"
             element={
