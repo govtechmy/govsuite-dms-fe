@@ -1,4 +1,3 @@
-// HomePage.tsx
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import AktivitiTerkini from '@/components/Homepage/AktivitiTerkini'
 import BubbleChart from '@/components/shared/BubbleChart'
@@ -59,7 +58,7 @@ export default function HomePage() {
       </div>
 
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
-        <BubbleChart data={dataBubble} className="h-[400px] w-full" />
+        <BubbleChart data={dataBubble} className="h-[700px] w-full" />
       </RightSidePageLayoutWrapper>
     </>
   )
