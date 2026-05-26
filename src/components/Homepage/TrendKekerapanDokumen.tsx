@@ -17,8 +17,8 @@ interface TrendKekerapanDokumenProps {
 
 export default function TrendKekerapanDokumen({ unit, data }: TrendKekerapanDokumenProps) {
   return (
-    <div className="font-body py-6">
-      <div className="text-body-md font-semibold">Trend Kekerapan Dokumen</div>
+    <div>
+      <div className="text-body-md font-semibold text-txt-black-900">Trend Kekerapan Dokumen</div>
       <div className="text-body-sm font-normal text-txt-black-500 pt-1 pb-3">
         Memaparkan 5 dokumen paling popular bagi unit ini.
       </div>
