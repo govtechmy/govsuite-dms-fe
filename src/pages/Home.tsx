@@ -1,3 +1,4 @@
+// HomePage.tsx
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import AktivitiTerkini from '@/components/Homepage/AktivitiTerkini'
 import BubbleChart from '@/components/shared/BubbleChart'
@@ -13,6 +14,36 @@ export default function HomePage() {
     { name: 'Laporan', value: 200 },
     { name: 'Slide Pembentangan', value: 180 },
   ]
+
+  const dataBubble = [
+    { id: 'pembangunan', value: 842 },
+    { id: 'laksana', value: 490 },
+    { id: 'bantuan', value: 490 },
+    { id: 'ekonomi', value: 490 },
+    { id: 'sasar', value: 490 },
+    { id: 'cukai', value: 490 },
+    { id: 'harga', value: 490 },
+    { id: 'rakyat', value: 490 },
+    { id: 'usaha', value: 490 },
+    { id: 'kos', value: 345 },
+    { id: 'hak', value: 345 },
+    { id: 'air', value: 345 },
+    { id: 'api', value: 345 },
+    { id: 'minyak', value: 345 },
+    { id: 'diesel', value: 345 },
+    { id: 'petrol', value: 345 },
+    { id: 'nilai', value: 345 },
+    { id: 'hasil', value: 345 },
+    { id: 'kadar', value: 248 },
+    { id: 'zakat', value: 247 },
+    { id: 'polis', value: 247 },
+    { id: 'firma', value: 247 },
+    { id: 'modal', value: 132 },
+    { id: 'pakej', value: 132 },
+    { id: 'bayar', value: 132 },
+    { id: 'niaga', value: 289 },
+  ]
+
   return (
     <>
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
@@ -28,7 +59,7 @@ export default function HomePage() {
       </div>
 
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
-        <BubbleChart />
+        <BubbleChart data={dataBubble} className="h-[400px] w-full" />
       </RightSidePageLayoutWrapper>
     </>
   )

@@ -14,6 +14,7 @@
   "dependencies": {
     "@govtechmy/myds-react": "^1.0.0",
     "@govtechmy/myds-style": "^1.0.0",
+    "@nivo/circle-packing": "^0.99.0",
     "@radix-ui/react-select": "^2.2.6",
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",
