@@ -52,7 +52,7 @@ export default function HomePage() {
         <TrendKekerapanDokumen unit={unit} data={data} />
       </RightSidePageLayoutWrapper>
 
-      <div className="grid grid-cols-2 divide-x-[1px] divide-otl-gray-200 border-b border-b-otl-gray-200">
+      <div className="grid grid-cols-2 max-[840px]:grid-cols-1 divide-x-[1px] max-[840px]:divide-x-0 max-[840px]:divide-y-[1px] divide-otl-gray-200 border-b border-b-otl-gray-200">
         <KategoriMesyuarat />
         <AktivitiTerkini />
       </div>

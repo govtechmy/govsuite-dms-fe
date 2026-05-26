@@ -20,7 +20,7 @@ export default function Excerpts({ date, secretTag, statusTag, title, type, unit
           'border border-otl-gray-200 rounded-lg p-1.5 px-0 gap-3 rounded-r-none border-r-0 flex items-center shrink-0 justify-center'
         )}
       >
-        <DateCard date={date} size={'sm'} />
+        <DateCard date={date} size={'sm'} className="flex-shrink-0" />
       </div>
       <div className="border-r border-otl-divider"></div>
       <div
