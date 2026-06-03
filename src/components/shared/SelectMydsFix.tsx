@@ -117,7 +117,7 @@ const SelectGroup = SelectPrimitive.Group
 
 /*========================================================================================================================*/
 
-const select_icon_cva = cva(['text-txt-black-900'], {
+const select_icon_cva = cva(['shrink-0 self-center text-txt-black-900'], {
   variants: {
     size: {
       small: 'size-4',
@@ -212,7 +212,7 @@ SelectCounter.displayName = 'SelectCounter'
 
 const select_trigger_cva = cva(
   [
-    'group inline-flex select-none items-center gap-1.5 outline-none rounded-md w-fit text-txt-black-900',
+    'group inline-flex w-fit select-none items-center justify-between gap-1.5 outline-none rounded-md text-txt-black-900',
     'focus:ring focus:ring-fr-primary',
     'disabled:bg-bg-white-disabled disabled:text-txt-black-disabled disabled:border-transparent disabled:cursor-not-allowed',
   ],
