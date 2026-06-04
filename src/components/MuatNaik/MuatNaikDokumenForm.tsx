@@ -26,6 +26,7 @@ export interface DocPreviewInfo {
 interface MuatNaikDokumenFormProps {
   profileDokumen: string[]
   peringkatKeselamatan: string[]
+  acceptedFileTypes: string
   lokasiFolder?: string
   selectedProfile: string
   setSelectedProfile: (value: string) => void
@@ -40,6 +41,7 @@ interface PreviewDocumentInfo {
 export default function MuatNaikDokumenForm({
   profileDokumen,
   peringkatKeselamatan,
+  acceptedFileTypes,
   lokasiFolder,
   selectedProfile,
   setSelectedProfile,
@@ -56,6 +58,7 @@ export default function MuatNaikDokumenForm({
   const [bilanganHelaian, setBilanganHelaian] = useState('')
   const [jenisKemasukan, setJenisKemasukan] = useState('')
   const [uploadState, setUploadState] = useState<UploadState>(1)
+  const [uploadErrorMessage, setUploadErrorMessage] = useState('')
   const [previewDocumentInfoData, setPreviewDocumentInfoData] =
     useState<PreviewDocumentInfo | null>(null)
   const { setSelectedFile } = useUploadStore()
@@ -74,7 +77,30 @@ export default function MuatNaikDokumenForm({
 
   const handleFileUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    const allowedExtensions = acceptedFileTypes
+      .split(',')
+      .map((value) => value.trim().toLowerCase().replace(/^\./, ''))
+    const fileExtension = file?.name?.split('.').pop()?.toLowerCase() ?? ''
+    const allowedMimeTypes = new Set([
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ])
+
     if (file) {
+      const hasAllowedExtension = allowedExtensions.includes(fileExtension)
+      const hasAllowedMimeType = allowedMimeTypes.has(file.type)
+
+      if (!hasAllowedExtension && !hasAllowedMimeType) {
+        setUploadState(4)
+        setUploadErrorMessage('Format fail tidak disokong. Sila muat naik fail DOCX atau PDF.')
+        setPreviewDocumentInfoData(null)
+        setSelectedFile(null)
+        event.target.value = ''
+        return
+      }
+
+      setUploadErrorMessage('')
       setUploadState(2) // uploading state
       // Simulate file processing
       setTimeout(() => {
@@ -100,6 +126,7 @@ export default function MuatNaikDokumenForm({
 
   const handleResetClick = () => {
     setUploadState(1)
+    setUploadErrorMessage('')
     setPreviewDocumentInfoData(null)
     setSelectedFile(null)
   }
@@ -188,8 +215,9 @@ export default function MuatNaikDokumenForm({
             handleResetClick={handleResetClick}
             handleDisabledButton={handleDisabledButton}
             uploadState={uploadState}
-            fileType=".docx .pdf"
+            fileType={acceptedFileTypes}
             displayFileName={previewDocumentInfoData?.fileName}
+            uploadErrorMessage={uploadErrorMessage}
           />
           <div className="flex flex-col gap-3 text-body-md font-medium text-txt-black-700">
             <div className="text-body-md font-semibold font-body text-txt-black-900">

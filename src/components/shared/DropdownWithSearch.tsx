@@ -60,8 +60,8 @@ export default function DropdownWithSearch({
             </Input>
           </SelectHeader>
 
-          {filteredOptions.map((item, index) => (
-            <SelectItem key={index} value={item}>
+          {filteredOptions.map((item) => (
+            <SelectItem key={item} value={item}>
               {item}
             </SelectItem>
           ))}

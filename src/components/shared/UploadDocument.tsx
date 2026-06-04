@@ -5,7 +5,6 @@ import { Button, ButtonIcon } from '@govtechmy/myds-react/button'
 import { CrossIcon, UploadIcon } from '@govtechmy/myds-react/icon'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { useRef } from 'react'
-import React from 'react'
 
 interface UploadDocumentProps {
   handleFileUploadChange: (event: React.ChangeEvent<HTMLInputElement>) => void
@@ -14,6 +13,7 @@ interface UploadDocumentProps {
   uploadState: UploadState
   fileType: string
   displayFileName?: string
+  uploadErrorMessage?: string
 }
 
 export default function UploadDocument({
@@ -23,6 +23,7 @@ export default function UploadDocument({
   uploadState,
   fileType,
   displayFileName,
+  uploadErrorMessage,
 }: UploadDocumentProps) {
   const { selectedFile } = useUploadStore()
 
@@ -30,6 +31,14 @@ export default function UploadDocument({
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
+  }
+
+  const handleRemoveClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+
+    handleResetClick()
   }
 
   return (
@@ -79,7 +88,7 @@ export default function UploadDocument({
         {/* uploaded */}
         {uploadState === 3 && selectedFile && (
           <div className="border border-otl-gray-200 max-w-[217px] rounded-lg flex items-center justify-start p-2 gap-2 mt-4">
-            {getFileIcon(fileType)}
+            {getFileIcon(selectedFile)}
             <div className="text-start w-full">
               <div className="flex gap-1">
                 <div className="max-w-[85px] truncate">
@@ -94,7 +103,7 @@ export default function UploadDocument({
               </div>
             </div>
             <Button
-              onClick={handleResetClick}
+              onClick={handleRemoveClick}
               variant="unset"
               className="p-2 text-txt-danger hover:bg-danger-50"
             >
@@ -107,7 +116,9 @@ export default function UploadDocument({
 
         {/* failed */}
         {uploadState === 4 && (
-          <div className="text-danger-700 text-sm font-body mt-4">Upload gagal. Cuba lagi.</div>
+          <div className="text-danger-700 text-sm font-body mt-4">
+            {uploadErrorMessage ?? 'Upload gagal. Cuba lagi.'}
+          </div>
         )}
       </div>
     </div>

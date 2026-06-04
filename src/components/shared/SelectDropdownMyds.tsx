@@ -1,6 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './SelectMydsFix'
 
-interface SelectDropdownMydsFix {
+interface SelectDropdownMydsProps {
   peringkatKeselamatan: string[]
   selectedPeringkatKeselamatan: string
   setSelectedPeringkatKeselamatan: (value: string) => void
@@ -10,7 +10,7 @@ export default function SelectDropdownMyds({
   peringkatKeselamatan,
   selectedPeringkatKeselamatan,
   setSelectedPeringkatKeselamatan,
-}: SelectDropdownMydsFix) {
+}: SelectDropdownMydsProps) {
   return (
     <Select
       size="medium"

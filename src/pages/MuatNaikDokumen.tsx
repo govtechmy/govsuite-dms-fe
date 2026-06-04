@@ -59,6 +59,7 @@ export default function MuatNaikDokumenPage() {
     'Jadual',
   ]
   const peringkatKeselamatan = ['Rahsia Besar', 'Rahsia', 'Sulit', 'Terhad', 'Terbuka']
+  const acceptedFileTypes = '.docx,.pdf'
 
   return (
     <>
@@ -106,6 +107,7 @@ export default function MuatNaikDokumenPage() {
           >
             <MuatNaikDokumenForm
               profileDokumen={profilDokumen}
+              acceptedFileTypes={acceptedFileTypes}
               lokasiFolder={'Lokasi Folder'}
               peringkatKeselamatan={peringkatKeselamatan}
               selectedProfile={selectedProfile}
