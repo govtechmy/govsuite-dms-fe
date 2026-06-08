@@ -30,14 +30,16 @@ export default function RingkasanEksekutif({ Tahun }: { Tahun: string[] }) {
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 w-full">
   
   {/* KAD 1: Jumlah Dokumen */}
-  <div className="relative overflow-hidden bg-bg-primary-50 border-l-[10px] border-l-primary-200 rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3">
+  <a 
+  href="ms/katalog-dokumen"
+  className="relative overflow-hidden bg-bg-primary-50 border-l-[10px] border-l-primary-200 rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3">
   <div className="text-5xl font-semibold text-txt-black-900">
     821
   </div>
   <div className="text-body-m font-medium text-txt-black-700">
     Jumlah Dokumen
   </div>
-</div>
+</a>
 
   {/* KAD 2: Perlukan Kelulusan */}
   <div className="relative overflow-hidden bg-bg-warning-50 border-l-[10px] border-l-bg-warning-200 rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3">
