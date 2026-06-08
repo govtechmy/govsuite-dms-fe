@@ -29,6 +29,7 @@ export interface FolderItem {
 }
 
 // Simulated data as if it were fetched from an API
+// eslint-disable-next-line react-refresh/only-export-components
 export const MOCK_FETCHED_DATA: FolderItem[] = [
   { name: 'JKPPN', value: 20 },
   {
