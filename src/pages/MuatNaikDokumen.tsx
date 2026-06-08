@@ -120,7 +120,7 @@ export default function MuatNaikDokumenPage() {
             />
           </RightSidePageLayoutWrapper>
           {selectedProfile && (
-            <RightSidePageLayoutWrapper className="flex flex-col gap-6 w-full">
+            <RightSidePageLayoutWrapper className="flex flex-col gap-6 w-full pr-3">
               <PratontonRekod docInfo={allInfoDocs} onSubmit={handleSubmitDokumen} />
             </RightSidePageLayoutWrapper>
           )}

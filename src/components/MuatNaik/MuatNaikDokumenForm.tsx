@@ -8,6 +8,7 @@ import { TextArea } from '@govtechmy/myds-react/textarea'
 import UploadDocument from '../shared/UploadDocument'
 import { useUploadStore, type UploadState } from '@/store/UploadStore'
 import { Input } from '@govtechmy/myds-react/input'
+import ModalLokasiFolder from './ModalLokasiFolder'
 
 export interface DocPreviewInfo {
   lokasiFolder: string
@@ -178,9 +179,7 @@ export default function MuatNaikDokumenForm({
       <div className="flex flex-col gap-3 text-body-md font-medium font-body text-txt-black-700 max-w-[460px]">
         <div className="flex flex-col gap-1.5">
           <div>Lokasi Folder</div>
-          <Button variant="default-outline" size="medium" className="w-full">
-            <div className="text-txt-black-500 font-normal">{lokasiFolder}</div>
-          </Button>
+          <ModalLokasiFolder lokasiFolder={lokasiFolder} />
         </div>
         <div className="flex flex-col gap-1.5">
           <div>Profil Dokumen</div>
