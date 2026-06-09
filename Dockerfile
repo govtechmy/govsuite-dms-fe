@@ -23,7 +23,6 @@ RUN pnpm run -w build
 # Stage 2: Production
 FROM nginx:alpine AS production
 
-RUN apk add --no-cache gettext
 
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
