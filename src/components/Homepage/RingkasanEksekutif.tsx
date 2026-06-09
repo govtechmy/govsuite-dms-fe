@@ -1,10 +1,20 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../shared/SelectMydsFix";
+import { RingkasanEksekutifCard } from "../shared/RingkasanEksekutifCard";
 
-type Card = { label: string; value: number; bgColor: string; borderColor: string };
+interface RingkasanEksekutifCardInfo {
+    jumlahDokumen: number | string;
+    perlukanKelulusan: number | string;
+    dokumenTidakDiluluskan: number | string;
+}
 
-const variantMapping = ['JDokumen', 'Kelulusan', 'taklulus'] as const;
+interface RingkasanEksekutifProps {
+    Tahun: string[];
+    cardInfo: RingkasanEksekutifCardInfo;
+}
 
-export default function RingkasanEksekutif({ Tahun, card }: { Tahun: string[]; card: Card[] }) {
+export default function RingkasanEksekutif({
+cardInfo, Tahun
+}: RingkasanEksekutifProps) {
     return (
         <div>
             <h1 className="text-heading-3xs font-heading font-semibold">Selamat Datang,</h1>
@@ -31,38 +41,12 @@ export default function RingkasanEksekutif({ Tahun, card }: { Tahun: string[]; c
 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 w-full">
-                {card.map((cardItem, index) => {
-                    const variant = variantMapping[index];
-
-                    return (
-                        <div key={index}>
-
-                            {variant === 'JDokumen' && (
-                                <div className={`relative overflow-hidden ${cardItem.bgColor} border-l-[10px] ${cardItem.borderColor} rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3`}>
-                                    <div className="text-5xl font-semibold text-txt-black-900">{cardItem.value}</div>
-                                    <div className="text-body-m font-medium text-txt-black-700">{cardItem.label}</div>
-                                </div>
-                            )}
-
-                            {variant === 'Kelulusan' && (
-                                <div className={`relative overflow-hidden ${cardItem.bgColor} border-l-[10px] ${cardItem.borderColor} rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3`}>
-                                    <div className="text-5xl font-semibold text-txt-black-900">{cardItem.value}</div>
-                                    <div className="text-body-m font-medium text-txt-black-700">{cardItem.label}</div>
-                                </div>
-                            )}
-
-              
-                            {variant === 'taklulus' && (
-                                <div className={`relative overflow-hidden ${cardItem.bgColor} border-l-[10px] ${cardItem.borderColor} rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3`}>
-                                    <div className="text-5xl font-semibold text-txt-black-900">{cardItem.value}</div>
-                                    <div className="text-body-m font-medium text-txt-black-700">{cardItem.label}</div>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                <RingkasanEksekutifCard key="jumlah-dokumen" label="Jumlah Dokumen" value={cardInfo.jumlahDokumen} variant="primary" />
+                <RingkasanEksekutifCard key="perlukan-kelulusan" label="Perlukan Kelulusan" value={cardInfo.perlukanKelulusan} variant="warning" />
+                <RingkasanEksekutifCard key="dokumen-tidak-diluluskan" label="Dokumen tidak diluluskan" value={cardInfo.dokumenTidakDiluluskan} variant="danger" />
             </div>
 
         </div>
     );
 }
+
