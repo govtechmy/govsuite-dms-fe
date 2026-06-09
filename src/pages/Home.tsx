@@ -9,6 +9,11 @@ import RingkasanEksekutif  from '@/components/Homepage/RingkasanEksekutif'
 export default function HomePage() {
 
   const Tahun= [ '2025', '2024']
+  const card = [
+    { label: 'Jumlah Dokumen', value: 821, bgColor: 'bg-bg-primary-50', borderColor: 'border-l-primary-200' },
+    { label: 'Perlukan Kelulusan', value: 42, bgColor: 'bg-bg-warning-50', borderColor: 'border-l-bg-warning-200' },
+    { label: 'Dokumen tidak diluluskan', value: 10, bgColor: 'bg-bg-danger-50', borderColor: 'border-l-bg-danger-200' }
+];
 
   const unit = ['unit k ', 'unit l']
   const data = [
@@ -51,7 +56,7 @@ export default function HomePage() {
   return (
     <>
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
-      <RingkasanEksekutif Tahun={Tahun} />
+      <RingkasanEksekutif Tahun={Tahun} card={card} />
       </RightSidePageLayoutWrapper>
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
         <TrendKekerapanDokumen unit={unit} data={data} />
