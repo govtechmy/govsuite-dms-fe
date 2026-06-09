@@ -3,8 +3,18 @@ import AktivitiTerkini from '@/components/Homepage/AktivitiTerkini'
 import BubbleChart from '@/components/shared/BubbleChart'
 import KategoriMesyuarat from '@/components/Homepage/KategoriMesyuarat'
 import TrendKekerapanDokumen from '@/components/Homepage/TrendKekerapanDokumen'
+import RingkasanEksekutif  from '@/components/Homepage/RingkasanEksekutif'
+
 
 export default function HomePage() {
+
+  const Tahun= [ '2025', '2024']
+  const cardInfo = {
+    jumlahDokumen: 821,
+    perlukanKelulusan: 42,
+    dokumenTidakDiluluskan: 10,
+  };
+
   const unit = ['unit k ', 'unit l']
   const data = [
     { name: 'Agenda Mesyuarat', value: 500 },
@@ -46,7 +56,7 @@ export default function HomePage() {
   return (
     <>
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
-        <div>Ringkasan Eksekutif</div>
+      <RingkasanEksekutif Tahun={Tahun} cardInfo={cardInfo} />
       </RightSidePageLayoutWrapper>
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
         <TrendKekerapanDokumen unit={unit} data={data} />
