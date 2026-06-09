@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/store/AuthStore.ts'
+import { getEnv } from '@/config/runtimeEnv'
 
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL
 // const AUTH_ENDPOINT = '/auth'
@@ -23,8 +24,8 @@ import { useAuthStore } from '@/store/AuthStore.ts'
 //   }
 // }
 
-const LOGIN_IC = import.meta.env.VITE_LOGIN_IC
-const LOGIN_PASSWORD = import.meta.env.VITE_LOGIN_PASSWORD
+const LOGIN_IC = getEnv('VITE_LOGIN_IC')
+const LOGIN_PASSWORD = getEnv('VITE_LOGIN_PASSWORD')
 
 export const login = async (data: { ic: string; password: string }) => {
   // Validate credentials against .env values
