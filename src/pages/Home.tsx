@@ -1,19 +1,17 @@
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
-import AktivitiTerkini from '@/components/page/Homepage/AktivitiTerkini';
-import KategoriMesyuarat from '@/components/page/Homepage/KategoriMesyuarat';
-import RingkasanEksekutif from '@/components/page/Homepage/RingkasanEksekutif';
-import TrendKekerapanDokumen from '@/components/page/Homepage/TrendKekerapanDokumen';
-import BubbleChart from '@/components/shared/BubbleChart';
-
+import AktivitiTerkini from '@/components/page/Homepage/AktivitiTerkini'
+import KategoriMesyuarat from '@/components/page/Homepage/KategoriMesyuarat'
+import RingkasanEksekutif from '@/components/page/Homepage/RingkasanEksekutif'
+import TrendKekerapanDokumen from '@/components/page/Homepage/TrendKekerapanDokumen'
+import BubbleChart from '@/components/shared/BubbleChart'
 
 export default function HomePage() {
-
-  const Tahun= [ '2025', '2024']
+  const Tahun = ['2025', '2024']
   const cardInfo = {
     jumlahDokumen: 821,
     perlukanKelulusan: 42,
     dokumenTidakDiluluskan: 10,
-  };
+  }
 
   const unit = ['unit k ', 'unit l']
   const data = [
@@ -56,7 +54,7 @@ export default function HomePage() {
   return (
     <>
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
-      <RingkasanEksekutif Tahun={Tahun} cardInfo={cardInfo} />
+        <RingkasanEksekutif Tahun={Tahun} cardInfo={cardInfo} />
       </RightSidePageLayoutWrapper>
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
         <TrendKekerapanDokumen unit={unit} data={data} />

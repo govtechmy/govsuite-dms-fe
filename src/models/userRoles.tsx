@@ -17,12 +17,9 @@ export const USER_ROLES: UserRole[] = [
   'PUBLIC',
 ]
 
-
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   PENGGUNA_AKHIR: ['paparan-utama'],
-  PELULUS: [
-    'paparan-utama',
-  ],
+  PELULUS: ['paparan-utama'],
   PENTADBIR_SISTEM: [
     'paparan-utama',
     'katalog-dokumen',
@@ -33,15 +30,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'log-aktiviti',
     'bantuan',
   ],
-  PENGURUS_REKOD: [
-    'paparan-utama',
-  ],
-  JURU_AUDIT: [
-    'paparan-utama',
-  ],
-  SUPER_ADMIN: [
-    'paparan-utama',
-  ],
+  PENGURUS_REKOD: ['paparan-utama'],
+  JURU_AUDIT: ['paparan-utama'],
+  SUPER_ADMIN: ['paparan-utama'],
   PUBLIC: [
     'paparan-utama',
     'katalog-dokumen',

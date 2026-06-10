@@ -1,2 +1,4 @@
+npx prettier --check .
+npx prettier --write .
 npx eslint .
 npx tsc --noEmit
