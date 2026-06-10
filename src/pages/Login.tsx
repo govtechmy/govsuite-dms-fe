@@ -12,7 +12,7 @@ import Mask from '@/assets/bg-svg/Mask'
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>(' ')
-  const [icNumber, seticNumber] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
 
@@ -22,7 +22,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      await login({ ic: icNumber, password: password })
+      await login({ username: username, password: password })
       const lang = localStorage.getItem('lang') ?? 'ms'
       navigate(`/${lang}/`)
     } catch (error) {
@@ -78,8 +78,8 @@ export default function LoginPage() {
           </div>
 
           <LoginUi
-            icNumber={icNumber}
-            seticNumber={seticNumber}
+            username={username}
+            setUsername={setUsername}
             password={password}
             setPassword={setPassword}
             isLoading={isLoading}
@@ -93,8 +93,8 @@ export default function LoginPage() {
 }
 
 interface LoginUiProps {
-  icNumber: string
-  seticNumber: React.Dispatch<React.SetStateAction<string>>
+  username: string
+  setUsername: React.Dispatch<React.SetStateAction<string>>
   password: string
   setPassword: React.Dispatch<React.SetStateAction<string>>
   isLoading: boolean
@@ -103,8 +103,8 @@ interface LoginUiProps {
 }
 
 function LoginUi({
-  icNumber,
-  seticNumber,
+  username,
+  setUsername,
   password,
   setPassword,
   isLoading,
@@ -120,18 +120,18 @@ function LoginUi({
       </div>
 
       <form onSubmit={handleLogin} className="flex flex-col gap-6 w-full">
-        <div className="flexll flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <div className="flex w-full flex-col gap-1.5">
-            <div className="text-txt-black-700 text-body-md font-medium">No Kad Pengenalan</div>
-            <div className="text-txt-black-500 text-body-sm font-normal">
-              Sila masukkan no kad pengenalan tanpa tanda ‘-’
-            </div>
+            <div className="text-txt-black-700 text-body-md font-medium">Username</div>
+            {/* <div className="text-txt-black-500 text-body-sm font-normal">
+              Sila masukkan no kad pengenalan tanpa tanda '-'
+            </div> */}
             <Input
-              id="ic"
+              id="username"
               type="string"
               placeholder="123456789000"
-              value={icNumber}
-              onChange={(e) => seticNumber(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
               disabled={isLoading}
             />
