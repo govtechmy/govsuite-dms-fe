@@ -1,19 +1,32 @@
 // Runtime environment configuration
-// Add new VITE_* variable keys here when adding to .env.example
-// This provides type safety and IDE autocomplete
-type RuntimeEnvKey = 'VITE_API_BASE_URL' | 'VITE_LOGIN_IC' | 'VITE_LOGIN_PASSWORD'
+// Required keys are derived from .env.example by Vite at startup.
+type RuntimeEnvKey = string
 
 type RuntimeEnv = Partial<Record<RuntimeEnvKey, string>>
 
-const readViteEnv = (): RuntimeEnv => {
-  return {
-    VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-    VITE_LOGIN_IC: import.meta.env.VITE_LOGIN_IC,
-    VITE_LOGIN_PASSWORD: import.meta.env.VITE_LOGIN_PASSWORD,
+const isDevMode = import.meta.env.DEV
+
+const getDevRequiredEnvKeys = (): string[] => {
+  if (!isDevMode) {
+    return []
   }
+
+  return ((import.meta.env.VITE_REQUIRED_ENV_KEYS as string | undefined) ?? '')
+    .split(',')
+    .map((key) => key.trim())
+    .filter(Boolean)
 }
 
-const isDevMode = import.meta.env.DEV
+const readEnvValue = (key: string): string | undefined => {
+  const env = import.meta.env as Record<string, string | boolean | undefined>
+  const value = env[key]
+  return typeof value === 'string' ? value : undefined
+}
+
+const readViteEnv = (): RuntimeEnv => {
+  const requiredEnvKeys = getDevRequiredEnvKeys()
+  return Object.fromEntries(requiredEnvKeys.map((key) => [key, readEnvValue(key)]))
+}
 
 declare global {
   interface Window {
@@ -38,3 +51,5 @@ export const getEnv = (key: RuntimeEnvKey, fallback = ''): string => {
   const value = getRuntimeEnv()[key]
   return typeof value === 'string' ? value : fallback
 }
+
+export const getRequiredEnvKeys = (): string[] => [...getDevRequiredEnvKeys()]
