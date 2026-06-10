@@ -6,9 +6,8 @@ import {
   AccordionTrigger,
 } from '@govtechmy/myds-react/accordion'
 import { AnnounceBarTag } from '@govtechmy/myds-react/announce-bar'
-
-import folderOpen from '../../assets/Icons/Folder_open.png'
-import folderClose from '../../assets/Icons/Folder_close.png'
+import folderOpen from '@/assets/Icons/Folder_open.png'
+import folderClose from '@/assets/Icons/Folder_close.png'
 
 type KatalogUnitItem = [string, boolean]
 

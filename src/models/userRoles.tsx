@@ -25,6 +25,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   ],
   PENTADBIR_SISTEM: [
     'paparan-utama',
+    'katalog-dokumen',
+    'muatnaik-dokumen',
+    'carian-dokumen',
+    'kegemaran',
+    'pengurusan',
+    'log-aktiviti',
+    'bantuan',
   ],
   PENGURUS_REKOD: [
     'paparan-utama',
