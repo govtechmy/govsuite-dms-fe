@@ -129,7 +129,7 @@ function LoginUi({
             <Input
               id="username"
               type="string"
-              placeholder="123456789000"
+              placeholder="admin@admin.com"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required

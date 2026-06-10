@@ -1,15 +1,14 @@
-import { useAuthStore } from '@/store/AuthStore.ts'
+import { useAuthStore } from '@/store/AuthStore'
+import { getEnv } from '@/config/runtimeEnv'
 import { unauthAxios } from './http'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
+const BASE_URL = getEnv('VITE_API_BASE_URL')
 const AUTH_ENDPOINT = '/auth'
 
 export const login = async (data: { username: string; password: string }) => {
   const url = `${BASE_URL}${AUTH_ENDPOINT}/login`
-  console.log('🔐 POST request:', { url, data })
   try {
     const response = await unauthAxios.post(url, data)
-    console.log('✅ Login response:', response.data)
     const token = response.data.data.accessToken
     const refreshToken = response.data.data.refreshToken
     const user = response.data.data.user
