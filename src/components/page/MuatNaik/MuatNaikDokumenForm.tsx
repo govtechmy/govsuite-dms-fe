@@ -1,14 +1,14 @@
 import { Button } from '@govtechmy/myds-react/button'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
 import { useEffect, useState } from 'react'
-import MainHeading from '../layout/MainHeading'
-import DropdownWithSearch from '../shared/DropdownWithSearch'
-import SelectDropdownMyds from '../shared/SelectDropdownMyds'
-import { TextArea } from '@govtechmy/myds-react/textarea'
-import UploadDocument from '../shared/UploadDocument'
 import { useUploadStore, type UploadState } from '@/store/UploadStore'
 import { Input } from '@govtechmy/myds-react/input'
 import ModalLokasiFolder from './ModalLokasiFolder'
+import MainHeading from '@/components/layout/MainHeading'
+import DropdownWithSearch from '@/components/shared/DropdownWithSearch'
+import SelectDropdownMyds from '@/components/shared/SelectDropdownMyds'
+import UploadDocument from '@/components/shared/UploadDocument'
+import { TextArea } from '@govtechmy/myds-react/textarea'
 
 export interface DocPreviewInfo {
   lokasiFolder: string

@@ -1,11 +1,6 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../shared/SelectMydsFix'
-import SimpleBarChart from '../shared/SimpleBarChart'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shared/SelectMydsFix"
+import SimpleBarChart from "@/components/shared/SimpleBarChart"
+
 
 interface TrendKekerapanDokumenProps {
   unit: string[]

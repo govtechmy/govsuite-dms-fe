@@ -1,9 +1,9 @@
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
-import AktivitiTerkini from '@/components/Homepage/AktivitiTerkini'
-import BubbleChart from '@/components/shared/BubbleChart'
-import KategoriMesyuarat from '@/components/Homepage/KategoriMesyuarat'
-import TrendKekerapanDokumen from '@/components/Homepage/TrendKekerapanDokumen'
-import RingkasanEksekutif  from '@/components/Homepage/RingkasanEksekutif'
+import AktivitiTerkini from '@/components/page/Homepage/AktivitiTerkini';
+import KategoriMesyuarat from '@/components/page/Homepage/KategoriMesyuarat';
+import RingkasanEksekutif from '@/components/page/Homepage/RingkasanEksekutif';
+import TrendKekerapanDokumen from '@/components/page/Homepage/TrendKekerapanDokumen';
+import BubbleChart from '@/components/shared/BubbleChart';
 
 
 export default function HomePage() {

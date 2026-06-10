@@ -1,5 +1,4 @@
 import { Button } from '@govtechmy/myds-react/button'
-import MainHeading from '../layout/MainHeading'
 import {
   SummaryList,
   SummaryListAction,
@@ -9,8 +8,9 @@ import {
   SummaryListDetail,
   SummaryListRow,
 } from '@govtechmy/myds-react/summary-list'
-import { renderSecretTag } from '../../utils/RenderTag'
 import type { DocPreviewInfo } from './MuatNaikDokumenForm'
+import MainHeading from '@/components/layout/MainHeading'
+import { renderSecretTag } from '@/utils/RenderTag'
 
 interface PratontonRekodProps {
   docInfo: DocPreviewInfo | null

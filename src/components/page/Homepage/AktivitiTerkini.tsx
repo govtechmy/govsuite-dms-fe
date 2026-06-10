@@ -1,4 +1,5 @@
-import Excerpts from '../shared/Excerpts'
+import Excerpts from "@/components/shared/Excerpts"
+
 
 export default function AktivitiTerkini() {
   const data = [

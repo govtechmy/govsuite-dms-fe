@@ -1,9 +1,10 @@
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import type { ProgressState } from '@/components/shared/ProgressResult'
 import ProgressResultChecker from '@/components/shared/ProgressResult'
-import MuatNaikDokumenForm, { type DocPreviewInfo } from '@/components/MuatNaik/MuatNaikDokumenForm'
+import type { DocPreviewInfo } from '@/components/page/MuatNaik/MuatNaikDokumenForm'
+import MuatNaikDokumenForm from '@/components/page/MuatNaik/MuatNaikDokumenForm'
+import PratontonRekod from '@/components/page/MuatNaik/PratontonRekod'
 import { useState } from 'react'
-import PratontonRekod from '@/components/MuatNaik/PratontonRekod'
 import { clx } from '@govtechmy/myds-react/utils'
 
 export default function MuatNaikDokumenPage() {

@@ -1,5 +1,6 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../shared/SelectMydsFix";
-import { RingkasanEksekutifCard } from "../shared/RingkasanEksekutifCard";
+import { RingkasanEksekutifCard } from "@/components/shared/RingkasanEksekutifCard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shared/SelectMydsFix";
+
 
 interface RingkasanEksekutifCardInfo {
     jumlahDokumen: number | string;
