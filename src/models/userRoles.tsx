@@ -1,7 +1,7 @@
-export type UserRole = 'KETUA_PENYELENGGARA' | 'REVIEWER' | 'VIEWER' | 'EDITOR' | 'PUBLIC'
+export type UserRole = 'PENTADBIR_SISTEM' | 'REVIEWER' | 'VIEWER' | 'EDITOR' | 'PUBLIC'
 
 export const USER_ROLES: UserRole[] = [
-  'KETUA_PENYELENGGARA',
+  'PENTADBIR_SISTEM',
   'REVIEWER',
   'VIEWER',
   'EDITOR',
@@ -9,7 +9,7 @@ export const USER_ROLES: UserRole[] = [
 ]
 
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  KETUA_PENYELENGGARA: [
+  PENTADBIR_SISTEM: [
     'paparan-utama',
     'katalog-dokumen',
     'muatnaik-dokumen',
@@ -36,5 +36,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'kegemaran',
     'bantuan',
   ],
-  PUBLIC: ['katalog-dokumen', 'carian-dokumen'],
+  PUBLIC: [
+    'paparan-utama',
+    'katalog-dokumen',
+    'muatnaik-dokumen',
+    'carian-dokumen',
+    'kegemaran',
+    'pengurusan',
+    'log-aktiviti',
+    'bantuan',
+  ],
 }

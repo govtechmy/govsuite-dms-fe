@@ -21,8 +21,9 @@ const sessionStorageAdapter = {
 type User = {
   id: string
   username: string
-  name: string
-  role: string
+  email?: string
+  fullName?: string
+  roles: string[]
   // Add other user fields as needed
 }
 

@@ -37,7 +37,7 @@ function ProtectedRoute({
 }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const authData = JSON.parse(sessionStorage.getItem('auth-storage') || '{}')
-  const role = (authData?.state?.user?.role as UserRole) || 'PUBLIC'
+  const role = (authData?.state?.user?.roles?.[0] as UserRole) || 'PUBLIC'
 
   if (!isAuthenticated) {
     return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}/login`} replace />
