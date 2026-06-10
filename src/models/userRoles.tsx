@@ -1,40 +1,39 @@
-export type UserRole = 'PENTADBIR_SISTEM' | 'REVIEWER' | 'VIEWER' | 'EDITOR' | 'PUBLIC'
+export type UserRole =
+  | 'PENGGUNA_AKHIR'
+  | 'PELULUS'
+  | 'PENTADBIR_SISTEM'
+  | 'PENGURUS_REKOD'
+  | 'JURU_AUDIT'
+  | 'SUPER_ADMIN'
+  | 'PUBLIC'
 
 export const USER_ROLES: UserRole[] = [
+  'PENGGUNA_AKHIR',
+  'PELULUS',
   'PENTADBIR_SISTEM',
-  'REVIEWER',
-  'VIEWER',
-  'EDITOR',
+  'PENGURUS_REKOD',
+  'JURU_AUDIT',
+  'SUPER_ADMIN',
   'PUBLIC',
 ]
 
+
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  PENGGUNA_AKHIR: ['paparan-utama'],
+  PELULUS: [
+    'paparan-utama',
+  ],
   PENTADBIR_SISTEM: [
     'paparan-utama',
-    'katalog-dokumen',
-    'muatnaik-dokumen',
-    'carian-dokumen',
-    'kegemaran',
-    'pengurusan',
-    'log-aktiviti',
-    'bantuan',
   ],
-  REVIEWER: [
+  PENGURUS_REKOD: [
     'paparan-utama',
-    'katalog-dokumen',
-    'carian-dokumen',
-    'kegemaran',
-    'log-aktiviti',
-    'bantuan',
   ],
-  VIEWER: ['paparan-utama', 'katalog-dokumen', 'carian-dokumen', 'bantuan'],
-  EDITOR: [
+  JURU_AUDIT: [
     'paparan-utama',
-    'katalog-dokumen',
-    'muatnaik-dokumen',
-    'carian-dokumen',
-    'kegemaran',
-    'bantuan',
+  ],
+  SUPER_ADMIN: [
+    'paparan-utama',
   ],
   PUBLIC: [
     'paparan-utama',
