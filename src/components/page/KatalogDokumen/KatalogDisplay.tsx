@@ -17,6 +17,21 @@ import {
 import BookmarkIcon from '@/assets/Icons/Bookmark'
 import folderOpen from '@/assets/Icons/Folder_open.png'
 import folderClose from '@/assets/Icons/Folder_close.png'
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+} from '@govtechmy/myds-react/dialog'
+import { Input } from '@govtechmy/myds-react/input'
+import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
+import { Spinner } from '@govtechmy/myds-react/spinner'
+import { clx } from '@govtechmy/myds-react/utils'
 
 export interface KatalogUnitItem {
   name: string
@@ -33,9 +48,14 @@ interface KatalogUnitProps {
   units: Unit[]
 }
 
-export default function KatalogDisplay({ units }: KatalogUnitProps) {
+export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps) {
+  const [units, setUnits] = useState<Unit[]>(initialUnits)
   const [openUnits, setOpenUnits] = useState<string[]>([])
   const [currentPaths, setCurrentPaths] = useState<Record<string, KatalogUnitItem[]>>({})
+  const [folderName, setFolderName] = useState<string>('')
+  const [isCreating, setIsCreating] = useState<boolean>(false)
+  const [showError, setShowError] = useState<boolean>(false)
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false)
 
   const handleFolderClick = (unitName: string, folder: KatalogUnitItem) => {
     if (folder.children && folder.children.length > 0) {
@@ -78,6 +98,102 @@ export default function KatalogDisplay({ units }: KatalogUnitProps) {
     setOpenUnits(values)
   }
 
+  const handleAddFolder = (unitName: string) => {
+    const trimmedName = folderName.trim()
+    if (!trimmedName) return
+
+    const currentPath = currentPaths[unitName] || []
+
+    // Get current folders at this level
+    const targetFolders =
+      currentPath.length === 0
+        ? units.find((u) => u.name === unitName)?.items || []
+        : currentPath[currentPath.length - 1].children || []
+
+    // Check if folder name already exists
+    const folderExists = targetFolders.some(
+      (folder) => folder.name.toLowerCase() === trimmedName.toLowerCase()
+    )
+
+    if (folderExists) {
+      setShowError(true)
+      return
+    }
+
+    // Show loading state
+    setIsCreating(true)
+    setShowError(false)
+
+    // Simulate folder creation delay
+    setTimeout(() => {
+      const newFolder: KatalogUnitItem = {
+        name: trimmedName,
+        value: 0,
+        children: [],
+      }
+
+      setUnits((prevUnits) => {
+        return prevUnits.map((unit) => {
+          if (unit.name !== unitName) return unit
+
+          if (currentPath.length === 0) {
+            // Add to root level
+            return {
+              ...unit,
+              items: [...unit.items, newFolder],
+            }
+          } else {
+            // Add to nested folder
+            const updateItems = (
+              items: KatalogUnitItem[],
+              pathIndex: number
+            ): KatalogUnitItem[] => {
+              return items.map((item) => {
+                if (item.name === currentPath[pathIndex].name) {
+                  if (pathIndex === currentPath.length - 1) {
+                    // This is the target folder
+                    return {
+                      ...item,
+                      children: [...(item.children || []), newFolder],
+                    }
+                  } else {
+                    // Need to go deeper
+                    return {
+                      ...item,
+                      children: updateItems(item.children || [], pathIndex + 1),
+                    }
+                  }
+                }
+                return item
+              })
+            }
+
+            return {
+              ...unit,
+              items: updateItems(unit.items, 0),
+            }
+          }
+        })
+      })
+
+      // Reset dialog state
+      setIsCreating(false)
+      setFolderName('')
+      setShowError(false)
+      setDialogOpen(false)
+    }, 10000) // Simulate API call delay
+  }
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open)
+    if (!open) {
+      // Reset state when dialog closes
+      setFolderName('')
+      setShowError(false)
+      setIsCreating(false)
+    }
+  }
+
   return (
     <Accordion
       type="multiple"
@@ -114,10 +230,93 @@ export default function KatalogDisplay({ units }: KatalogUnitProps) {
               {/* Action Buttons */}
               {isOpen && (
                 <div className="flex items-center justify-end gap-1 pt-1">
-                  <Button variant="default-outline" size="small">
-                    <PlusIcon className="size-4" />
-                    Tambah Folder
-                  </Button>
+                  <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
+                    <DialogTrigger>
+                      <Button variant="default-outline" size="small">
+                        <PlusIcon className="size-4" />
+                        Tambah Folder
+                      </Button>
+                    </DialogTrigger>
+                    <DialogBody
+                      hideClose={isCreating}
+                      className={clx(isCreating && 'items-center justify-center flex')}
+                    >
+                      {!isCreating && (
+                        <DialogHeader className="pb-[18px]">
+                          <DialogTitle>Tambah Folder</DialogTitle>
+                        </DialogHeader>
+                      )}
+
+                      <DialogContent
+                        className={clx(
+                          'p-6 flex flex-col gap-6 border-b border-t border-otl-gray-200 ',
+                          isCreating && 'border-none'
+                        )}
+                      >
+                        {/* for myds issue for throwing error */}
+                        <DialogDescription className="hidden">
+                          Dialog content goes here.
+                        </DialogDescription>
+
+                        {isCreating ? (
+                          <div className="items-center justify-center flex flex-col gap-3 py-6 min-h-[350px]">
+                            <Spinner size={'large'} />
+                            <div className="font-body font-normal text-sm text-txt-black-700">
+                              Folder Sedang Dicipta
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex flex-col gap-1.5">
+                              <div>Nama Folder</div>
+                              <Input
+                                placeholder="Nama Folder"
+                                value={folderName}
+                                onChange={(e) => {
+                                  setFolderName(e.target.value)
+                                  setShowError(false)
+                                }}
+                              />
+                            </div>
+                            {!showError && (
+                              <Callout>
+                                <CalloutTitle>Informasi</CalloutTitle>
+                                <CalloutContent>
+                                  Nama folder mestilah unik dan tidak boleh sama dengan folder yang
+                                  sedia ada di dalam unit/folder ini.
+                                </CalloutContent>
+                              </Callout>
+                            )}
+                            {showError && (
+                              <Callout variant={'danger'}>
+                                <CalloutTitle>Ralat</CalloutTitle>
+                                <CalloutContent>
+                                  Nama folder ini telah wujud. Sila gunakan nama lain.
+                                </CalloutContent>
+                              </Callout>
+                            )}
+                          </>
+                        )}
+                      </DialogContent>
+                      {!isCreating && (
+                        <DialogFooter>
+                          <DialogClose>
+                            <Button variant="default-outline" disabled={isCreating}>
+                              Batalkan
+                            </Button>
+                          </DialogClose>
+                          <Button
+                            variant="primary-fill"
+                            disabled={!folderName.trim() || isCreating}
+                            onClick={() => handleAddFolder(unit.name)}
+                          >
+                            Tambah Folder
+                          </Button>
+                        </DialogFooter>
+                      )}
+                    </DialogBody>
+                  </Dialog>
+
                   <Button variant="primary-fill" size="small">
                     <UploadIcon className="h-4 w-4" />
                     Muat Naik Dokumen
