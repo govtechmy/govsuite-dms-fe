@@ -4,7 +4,7 @@ import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarK
 import SelectKatalogDokumen from '@/components/page/KatalogDokumen/SelectKatalogDokumen'
 
 export default function KatalogDokumenPage() {
-  let units: Unit[] = [
+  const units: Unit[] = [
     {
       name: 'JKPPN',
       items: [

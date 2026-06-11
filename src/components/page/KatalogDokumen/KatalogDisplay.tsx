@@ -181,7 +181,7 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
       setFolderName('')
       setShowError(false)
       setDialogOpen(false)
-    }, 10000) // Simulate API call delay
+    }, 1000) // Simulate API call delay
   }
 
   const handleDialogOpenChange = (open: boolean) => {
