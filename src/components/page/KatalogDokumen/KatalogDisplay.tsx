@@ -391,6 +391,7 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
                 {/* Documents Section */}
                 {currentDocuments.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-otl-gray-200">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {currentDocuments.map((doc: any) => (
                       <Excerpts
                         key={doc.path}
