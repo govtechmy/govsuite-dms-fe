@@ -109,7 +109,6 @@ export default function MuatNaikDokumenPage() {
             <MuatNaikDokumenForm
               profileDokumen={profilDokumen}
               acceptedFileTypes={acceptedFileTypes}
-              lokasiFolder={'Lokasi Folder'}
               peringkatKeselamatan={peringkatKeselamatan}
               selectedProfile={selectedProfile}
               setSelectedProfile={setSelectedProfile}

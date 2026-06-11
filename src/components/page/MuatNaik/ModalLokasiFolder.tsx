@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@govtechmy/myds-react/button'
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
 import BookmarkIcon from '@/assets/Icons/Bookmark'
 import folderClose from '@/assets/Icons/Folder_close.png'
 import { ArrowBackIcon } from '@govtechmy/myds-react/icon'
+import { useFolderLocationStore } from '@/store/FolderLocationStore'
 
 export interface FolderItem {
   name: string
@@ -79,20 +80,23 @@ export const MOCK_FETCHED_DATA: FolderItem[] = [
 ]
 
 interface ModalLokasiFolderProps {
-  lokasiFolder?: string
   data?: FolderItem[]
 }
 
-export default function ModalLokasiFolder({
-  lokasiFolder,
-  data = MOCK_FETCHED_DATA,
-}: ModalLokasiFolderProps) {
+export default function ModalLokasiFolder({ data = MOCK_FETCHED_DATA }: ModalLokasiFolderProps) {
+  const { folderPath, setFolderPath } = useFolderLocationStore()
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedFolder, setSelectedFolder] = useState(lokasiFolder ?? '')
-  const [draftFolder, setDraftFolder] = useState(lokasiFolder ?? '')
+  const [selectedFolder, setSelectedFolder] = useState(folderPath)
+  const [draftFolder, setDraftFolder] = useState(folderPath)
 
   // State to track nested navigation
   const [currentPath, setCurrentPath] = useState<FolderItem[]>([])
+
+  // Sync local state with store when folderPath changes
+  useEffect(() => {
+    setSelectedFolder(folderPath)
+    setDraftFolder(folderPath)
+  }, [folderPath])
 
   // Determine which folders to display based on current depth
   const currentFolders =
@@ -118,6 +122,7 @@ export default function ModalLokasiFolder({
       pathString = pathNames.join(' > ')
     }
     setSelectedFolder(pathString)
+    setFolderPath(pathString) // Update the store
     setIsOpen(false)
   }
 

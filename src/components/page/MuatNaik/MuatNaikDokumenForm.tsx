@@ -2,6 +2,7 @@ import { Button } from '@govtechmy/myds-react/button'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
 import { useEffect, useState } from 'react'
 import { useUploadStore, type UploadState } from '@/store/UploadStore'
+import { useFolderLocationStore } from '@/store/FolderLocationStore'
 import { Input } from '@govtechmy/myds-react/input'
 import ModalLokasiFolder from './ModalLokasiFolder'
 import MainHeading from '@/components/layout/MainHeading'
@@ -28,7 +29,6 @@ interface MuatNaikDokumenFormProps {
   profileDokumen: string[]
   peringkatKeselamatan: string[]
   acceptedFileTypes: string
-  lokasiFolder?: string
   selectedProfile: string
   setSelectedProfile: (value: string) => void
   onPreview: (info: DocPreviewInfo) => void
@@ -43,12 +43,12 @@ export default function MuatNaikDokumenForm({
   profileDokumen,
   peringkatKeselamatan,
   acceptedFileTypes,
-  lokasiFolder,
   selectedProfile,
   setSelectedProfile,
   onPreview,
   onReset,
 }: MuatNaikDokumenFormProps) {
+  const { folderPath, resetFolderPath } = useFolderLocationStore()
   const [selectedPeringkatKeselamatan, setSelectedPeringkatKeselamatan] = useState('')
   const [ringkasan, setRingkasan] = useState('')
   const [tajuk, setTajuk] = useState('')
@@ -138,7 +138,7 @@ export default function MuatNaikDokumenForm({
 
   const handlePreviewClick = () => {
     onPreview({
-      lokasiFolder: lokasiFolder ?? '',
+      lokasiFolder: folderPath,
       profilDokumen: selectedProfile,
       tahapKeselamatan: selectedPeringkatKeselamatan,
       ringkasan,
@@ -163,6 +163,7 @@ export default function MuatNaikDokumenForm({
     setTempatMesyuarat('')
     setBilanganHelaian('')
     setJenisKemasukan('')
+    resetFolderPath()
     handleResetClick()
     onReset?.()
   }
@@ -179,7 +180,7 @@ export default function MuatNaikDokumenForm({
       <div className="flex flex-col gap-3 text-body-md font-medium font-body text-txt-black-700 max-w-[460px]">
         <div className="flex flex-col gap-1.5">
           <div>Lokasi Folder</div>
-          <ModalLokasiFolder lokasiFolder={lokasiFolder} />
+          <ModalLokasiFolder />
         </div>
         <div className="flex flex-col gap-1.5">
           <div>Profil Dokumen</div>

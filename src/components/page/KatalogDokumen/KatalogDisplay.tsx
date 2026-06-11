@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@govtechmy/myds-react/button'
 import { ArrowBackIcon, PlusIcon, UploadIcon } from '@govtechmy/myds-react/icon'
 import {
@@ -17,6 +18,7 @@ import {
 import BookmarkIcon from '@/assets/Icons/Bookmark'
 import folderOpen from '@/assets/Icons/Folder_open.png'
 import folderClose from '@/assets/Icons/Folder_close.png'
+import { useFolderLocationStore } from '@/store/FolderLocationStore'
 import {
   Dialog,
   DialogBody,
@@ -49,6 +51,9 @@ interface KatalogUnitProps {
 }
 
 export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps) {
+  const navigate = useNavigate()
+  const { lang } = useParams<{ lang: string }>()
+  const { setFolderPath } = useFolderLocationStore()
   const [units, setUnits] = useState<Unit[]>(initialUnits)
   const [openUnits, setOpenUnits] = useState<string[]>([])
   const [currentPaths, setCurrentPaths] = useState<Record<string, KatalogUnitItem[]>>({})
@@ -194,6 +199,23 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
     }
   }
 
+  const handleUploadClick = (unitName: string) => {
+    const currentPath = currentPaths[unitName] || []
+
+    // Build the folder path string
+    let pathString = unitName
+    if (currentPath.length > 0) {
+      const pathNames = currentPath.map((item) => item.name)
+      pathString = [unitName, ...pathNames].join(' > ')
+    }
+
+    // Set the folder path in the store
+    setFolderPath(pathString)
+
+    // Navigate to the upload page
+    navigate(`/${lang}/muatnaik-dokumen`)
+  }
+
   return (
     <Accordion
       type="multiple"
@@ -317,7 +339,11 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
                     </DialogBody>
                   </Dialog>
 
-                  <Button variant="primary-fill" size="small">
+                  <Button
+                    variant="primary-fill"
+                    size="small"
+                    onClick={() => handleUploadClick(unit.name)}
+                  >
                     <UploadIcon className="h-4 w-4" />
                     Muat Naik Dokumen
                   </Button>
