@@ -15,35 +15,22 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@govtechmy/myds-react/accordion'
-import BookmarkIcon from '@/assets/Icons/Bookmark'
 import folderOpen from '@/assets/Icons/Folder_open.png'
 import folderClose from '@/assets/Icons/Folder_close.png'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-  DialogFooter,
-  DialogHeader,
-  DialogTrigger,
-} from '@govtechmy/myds-react/dialog'
-import { Input } from '@govtechmy/myds-react/input'
-import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
-import { Spinner } from '@govtechmy/myds-react/spinner'
+import { getCatalogUnits } from '@/services/catalog.svc'
+import Excerpts from '@/components/shared/Excerpts'
 import { clx } from '@govtechmy/myds-react/utils'
-
-export interface KatalogUnitItem {
-  name: string
-  value: number
-  children?: KatalogUnitItem[]
-}
+import TambahFolderModal from './TambahFolderModal'
+import FolderGrid from '@/components/shared/FolderGrid'
 
 export interface Unit {
   name: string
-  items: KatalogUnitItem[]
+  type: 'folder'
+  hasChildren: boolean
+  path: string
+  value?: number
+  children?: Unit[]
 }
 
 interface KatalogUnitProps {
@@ -56,18 +43,74 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
   const { setFolderPath } = useFolderLocationStore()
   const [units, setUnits] = useState<Unit[]>(initialUnits)
   const [openUnits, setOpenUnits] = useState<string[]>([])
-  const [currentPaths, setCurrentPaths] = useState<Record<string, KatalogUnitItem[]>>({})
-  const [folderName, setFolderName] = useState<string>('')
-  const [isCreating, setIsCreating] = useState<boolean>(false)
-  const [showError, setShowError] = useState<boolean>(false)
+  const [currentPaths, setCurrentPaths] = useState<Record<string, Unit[]>>({})
   const [dialogOpen, setDialogOpen] = useState<boolean>(false)
+  const [activeUnit, setActiveUnit] = useState<string>('')
+  const [loadingFolders, setLoadingFolders] = useState<Record<string, boolean>>({})
 
-  const handleFolderClick = (unitName: string, folder: KatalogUnitItem) => {
-    if (folder.children && folder.children.length > 0) {
+  const handleFolderClick = async (unitName: string, folder: Unit) => {
+    const loadingKey = `${unitName}-${folder.path}`
+    setLoadingFolders((prev) => ({ ...prev, [loadingKey]: true }))
+
+    try {
+      // Always fetch from API when clicking a folder
+      const fetchedChildren = await getCatalogUnits(folder.path)
+
+      // Update the units state with the fetched children
+      setUnits((prevUnits) => {
+        return prevUnits.map((unit) => {
+          if (unit.name !== unitName) return unit
+
+          const currentPath = currentPaths[unitName] || []
+
+          // If we're at root level, update the root folder
+          if (currentPath.length === 0) {
+            return {
+              ...unit,
+              children: (unit.children || []).map((item) =>
+                item.path === folder.path
+                  ? { ...item, children: fetchedChildren, hasChildren: fetchedChildren.length > 0 }
+                  : item
+              ),
+            }
+          }
+
+          // Helper function to update nested children
+          const updateFolderChildren = (items: Unit[], targetPath: string): Unit[] => {
+            return items.map((item) => {
+              if (item.path === targetPath) {
+                return {
+                  ...item,
+                  children: fetchedChildren,
+                  hasChildren: fetchedChildren.length > 0,
+                }
+              }
+              if (item.children) {
+                return {
+                  ...item,
+                  children: updateFolderChildren(item.children, targetPath),
+                }
+              }
+              return item
+            })
+          }
+
+          return {
+            ...unit,
+            children: updateFolderChildren(unit.children || [], folder.path),
+          }
+        })
+      })
+
+      // Navigate into the folder after loading
       setCurrentPaths((prev) => ({
         ...prev,
-        [unitName]: [...(prev[unitName] || []), folder],
+        [unitName]: [...(prev[unitName] || []), { ...folder, children: fetchedChildren }],
       }))
+    } catch (error) {
+      console.error('Error fetching folder contents:', error)
+    } finally {
+      setLoadingFolders((prev) => ({ ...prev, [loadingKey]: false }))
     }
   }
 
@@ -81,122 +124,76 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
   const handleBreadcrumbClick = (unitName: string, index: number) => {
     setCurrentPaths((prev) => ({
       ...prev,
-      [unitName]: (prev[unitName] || []).slice(0, index + 1),
+      [unitName]: index === -1 ? [] : (prev[unitName] || []).slice(0, index + 1),
     }))
   }
 
   const handleAccordionChange = (values: string[]) => {
-    const previouslyOpen = new Set(openUnits)
-    const nowOpen = new Set(values)
-
-    // Find units that were just closed
-    for (const unitName of previouslyOpen) {
-      if (!nowOpen.has(unitName)) {
-        // Reset path when closing
-        setCurrentPaths((prev) => ({
-          ...prev,
-          [unitName]: [],
-        }))
-      }
-    }
-
     setOpenUnits(values)
   }
 
-  const handleAddFolder = (unitName: string) => {
-    const trimmedName = folderName.trim()
-    if (!trimmedName) return
-
+  const handleAddFolder = (folderName: string) => {
+    const unitName = activeUnit
     const currentPath = currentPaths[unitName] || []
 
-    // Get current folders at this level
-    const targetFolders =
-      currentPath.length === 0
-        ? units.find((u) => u.name === unitName)?.items || []
-        : currentPath[currentPath.length - 1].children || []
+    // Get current unit
+    const currentUnit = units.find((u) => u.name === unitName)
+    if (!currentUnit) return
 
-    // Check if folder name already exists
-    const folderExists = targetFolders.some(
-      (folder) => folder.name.toLowerCase() === trimmedName.toLowerCase()
-    )
+    const basePath =
+      currentPath.length === 0 ? `/${currentUnit.name}` : currentPath[currentPath.length - 1].path
 
-    if (folderExists) {
-      setShowError(true)
-      return
+    const newFolder: Unit = {
+      name: folderName,
+      type: 'folder',
+      hasChildren: false,
+      path: `${basePath}/${folderName}`,
+      value: 0,
+      children: [],
     }
 
-    // Show loading state
-    setIsCreating(true)
-    setShowError(false)
+    setUnits((prevUnits) => {
+      return prevUnits.map((unit) => {
+        if (unit.name !== unitName) return unit
 
-    // Simulate folder creation delay
-    setTimeout(() => {
-      const newFolder: KatalogUnitItem = {
-        name: trimmedName,
-        value: 0,
-        children: [],
-      }
-
-      setUnits((prevUnits) => {
-        return prevUnits.map((unit) => {
-          if (unit.name !== unitName) return unit
-
-          if (currentPath.length === 0) {
-            // Add to root level
-            return {
-              ...unit,
-              items: [...unit.items, newFolder],
-            }
-          } else {
-            // Add to nested folder
-            const updateItems = (
-              items: KatalogUnitItem[],
-              pathIndex: number
-            ): KatalogUnitItem[] => {
-              return items.map((item) => {
-                if (item.name === currentPath[pathIndex].name) {
-                  if (pathIndex === currentPath.length - 1) {
-                    // This is the target folder
-                    return {
-                      ...item,
-                      children: [...(item.children || []), newFolder],
-                    }
-                  } else {
-                    // Need to go deeper
-                    return {
-                      ...item,
-                      children: updateItems(item.children || [], pathIndex + 1),
-                    }
+        if (currentPath.length === 0) {
+          // Add to root level
+          return {
+            ...unit,
+            hasChildren: true,
+            children: [...(unit.children || []), newFolder],
+          }
+        } else {
+          // Add to nested folder
+          const updateChildren = (items: Unit[], pathIndex: number): Unit[] => {
+            return items.map((item) => {
+              if (item.name === currentPath[pathIndex].name) {
+                if (pathIndex === currentPath.length - 1) {
+                  // This is the target folder
+                  return {
+                    ...item,
+                    hasChildren: true,
+                    children: [...(item.children || []), newFolder],
+                  }
+                } else {
+                  // Need to go deeper
+                  return {
+                    ...item,
+                    children: updateChildren(item.children || [], pathIndex + 1),
                   }
                 }
-                return item
-              })
-            }
-
-            return {
-              ...unit,
-              items: updateItems(unit.items, 0),
-            }
+              }
+              return item
+            })
           }
-        })
+
+          return {
+            ...unit,
+            children: updateChildren(unit.children || [], 0),
+          }
+        }
       })
-
-      // Reset dialog state
-      setIsCreating(false)
-      setFolderName('')
-      setShowError(false)
-      setDialogOpen(false)
-    }, 1000) // Simulate API call delay
-  }
-
-  const handleDialogOpenChange = (open: boolean) => {
-    setDialogOpen(open)
-    if (!open) {
-      // Reset state when dialog closes
-      setFolderName('')
-      setShowError(false)
-      setIsCreating(false)
-    }
+    })
   }
 
   const handleUploadClick = (unitName: string) => {
@@ -226,8 +223,17 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
       {units.map((unit) => {
         const isOpen = openUnits.includes(unit.name)
         const currentPath = currentPaths[unit.name] || []
-        const currentFolders =
-          currentPath.length === 0 ? unit.items : currentPath[currentPath.length - 1].children || []
+        const allItems =
+          currentPath.length === 0
+            ? unit.children || []
+            : currentPath[currentPath.length - 1].children || []
+
+        // Separate folders and documents
+        const currentFolders = allItems.filter((item) => item.type === 'folder')
+        const currentDocuments = allItems.filter((item) => item.type !== 'folder')
+
+        // Get existing folder names for validation
+        const existingFolderNames = currentFolders.map((folder) => folder.name)
 
         return (
           <AccordionItem key={unit.name} value={unit.name} className="border-none">
@@ -235,15 +241,86 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
               {/* Title Row */}
               <AccordionTrigger className="py-0 hover:no-underline">
                 <div className="flex w-full items-center gap-3 text-left">
-                  <img
-                    src={isOpen ? folderOpen : folderClose}
-                    alt="Folder"
-                    className="h-8 w-8 shrink-0 object-contain transition-all duration-200"
-                  />
+                  {currentPath.length > 0 ? (
+                    <>
+                      {/* Back Button */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleBackClick(unit.name)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleBackClick(unit.name)
+                          }
+                        }}
+                        className="flex size-[18px] shrink-0 items-center justify-center text-txt-black-700 transition-colors hover:text-txt-black-900 cursor-pointer"
+                        aria-label="Go back"
+                      >
+                        <ArrowBackIcon />
+                      </div>
 
-                  <h2 className="text-body-lg font-semibold text-txt-black-900 whitespace-nowrap">
-                    {unit.name}
-                  </h2>
+                      {/* Breadcrumb Path */}
+                      <Breadcrumb>
+                        <div className="relative h-[22px] shrink-0 pr-2">
+                          <img
+                            src={folderOpen}
+                            alt="Folder"
+                            className="h-full w-full object-contain flex-shrink-0"
+                          />
+                        </div>
+                        <BreadcrumbItem>
+                          <BreadcrumbLink
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleBreadcrumbClick(unit.name, -1)
+                            }}
+                            className="cursor-pointer font-semibold text-[18px] leading-[26px] hover:text-txt-black-900"
+                          >
+                            {unit.name}
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        {currentPath.map((pathItem, index) => (
+                          <div key={pathItem.name} className="flex items-center">
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                              {index === currentPath.length - 1 ? (
+                                <BreadcrumbPage className="font-semibold text-[18px] leading-[26px]">
+                                  {pathItem.name}
+                                </BreadcrumbPage>
+                              ) : (
+                                <BreadcrumbLink
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleBreadcrumbClick(unit.name, index)
+                                  }}
+                                  className="cursor-pointer font-semibold text-[18px] leading-[26px] hover:text-txt-black-900"
+                                >
+                                  {pathItem.name}
+                                </BreadcrumbLink>
+                              )}
+                            </BreadcrumbItem>
+                          </div>
+                        ))}
+                      </Breadcrumb>
+                    </>
+                  ) : (
+                    <>
+                      <img
+                        src={isOpen ? folderOpen : folderClose}
+                        alt="Folder"
+                        className="h-8 w-8 shrink-0 object-contain transition-all duration-200"
+                      />
+
+                      <h2 className="text-body-lg font-semibold text-txt-black-900 whitespace-nowrap">
+                        {unit.name}
+                      </h2>
+                    </>
+                  )}
 
                   <div className="flex-1 border-t border-dashed border-otl-gray-200" />
                 </div>
@@ -252,92 +329,25 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
               {/* Action Buttons */}
               {isOpen && (
                 <div className="flex items-center justify-end gap-1 pt-1">
-                  <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
-                    <DialogTrigger>
-                      <Button variant="default-outline" size="small">
+                  <TambahFolderModal
+                    open={dialogOpen}
+                    onOpenChange={setDialogOpen}
+                    onAddFolder={handleAddFolder}
+                    existingFolders={existingFolderNames}
+                    trigger={
+                      <Button
+                        variant="default-outline"
+                        size="small"
+                        onClick={() => {
+                          setActiveUnit(unit.name)
+                          setDialogOpen(true)
+                        }}
+                      >
                         <PlusIcon className="size-4" />
                         Tambah Folder
                       </Button>
-                    </DialogTrigger>
-                    <DialogBody
-                      hideClose={isCreating}
-                      className={clx(isCreating && 'items-center justify-center flex')}
-                    >
-                      {!isCreating && (
-                        <DialogHeader className="pb-[18px]">
-                          <DialogTitle>Tambah Folder</DialogTitle>
-                        </DialogHeader>
-                      )}
-
-                      <DialogContent
-                        className={clx(
-                          'p-6 flex flex-col gap-6 border-b border-t border-otl-gray-200 ',
-                          isCreating && 'border-none'
-                        )}
-                      >
-                        {/* for myds issue for throwing error */}
-                        <DialogDescription className="hidden">
-                          Dialog content goes here.
-                        </DialogDescription>
-
-                        {isCreating ? (
-                          <div className="items-center justify-center flex flex-col gap-3 py-6 min-h-[350px]">
-                            <Spinner size={'large'} />
-                            <div className="font-body font-normal text-sm text-txt-black-700">
-                              Folder Sedang Dicipta
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex flex-col gap-1.5">
-                              <div>Nama Folder</div>
-                              <Input
-                                placeholder="Nama Folder"
-                                value={folderName}
-                                onChange={(e) => {
-                                  setFolderName(e.target.value)
-                                  setShowError(false)
-                                }}
-                              />
-                            </div>
-                            {!showError && (
-                              <Callout>
-                                <CalloutTitle>Informasi</CalloutTitle>
-                                <CalloutContent>
-                                  Nama folder mestilah unik dan tidak boleh sama dengan folder yang
-                                  sedia ada di dalam unit/folder ini.
-                                </CalloutContent>
-                              </Callout>
-                            )}
-                            {showError && (
-                              <Callout variant={'danger'}>
-                                <CalloutTitle>Ralat</CalloutTitle>
-                                <CalloutContent>
-                                  Nama folder ini telah wujud. Sila gunakan nama lain.
-                                </CalloutContent>
-                              </Callout>
-                            )}
-                          </>
-                        )}
-                      </DialogContent>
-                      {!isCreating && (
-                        <DialogFooter>
-                          <DialogClose>
-                            <Button variant="default-outline" disabled={isCreating}>
-                              Batalkan
-                            </Button>
-                          </DialogClose>
-                          <Button
-                            variant="primary-fill"
-                            disabled={!folderName.trim() || isCreating}
-                            onClick={() => handleAddFolder(unit.name)}
-                          >
-                            Tambah Folder
-                          </Button>
-                        </DialogFooter>
-                      )}
-                    </DialogBody>
-                  </Dialog>
+                    }
+                  />
 
                   <Button
                     variant="primary-fill"
@@ -352,86 +362,48 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
             </div>
 
             <AccordionContent className="pb-0 pt-6">
-              <div className="flex flex-col gap-6">
-                {/* Breadcrumb Navigation */}
-                {currentPath.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    {/* Back Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleBackClick(unit.name)}
-                      className="flex size-[18px] shrink-0 items-center justify-center text-txt-black-700 transition-colors hover:text-txt-black-900"
-                      aria-label="Go back"
-                    >
-                      <ArrowBackIcon />
-                    </button>
-
-                    {/* Breadcrumb Path */}
-                    <Breadcrumb>
-                      <div className="relative h-[22px] shrink-0 pr-2">
-                        <img
-                          src={folderClose}
-                          alt="Folder"
-                          className="h-full w-full object-contain flex-shrink-0"
-                        />
-                      </div>
-                      {currentPath.map((pathItem, index) => (
-                        <div key={pathItem.name} className="flex items-center">
-                          {index > 0 && <BreadcrumbSeparator />}
-                          <BreadcrumbItem>
-                            {index === currentPath.length - 1 ? (
-                              <BreadcrumbPage className="font-semibold text-[18px] leading-[26px]">
-                                {pathItem.name}
-                              </BreadcrumbPage>
-                            ) : (
-                              <BreadcrumbLink
-                                onClick={() => handleBreadcrumbClick(unit.name, index)}
-                                className="cursor-pointer font-semibold text-[18px] leading-[26px] hover:text-txt-black-900"
-                              >
-                                {pathItem.name}
-                              </BreadcrumbLink>
-                            )}
-                          </BreadcrumbItem>
-                        </div>
-                      ))}
-                    </Breadcrumb>
-                  </div>
+              <div
+                className={clx(
+                  'flex flex-col',
+                  currentFolders.length > 0 && currentDocuments.length > 0 && 'gap-6'
+                )}
+              >
+                {/* Folder Grid */}
+                {currentFolders.length === 0 && currentDocuments.length === 0 ? (
+                  <FolderGrid
+                    folders={[]}
+                    loadingFolders={loadingFolders}
+                    unitName={unit.name}
+                    onFolderClick={(folder) => handleFolderClick(unit.name, folder)}
+                    emptyMessage="Tiada folder ditemui bagi unit ini"
+                  />
+                ) : (
+                  currentFolders.length > 0 && (
+                    <FolderGrid
+                      folders={currentFolders}
+                      loadingFolders={loadingFolders}
+                      unitName={unit.name}
+                      onFolderClick={(folder) => handleFolderClick(unit.name, folder)}
+                    />
+                  )
                 )}
 
-                {/* Folder Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {currentFolders.length === 0 ? (
-                    <p className="col-span-full py-5 text-center text-body-sm font-medium text-txt-black-500">
-                      Tiada folder ditemui bagi unit ini
-                    </p>
-                  ) : (
-                    currentFolders.map((folder) => (
-                      <button
-                        key={unit.name + '-' + folder.name}
-                        onClick={() => handleFolderClick(unit.name, folder)}
-                        className="flex flex-col items-center gap-3 rounded-xl p-3 border border-transparent hover:border-otl-gray-300 hover:bg-bg-secondary-50 transition-all duration-200 cursor-pointer"
-                      >
-                        <div className="relative flex h-20 items-center justify-center rounded-md p-1.5">
-                          <img
-                            src={folderClose}
-                            alt={`Folder ${folder.name}`}
-                            className="h-16 w-[84px] shrink-0 object-contain"
-                          />
-
-                          <div className="absolute right-[13px] top-[calc(50%+13px)] flex -translate-y-1/2 items-center justify-center gap-0.5 rounded-md bg-primary-900 px-1.5 py-0.5">
-                            <BookmarkIcon className="size-3.5 text-white" />
-                            <span className="font-body text-body-sm font-medium leading-6 text-white">
-                              {folder.value}
-                            </span>
-                          </div>
-                        </div>
-                        <p className="w-full text-center font-body text-body-md font-medium text-txt-black-900">
-                          {folder.name}
-                        </p>
-                      </button>
-                    ))
-                  )}
-                </div>
+                {/* Documents Section */}
+                {currentDocuments.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-otl-gray-200">
+                    {currentDocuments.map((doc: any) => (
+                      <Excerpts
+                        key={doc.path}
+                        date={doc.date}
+                        secretTag={doc.peringkat_keselamatan}
+                        statusTag={doc.status}
+                        title={doc.document_name}
+                        type={doc.meta_info?.documentType || doc.type}
+                        unit={unit.name}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
