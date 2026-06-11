@@ -27,14 +27,14 @@ export default function LoginPage() {
       navigate(`/${lang}/`)
     } catch (error) {
       setIsLoading(false)
-      setError('Gagal log masuk. Sila semak Nombor IC dan kata laluan.')
+      setError('Tiada akaun dijumpai. Sila masukkan maklumat log masuk yang betul.')
       console.error('Login error:', error)
     }
   }
 
   return (
     <>
-      <div className="relative flex w-full min-h-full px-[24px] lg:px-[36px] py-[32px] overflow-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
+      <div className="relative flex w-full min-h-full px-[24px] lg:px-[36px] py-[32px] pb-[60px] overflow-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
         <Mask className="absolute inset-0 xl:w-full h-2/3 pointer-events-none" />
         <div className="flex max-lg:flex-col items-center justify-center gap-12 w-full z-10">
           <div className="w-full lg:max-w-[600px] flex flex-col gap-6">
@@ -46,33 +46,37 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="text-center font-body font-semibold tracking-[4px] lg:text-start text-primary-700 max-sm:text-sm">
-              MESYUARAT KABINET MALAYSIA
+            <div className="text-center font-body font-semibold uppercase tracking-[0.2em] text-txt-primary lg:text-start text-body-lg max-sm:text-body-sm">
+              SELAMAT DATANG
             </div>
             <h1 className="text-heading-md text-center lg:text-start font-heading font-semibold max-sm:text-heading-sm">
               GOVSuiteDMS
             </h1>
             <div className="flex flex-col text-body-md text-center lg:text-start text-txt-black-700 font-body gap-2 max-sm:px-0 max-lg:px-16  max-sm:text-body-sm">
-              <p> Anda boleh cari rekod mesyuarat (MJM, MBKM, KSUKP, JKPPN).</p>
-              <p>
-                Klik hasil carian untuk lihat preview, termasuk info tarikh, bilangan mesyuarat,
-                senarai kehadiran, rumusan AI, dan maklum balas (jika ada).
-              </p>
+              <p> Pusat rujukan digital bagi pengurusan, capaian, dan analisis rekod 
+                strategik negara secara efisien dan selamat.</p>
+              
             </div>
             <div className="flex max-lg:justify-center max-lg:items-center max-sm:text-body-sm">
               <div className="flex flex-col">
                 <div className="flex gap-2 items-center p-2">
                   <CheckCircleIcon className="text-txt-success shrink-0" />
-                  <p>Carian Dokumen (Tahun, Keyword, penapis)</p>
+                  <p>Satu Carian, Semua Dokumen</p>
                 </div>
+                <p className="text-body-md font-normal text-txt-black-500 pl-4 pr-0.5 pb-0.5">
+                 Akses menyeluruh kepada pelbagai jenis rekod</p>
                 <div className="flex gap-2 items-center p-2">
                   <CheckCircleIcon className="text-txt-success shrink-0" />
-                  <p>Carian AI (instant preview + highlight + Next/Prev)</p>
+                  <p>Navigasi Dashboard</p>
                 </div>
+                <p className="text-body-md font-normal text-txt-black-500 pl-4 pr-0.5 pb-0.5">
+                 Paparan analitik mengikut unit</p>
                 <div className="flex gap-2 items-center p-2">
                   <CheckCircleIcon className="text-txt-success shrink-0" />
-                  <p>Dashboard Unit (Unit L, UP, K, H, M, J, IO)</p>
+                  <p>Capaian Pantas</p>
                 </div>
+                <p className="text-body-md font-normal text-txt-black-500 pl-4 pr-0.5 pb-0.5">
+                 Arkib digital di hujung jari</p>
               </div>
             </div>
           </div>
@@ -87,6 +91,11 @@ export default function LoginPage() {
             handleLogin={handleLogin}
           />
         </div>
+<div className="absolute bottom-6 left-0 right-0 z-10 text-center px-6 pointer-events-none">
+  <p className="text-body-sm font-normal text-txt-black-500 tracking-normal inline-block">
+    Sistem ini hanya untuk kegunaan rasmi kerajaan. Sila pastikan kerahsiaan data terpelihara.
+  </p>
+</div>
       </div>
     </>
   )
@@ -122,14 +131,11 @@ function LoginUi({
       <form onSubmit={handleLogin} className="flex flex-col gap-6 w-full">
         <div className="flexll flex-col gap-4">
           <div className="flex w-full flex-col gap-1.5">
-            <div className="text-txt-black-700 text-body-md font-medium">No Kad Pengenalan</div>
-            <div className="text-txt-black-500 text-body-sm font-normal">
-              Sila masukkan no kad pengenalan tanpa tanda ‘-’
-            </div>
+            <div className="text-txt-black-700 text-body-md font-medium">ID Pengguna</div>
             <Input
               id="ic"
               type="string"
-              placeholder="123456789000"
+              placeholder="nama@mail.com"
               value={icNumber}
               onChange={(e) => seticNumber(e.target.value)}
               required
