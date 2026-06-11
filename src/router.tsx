@@ -8,7 +8,8 @@ import LoginPage from './pages/Login'
 import LayoutMain from './components/layout/LayoutMain'
 import HomePage from './pages/Home'
 import ErrorPage from './pages/Error'
-import KatalogDokumenPage from './pages/KatalogDokumen'
+import KatalogDokumenPage from './pages/KatalogDokumen/KatalogDokumen'
+import DokumenIDPage from './pages/KatalogDokumen/DokumenID/DokumenID'
 import MuatNaikDokumenPage from './pages/MuatNaikDokumen'
 import CarianDokumenPage from './pages/CarianDokumen'
 import KegemaranPage from './pages/Kegemaran'
@@ -91,6 +92,14 @@ export default function AppRoutes() {
             element={
               <ProtectedRoute routeKey="katalog-dokumen">
                 <KatalogDokumenPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="katalog-dokumen/:DokumenID"
+            element={
+              <ProtectedRoute routeKey="katalog-dokumen">
+                <DokumenIDPage />
               </ProtectedRoute>
             }
           />

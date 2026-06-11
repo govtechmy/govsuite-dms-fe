@@ -18,7 +18,6 @@ export default function KatalogDokumenPage() {
         setIsLoading(true)
         setError(null)
         const data = await getCatalogUnits()
-        console.log('📦 Initial catalog data:', JSON.stringify(data, null, 2))
         setUnits(data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch catalog data')
