@@ -1,3 +1,4 @@
+import { searchPlugin } from '@react-pdf-viewer/search'
 import DokumenContentID from '@/components/page/KatalogDokumen/DokumenID/DokumenContentID'
 import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/HeaderDokumenID'
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
@@ -12,12 +13,15 @@ export default function DokumenIDPage() {
     classification: 'Terhad',
     category: 'Minit Mesyuarat',
     unit: 'Unit K',
-    currentPage: 1,
-    totalPages: 34,
+    // Mock PDF URL - replace with actual document URL
+    pdfUrl: '/MinitMesyuaratSample.pdf',
   }
 
+  // Create search plugin instance
+  const searchPluginInstance = searchPlugin()
+
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex w-full flex-col overflow-auto">
       <HeaderDokumenID
         title={document.title}
         path={document.path}
@@ -27,8 +31,8 @@ export default function DokumenIDPage() {
         category={document.category}
         unit={document.unit}
       />
-      <SearchBarDokumenID currentPage={document.currentPage} totalPages={document.totalPages} />
-      <DokumenContentID />
+      <SearchBarDokumenID searchPluginInstance={searchPluginInstance} />
+      <DokumenContentID pdfUrl={document.pdfUrl} searchPluginInstance={searchPluginInstance} />
     </div>
   )
 }
