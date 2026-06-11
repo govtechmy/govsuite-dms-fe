@@ -16,7 +16,6 @@ export default function SearchPage() {
         Carian Dokumen
       </h2>
 
-      {/* Kontena Bar Input & Kotak Tips */}
       <div className="w-full max-w-[640px] flex flex-col gap-3">
         
         <form onSubmit={handleSearch} className="w-full relative">
