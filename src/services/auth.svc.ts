@@ -23,12 +23,12 @@ import { useAuthStore } from '@/store/AuthStore.ts'
 //   }
 // }
 
-const LOGIN_USERNAME = import.meta.env.VITE_LOGIN_USERNAME
+const LOGIN_IC = import.meta.env.VITE_LOGIN_IC
 const LOGIN_PASSWORD = import.meta.env.VITE_LOGIN_PASSWORD
 
-export const login = async (data: { username: string; password: string }) => {
+export const login = async (data: { ic: string; password: string }) => {
   // Validate credentials against .env values
-  if (data.username === LOGIN_USERNAME && data.password === LOGIN_PASSWORD) {
+  if (data.ic === LOGIN_IC && data.password === LOGIN_PASSWORD) {
     // Mock successful login response
     const mockToken = 'mock-access-token-' + Date.now()
     const mockRefreshToken = 'mock-refresh-token-' + Date.now()
@@ -50,7 +50,7 @@ export const login = async (data: { username: string; password: string }) => {
       },
     }
   } else {
-    throw new Error('Invalid username or password')
+    throw new Error('Invalid IC or password')
   }
 }
 

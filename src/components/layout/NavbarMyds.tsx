@@ -5,7 +5,7 @@ import {
   WarningIcon,
 } from '@govtechmy/myds-react/icon'
 import { Navbar } from '@govtechmy/myds-react/navbar'
-import { Tag } from '@govtechmy/myds-react/tag'
+// import { Tag } from '@govtechmy/myds-react/tag'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/AuthStore'
 import SidebarMyds from './SidebarMyds'
@@ -46,7 +46,7 @@ export function NavbarMyds() {
         <div className="flex gap-2.5 items-center justify-center">
           <JataNegaraIcon />
           <div className="text-lg leading-[26px] font-semibold font-heading">GOVSuiteDMS</div>
-          <Tag variant="primary">ADMIN</Tag>
+          {/* <Tag variant="primary">ADMIN</Tag> */}
         </div>
 
         {/* Desktop Navigation */}

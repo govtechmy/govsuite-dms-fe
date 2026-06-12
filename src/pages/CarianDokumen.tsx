@@ -27,7 +27,7 @@ export default function SearchPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-5 pr-[140px] py-3 rounded-full border border-otl-gray-200 shadow-sm focus:outline-none placeholder:text-txt-black-500 placeholder:text-body-md text-body-md font-normal text-txt-black-900"
           >
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-3">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
               <span className="text-body-sm text-txt-black-400 max-sm:hidden">
                 Tekan <kbd className="px-1.5 py-0.5 bg-bg-neutral-50 border border-otl-gray-200 rounded text-[11px] font-sans font-normal shadow-sm">/</kbd> untuk cari
               </span>

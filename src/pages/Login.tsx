@@ -12,7 +12,7 @@ import Mask from '@/assets/bg-svg/Mask'
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>(' ')
-  const [username, setUsername] = useState('')
+  const [icNumber, seticNumber] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
 
@@ -22,19 +22,19 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      await login({ username: username, password: password })
+      await login({ ic: icNumber, password: password })
       const lang = localStorage.getItem('lang') ?? 'ms'
       navigate(`/${lang}/`)
     } catch (error) {
       setIsLoading(false)
-      setError('Tiada akaun dijumpai. Sila masukkan maklumat log masuk yang betul.')
+      setError('Gagal log masuk. Sila semak Nombor IC dan kata laluan.')
       console.error('Login error:', error)
     }
   }
 
   return (
     <>
-      <div className="relative flex w-full min-h-full px-[24px] lg:px-[36px] py-[32px] pb-[60px] overflow-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
+      <div className="relative flex w-full min-h-full px-[24px] lg:px-[36px] py-[32px] pb-[50px] overflow-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
         <Mask className="absolute inset-0 xl:w-full h-2/3 pointer-events-none" />
         <div className="flex max-lg:flex-col items-center justify-center gap-12 w-full z-10">
           <div className="w-full lg:max-w-[600px] flex flex-col gap-6">
@@ -63,27 +63,27 @@ export default function LoginPage() {
                   <CheckCircleIcon className="text-txt-success shrink-0" />
                   <p>Satu Carian, Semua Dokumen</p>
                 </div>
-                <p className="text-body-md font-normal text-txt-black-500 pl-4 pr-0.5 pb-0.5">
+                <p className="text-body-md font-normal text-txt-black-500 pl-8 pr-2 pb-2">
                  Akses menyeluruh kepada pelbagai jenis rekod</p>
                 <div className="flex gap-2 items-center p-2">
                   <CheckCircleIcon className="text-txt-success shrink-0" />
                   <p>Navigasi Dashboard</p>
                 </div>
-                <p className="text-body-md font-normal text-txt-black-500 pl-4 pr-0.5 pb-0.5">
+                 <p className="text-body-md font-normal text-txt-black-500 pl-8 pr-2 pb-2">
                  Paparan analitik mengikut unit</p>
                 <div className="flex gap-2 items-center p-2">
                   <CheckCircleIcon className="text-txt-success shrink-0" />
                   <p>Capaian Pantas</p>
                 </div>
-                <p className="text-body-md font-normal text-txt-black-500 pl-4 pr-0.5 pb-0.5">
+                 <p className="text-body-md font-normal text-txt-black-500 pl-8 pr-2 pb-2">
                  Arkib digital di hujung jari</p>
               </div>
             </div>
           </div>
 
           <LoginUi
-            username={username}
-            setUsername={setUsername}
+            icNumber={icNumber}
+            seticNumber={seticNumber}
             password={password}
             setPassword={setPassword}
             isLoading={isLoading}
@@ -91,7 +91,7 @@ export default function LoginPage() {
             handleLogin={handleLogin}
           />
         </div>
-<div className="absolute bottom-6 left-0 right-0 z-10 text-center px-6 pointer-events-none">
+        <div className="absolute bottom-6 left-0 right-0 z-10 text-center px-6 pointer-events-none">
   <p className="text-body-sm font-normal text-txt-black-500 tracking-normal inline-block">
     Sistem ini hanya untuk kegunaan rasmi kerajaan. Sila pastikan kerahsiaan data terpelihara.
   </p>
@@ -102,8 +102,8 @@ export default function LoginPage() {
 }
 
 interface LoginUiProps {
-  username: string
-  setUsername: React.Dispatch<React.SetStateAction<string>>
+  icNumber: string
+  seticNumber: React.Dispatch<React.SetStateAction<string>>
   password: string
   setPassword: React.Dispatch<React.SetStateAction<string>>
   isLoading: boolean
@@ -112,8 +112,8 @@ interface LoginUiProps {
 }
 
 function LoginUi({
-  username,
-  setUsername,
+  icNumber,
+  seticNumber,
   password,
   setPassword,
   isLoading,
@@ -129,15 +129,15 @@ function LoginUi({
       </div>
 
       <form onSubmit={handleLogin} className="flex flex-col gap-6 w-full">
-        <div className="flex flex-col gap-4">
+        <div className="flexll flex-col gap-4">
           <div className="flex w-full flex-col gap-1.5">
             <div className="text-txt-black-700 text-body-md font-medium">ID Pengguna</div>
             <Input
-              id="username"
+              id="ic"
               type="string"
               placeholder="nama@mail.com"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={icNumber}
+              onChange={(e) => seticNumber(e.target.value)}
               required
               disabled={isLoading}
             />
