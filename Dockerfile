@@ -23,8 +23,13 @@ RUN pnpm run -w build
 # Stage 2: Production
 FROM nginx:alpine AS production
 
+
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy startup script for runtime environment injection
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Copy nginx configuration for SPA routing
 RUN echo 'server { \
@@ -54,4 +59,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 
 # Start nginx
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

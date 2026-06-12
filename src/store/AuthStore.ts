@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getEnv } from '@/config/runtimeEnv'
 
 import { unauthAxios } from '../services/http'
 
@@ -19,7 +20,7 @@ const sessionStorageAdapter = {
 
 type User = {
   id: string
-  email: string
+  username: string
   name: string
   role: string
   // Add other user fields as needed
@@ -55,12 +56,9 @@ export const useAuthStore = create<AuthStore>()(
         const refreshToken = get().refreshToken
         if (!refreshToken) return null
         try {
-          const response = await unauthAxios.post(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
-            {
-              refreshToken,
-            }
-          )
+          const response = await unauthAxios.post(`${getEnv('VITE_API_BASE_URL')}/auth/refresh`, {
+            refreshToken,
+          })
           const newToken: string = response.data.data.accessToken
           set({ token: newToken, refreshToken: refreshToken })
           axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
