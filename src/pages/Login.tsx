@@ -131,14 +131,14 @@ function LoginUi({
       <form onSubmit={handleLogin} className="flex flex-col gap-6 w-full">
         <div className="flex flex-col gap-4">
           <div className="flex w-full flex-col gap-1.5">
-            <div className="text-txt-black-700 text-body-md font-medium">Username</div>
+            <div className="text-txt-black-700 text-body-md font-medium">ID Pengguna</div>
             {/* <div className="text-txt-black-500 text-body-sm font-normal">
-              Sila masukkan no kad pengenalan tanpa tanda '-'
+              Sila masukkan emel '-'
             </div> */}
             <Input
               id="username"
               type="string"
-              placeholder="admin@admin.com"
+              placeholder="nama@mail.com"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
