@@ -89,18 +89,21 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
 
 export default function SidebarMyds({ onclick }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [userRole, setUserRole] = useState<UserRole>('PUBLIC')
+  const [userRoles, setUserRoles] = useState<UserRole[]>(['PUBLIC'])
 
   const location = useLocation()
   const navigate = useNavigate()
   const lang = localStorage.getItem('lang') ?? 'ms'
 
-  // Load user role once on component mount
+  // Load user roles once on component mount
   useEffect(() => {
     const authData = JSON.parse(sessionStorage.getItem('auth-storage') || '{}')
-    const role = authData?.state?.user?.role as UserRole
-    // Use PUBLIC as fallback if role is not found or invalid
-    setUserRole(USER_ROLES.includes(role) ? role : 'PUBLIC')
+    const roles = (authData?.state?.user?.roles || []) as string[]
+    const validRoles = roles.filter((role): role is UserRole =>
+      USER_ROLES.includes(role as UserRole)
+    )
+    // Use PUBLIC as fallback if no valid roles found
+    setUserRoles(validRoles.length > 0 ? validRoles : ['PUBLIC'])
   }, [])
 
   const getItemClasses = (active: boolean) => {
@@ -111,7 +114,8 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
   }
 
   const isMenuItemVisible = (item: Omit<MenuItem, 'roles'>) => {
-    return ROLE_PERMISSIONS[String(userRole) as UserRole]?.includes(item.id) ?? false
+    // Check if ANY of the user's roles grants access to this menu item
+    return userRoles.some((role) => ROLE_PERMISSIONS[role]?.includes(item.id) ?? false)
   }
 
   const isMenuItemActive = (item: Omit<MenuItem, 'roles'>) => {

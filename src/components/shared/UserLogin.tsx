@@ -1,8 +1,10 @@
 // ✅ Define types
 interface User {
   id: string
-  name: string
-  role: string
+  username: string
+  email?: string
+  fullName?: string
+  roles: string[]
 }
 
 interface AuthState {
@@ -15,11 +17,15 @@ interface AuthStorage {
 }
 
 export default function UserLogin() {
-  const formatUserRole = (role?: string) => {
-    if (!role) return ''
-    const normalized = role.toLowerCase()
-    if (normalized === 'editor') return <i>FOCAL PERSON</i>
-    return role.replace(/_/g, ' ')
+  const formatUserRoles = (roles?: string[]) => {
+    if (!roles || roles.length === 0) return ''
+    return roles
+      .map((role) => {
+        const normalized = role.toLowerCase()
+        if (normalized === 'editor') return 'FOCAL PERSON'
+        return role.replace(/_/g, ' ')
+      })
+      .join(', ')
   }
 
   const sessionInfo = sessionStorage['auth-storage']
@@ -29,7 +35,7 @@ export default function UserLogin() {
   if (sessionInfo) {
     try {
       parsedSession = JSON.parse(sessionInfo) as AuthStorage
-      const fullName = parsedSession.state?.user?.name ?? ''
+      const fullName = parsedSession.state?.user?.fullName ?? ''
       const parts = fullName.trim().split(' ').filter(Boolean)
 
       if (parts.length >= 2) {
@@ -54,9 +60,9 @@ export default function UserLogin() {
           </div>
 
           <div>
-            <div>{parsedSession.state.user?.name ?? ''}</div>
+            <div>{parsedSession.state.user?.fullName ?? ''}</div>
             <div className="text-body-xs font-normal text-txt-black-500">
-              {formatUserRole(parsedSession.state.user?.role)}
+              {formatUserRoles(parsedSession.state.user?.roles)}
             </div>
           </div>
         </div>
