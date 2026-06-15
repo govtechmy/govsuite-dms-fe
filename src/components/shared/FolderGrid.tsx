@@ -1,5 +1,5 @@
 import BookmarkIcon from '@/assets/Icons/Bookmark'
-import folderClose from '@/assets/Icons/Folder_close.png'
+import folderClose from '@/assets/png/Folder_close.png'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 
 export interface Folder {

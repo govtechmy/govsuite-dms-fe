@@ -15,8 +15,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@govtechmy/myds-react/accordion'
-import folderOpen from '@/assets/Icons/Folder_open.png'
-import folderClose from '@/assets/Icons/Folder_close.png'
+import folderOpen from '@/assets/png/Folder_open.png'
+import folderClose from '@/assets/png/Folder_close.png'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
 import { getCatalogUnits } from '@/services/catalog.svc'
 import Excerpts from '@/components/shared/Excerpts'

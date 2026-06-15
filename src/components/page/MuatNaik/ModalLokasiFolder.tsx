@@ -19,7 +19,7 @@ import {
   BreadcrumbPage,
 } from '@govtechmy/myds-react/breadcrumb'
 import BookmarkIcon from '@/assets/Icons/Bookmark'
-import folderClose from '@/assets/Icons/Folder_close.png'
+import folderClose from '@/assets/png/Folder_close.png'
 import { ArrowBackIcon } from '@govtechmy/myds-react/icon'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
 
