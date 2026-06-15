@@ -44,8 +44,7 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
   const [units, setUnits] = useState<Unit[]>(initialUnits)
   const [openUnits, setOpenUnits] = useState<string[]>([])
   const [currentPaths, setCurrentPaths] = useState<Record<string, Unit[]>>({})
-  const [dialogOpen, setDialogOpen] = useState<boolean>(false)
-  const [activeUnit, setActiveUnit] = useState<string>('')
+  const [dialogOpenUnit, setDialogOpenUnit] = useState<string | null>(null)
   const [loadingFolders, setLoadingFolders] = useState<Record<string, boolean>>({})
 
   const handleFolderClick = async (unitName: string, folder: Unit) => {
@@ -133,7 +132,8 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
   }
 
   const handleAddFolder = (folderName: string) => {
-    const unitName = activeUnit
+    const unitName = dialogOpenUnit
+    if (!unitName) return
     const currentPath = currentPaths[unitName] || []
 
     // Get current unit
@@ -330,18 +330,15 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
               {isOpen && (
                 <div className="flex items-center justify-end gap-1 pt-1">
                   <TambahFolderModal
-                    open={dialogOpen}
-                    onOpenChange={setDialogOpen}
+                    open={dialogOpenUnit === unit.name}
+                    onOpenChange={(open) => setDialogOpenUnit(open ? unit.name : null)}
                     onAddFolder={handleAddFolder}
                     existingFolders={existingFolderNames}
                     trigger={
                       <Button
                         variant="default-outline"
                         size="small"
-                        onClick={() => {
-                          setActiveUnit(unit.name)
-                          setDialogOpen(true)
-                        }}
+                        onClick={() => setDialogOpenUnit(unit.name)}
                       >
                         <PlusIcon className="size-4" />
                         Tambah Folder
