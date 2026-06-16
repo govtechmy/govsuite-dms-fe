@@ -15,7 +15,7 @@ export default function LayoutMain() {
         <div className="hidden lg:block sticky top-[100px] h-[calc(100vh-100px)] overflow-y-hidden">
           <SidebarMyds />
         </div>
-        <div className="flex-1 h-[calc(100vh-100px)] overflow-y-auto scrollbar-hide">
+        <div className="flex-1 h-[calc(100vh-100px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <Outlet />
         </div>
       </div>
