@@ -73,10 +73,14 @@ export default function CarianDokumenPage() {
       setDocumentRecords([])
       setKeywordRecords([])
       setDocumentInfo(null)
+      setSelectedDocumentId(null)
+      setSelectedKeywordId(null)
       return
     }
 
     const fetchDocumentRecords = async () => {
+      // Reset selections at the start of a new search
+      setSelectedKeywordId(null)
       setIsLoadingSearch(true)
       try {
         // Step 1: Fetch backend search response first

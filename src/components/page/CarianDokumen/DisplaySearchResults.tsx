@@ -50,17 +50,31 @@ export default function DisplaySearchResults({
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const hasAutoSelectedRef = useRef(false)
+  const lastDocumentIdRef = useRef<string>('')
 
   // Get the keyword text from the first keyword record (assuming single keyword search)
   const keyword = keywordRecords.length > 0 ? keywordRecords[0].keyword : ''
 
+  // Reset refs when document changes (new search or different document selected)
+  useEffect(() => {
+    const currentDocId = documentInfo?.documentID || ''
+    if (currentDocId && currentDocId !== lastDocumentIdRef.current) {
+      lastDocumentIdRef.current = currentDocId
+      hasAutoSelectedRef.current = false
+      lastSearchRef.current = ''
+      setIsPdfLoaded(false)
+    }
+  }, [documentInfo?.documentID])
+
   // Auto-select first keyword once when PDF is loaded and keywords are available
+  // Only auto-select if there's no existing selection (to avoid overriding user choices)
   useEffect(() => {
     if (
       isPdfLoaded &&
       keywordRecords.length > 0 &&
       onKeywordSelect &&
-      !hasAutoSelectedRef.current
+      !hasAutoSelectedRef.current &&
+      !selectedKeywordId
     ) {
       hasAutoSelectedRef.current = true
       // Calculate first occurrence ID (following the same logic as WordsResultSearch)
@@ -69,7 +83,7 @@ export default function DisplaySearchResults({
         onKeywordSelect(`1`) // First occurrence is always 1
       }
     }
-  }, [isPdfLoaded, keywordRecords, onKeywordSelect])
+  }, [isPdfLoaded, keywordRecords, onKeywordSelect, selectedKeywordId])
 
   // Handle search when keyword selection changes
   useEffect(() => {
