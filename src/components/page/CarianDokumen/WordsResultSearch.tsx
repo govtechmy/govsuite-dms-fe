@@ -60,7 +60,7 @@ export function WordsResultSearch({
       <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-otl-gray-200 p-2">
         <div className="flex flex-col gap-0 overflow-y-auto">
           {expandedKeywords.map((item) => {
-            const itemId = `0-${item.occurance}`
+            const itemId = `${item.occurance}`
             return (
               <button
                 key={itemId}

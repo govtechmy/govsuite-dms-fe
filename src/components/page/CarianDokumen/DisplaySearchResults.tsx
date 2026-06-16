@@ -66,7 +66,7 @@ export default function DisplaySearchResults({
       // Calculate first occurrence ID (following the same logic as WordsResultSearch)
       const firstRecord = keywordRecords[0]
       if (firstRecord.dataPage.length > 0) {
-        onKeywordSelect(`0-1`) // First occurrence is always 0-1
+        onKeywordSelect(`1`) // First occurrence is always 1
       }
     }
   }, [isPdfLoaded, keywordRecords, onKeywordSelect])
@@ -75,11 +75,10 @@ export default function DisplaySearchResults({
   useEffect(() => {
     if (!selectedKeywordId) return
 
-    // Parse the selected keyword info from the ID (format: "recordIndex-occurrenceNumber")
-    const parts = selectedKeywordId.split('-')
-    if (parts.length !== 2) return
+    // Parse the occurrence number from the ID
+    const occurrenceNumber = parseInt(selectedKeywordId)
+    if (isNaN(occurrenceNumber)) return
 
-    const occurrenceNumber = parseInt(parts[1])
     const keywordText = keyword
 
     const searchId = `${keywordText}-${occurrenceNumber}`

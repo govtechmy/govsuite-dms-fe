@@ -48,6 +48,7 @@ export default function CarianDokumenPage() {
   const handleDocumentSelect = (id: string) => {
     if (selectedDocumentId !== id) {
       setSelectedDocumentId(id)
+      setSelectedKeywordId('1')
       fetchKeywordRecords(id)
       fetchDocumentInfo(id)
     }
