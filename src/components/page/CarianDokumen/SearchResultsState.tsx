@@ -9,7 +9,7 @@ import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 interface SearchResultsStateProps {
   isLoadingSearchPage?: boolean
   documentRecords?: DocumentRecord[]
-  keywordRecords?: KeywordRecord[]
+  keywordRecords?: KeywordRecord | null
   selectedDocumentId?: string | null
   selectedKeywordId?: string | null
   documentInfo?: DocumentInfoResponse['data'] | null
@@ -22,7 +22,7 @@ interface SearchResultsStateProps {
 export default function SearchResultsState({
   isLoadingSearchPage = false,
   documentRecords = [],
-  keywordRecords = [],
+  keywordRecords = null,
   selectedDocumentId,
   selectedKeywordId,
   documentInfo,

@@ -41,7 +41,7 @@ export default function CarianDokumenPage() {
   const [isLoadingSearch, setIsLoadingSearch] = useState(false)
   const [documentRecords, setDocumentRecords] = useState<DocumentRecord[]>([])
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
-  const [keywordRecords, setKeywordRecords] = useState<KeywordRecord[]>([])
+  const [keywordRecords, setKeywordRecords] = useState<KeywordRecord | null>(null)
   const [selectedKeywordId, setSelectedKeywordId] = useState<string | null>(null)
   const [documentInfo, setDocumentInfo] = useState<DocumentInfoResponse['data'] | null>(null)
 
@@ -71,7 +71,7 @@ export default function CarianDokumenPage() {
   useEffect(() => {
     if (!query) {
       setDocumentRecords([])
-      setKeywordRecords([])
+      setKeywordRecords(null)
       setDocumentInfo(null)
       setSelectedDocumentId(null)
       setSelectedKeywordId(null)
@@ -133,21 +133,19 @@ export default function CarianDokumenPage() {
   const fetchKeywordRecords = async (documentId: string) => {
     try {
       // Mock data - EXACT backend response structure
-      const mockKeywords: KeywordRecord[] = [
-        {
-          keyword: 'Tindakan',
-          documentID: documentId,
-          dataPage: [
-            { page1: Math.floor(Math.random() * 10) + 1 },
-            { page3: Math.floor(Math.random() * 10) + 1 },
-          ],
-        },
-      ]
+      const mockKeywords: KeywordRecord = {
+        keyword: 'Tindakan',
+        documentID: documentId,
+        dataPage: [
+          { page1: Math.floor(Math.random() * 10) + 1 },
+          { page3: Math.floor(Math.random() * 10) + 1 },
+        ],
+      }
 
       setKeywordRecords(mockKeywords)
     } catch (error) {
       console.error('Keyword records error:', error)
-      setKeywordRecords([])
+      setKeywordRecords(null)
     }
   }
 

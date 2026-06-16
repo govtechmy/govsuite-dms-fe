@@ -11,7 +11,7 @@ interface ExpandedKeywordItem {
 }
 
 interface WordsResultSearchProps {
-  keywordRecords: KeywordRecord[]
+  keywordRecords: KeywordRecord | null
   selectedKeywordId?: string | null
   onKeywordSelect?: (id: string) => void
 }
@@ -21,25 +21,24 @@ export function WordsResultSearch({
   selectedKeywordId,
   onKeywordSelect,
 }: WordsResultSearchProps) {
-  // Expand keyword records into individual occurrences with formatted text
-  const expandKeywordRecords = (records: KeywordRecord[]): ExpandedKeywordItem[] => {
+  // Expand keyword record into individual occurrences with formatted text
+  const expandKeywordRecords = (record: KeywordRecord | null): ExpandedKeywordItem[] => {
+    if (!record) return []
+
     const expanded: ExpandedKeywordItem[] = []
+    let occurrenceNumber = 0
 
-    records.forEach((record) => {
-      let globalOccurrenceNumber = 0
+    record.dataPage.forEach((pageObj) => {
+      const [pageKey, count] = Object.entries(pageObj)[0]
+      const pageNumber = parseInt(pageKey.replace('page', ''), 10)
 
-      record.dataPage.forEach((pageObj) => {
-        const [pageKey, count] = Object.entries(pageObj)[0]
-        const pageNumber = parseInt(pageKey.replace('page', ''))
-
-        for (let i = 0; i < count; i++) {
-          globalOccurrenceNumber++
-          expanded.push({
-            occurance: globalOccurrenceNumber,
-            keyword: `${record.keyword} ${globalOccurrenceNumber} : M/S ${pageNumber}`,
-          })
-        }
-      })
+      for (let i = 0; i < count; i++) {
+        occurrenceNumber++
+        expanded.push({
+          occurance: occurrenceNumber,
+          keyword: `${record.keyword} ${occurrenceNumber} : M/S ${pageNumber}`,
+        })
+      }
     })
 
     return expanded

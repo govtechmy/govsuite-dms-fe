@@ -23,7 +23,7 @@ interface DocumentInfo {
 
 interface DisplaySearchResultsProps {
   documentRecords?: DocumentRecord[]
-  keywordRecords?: KeywordRecord[]
+  keywordRecords?: KeywordRecord | null
   selectedDocumentId?: string | null
   selectedKeywordId?: string | null
   documentInfo?: DocumentInfo | null
@@ -35,7 +35,7 @@ interface DisplaySearchResultsProps {
 
 export default function DisplaySearchResults({
   documentRecords = [],
-  keywordRecords = [],
+  keywordRecords = null,
   selectedDocumentId,
   selectedKeywordId,
   documentInfo,
@@ -52,8 +52,8 @@ export default function DisplaySearchResults({
   const hasAutoSelectedRef = useRef(false)
   const lastDocumentIdRef = useRef<string>('')
 
-  // Get the keyword text from the first keyword record (assuming single keyword search)
-  const keyword = keywordRecords.length > 0 ? keywordRecords[0].keyword : ''
+  // Get the keyword text from keyword record
+  const keyword = keywordRecords?.keyword || ''
 
   // Reset refs when document changes (new search or different document selected)
   useEffect(() => {
@@ -71,15 +71,14 @@ export default function DisplaySearchResults({
   useEffect(() => {
     if (
       isPdfLoaded &&
-      keywordRecords.length > 0 &&
+      keywordRecords &&
       onKeywordSelect &&
       !hasAutoSelectedRef.current &&
       !selectedKeywordId
     ) {
       hasAutoSelectedRef.current = true
       // Calculate first occurrence ID (following the same logic as WordsResultSearch)
-      const firstRecord = keywordRecords[0]
-      if (firstRecord.dataPage.length > 0) {
+      if (keywordRecords.dataPage.length > 0) {
         onKeywordSelect(`1`) // First occurrence is always 1
       }
     }
