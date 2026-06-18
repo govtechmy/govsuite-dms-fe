@@ -1,12 +1,14 @@
 import React from 'react'
-import { Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom'
 import { useAuthStore } from './store/AuthStore'
 import { ROLE_PERMISSIONS, USER_ROLES, type UserRole } from './models/userRoles'
 import LangWrapper from './LangWrapper'
 import LayoutLogin from './components/layout/LayoutLogin'
 import LoginPage from './pages/Login'
 import LayoutMain from './components/layout/LayoutMain'
-import HomePage from './pages/Home'
+import HomePage from './pages/Home/Home'
+import PerluKelulusanPage from './pages/Home/PerluKelulusan/PerluKelulusan'
+import TidakLulusPage from './pages/Home/TidakLulus/TidakLulus'
 import ErrorPage from './pages/Error'
 import KatalogDokumenPage from './pages/KatalogDokumen/KatalogDokumen'
 import DokumenIDPage from './pages/KatalogDokumen/DokumenID/DokumenID'
@@ -17,7 +19,10 @@ import PengurusanDokumenPage from './pages/PengurusanDokumen'
 import LogAktivitiPage from './pages/LogAktiviti'
 import BantuanPage from './pages/Bantuan'
 
-// Route-to-permission mapping
+/**
+ * Maps route paths to their required permission keys.
+ * Used by ProtectedRoute to enforce role-based access control.
+ */
 const ROUTE_PERMISSIONS: Record<string, string> = {
   '': 'paparan-utama',
   'katalog-dokumen': 'katalog-dokumen',
@@ -29,6 +34,11 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
   bantuan: 'bantuan',
 }
 
+/**
+ * ProtectedRoute wrapper component.
+ * Enforces authentication and role-based permissions for routes.
+ * Redirects to login if not authenticated, or to appropriate page if unauthorized.
+ */
 function ProtectedRoute({
   children,
   routeKey,
@@ -72,37 +82,49 @@ export default function AppRoutes() {
 
   return (
     <Routes>
+      {/* Root redirect to default language */}
       <Route path="/" element={<Navigate to={`/${lang}`} replace />} />
-      {/* OAuth callback route - no language prefix needed */}
+
+      {/* All routes prefixed with :lang (en|ms) */}
       <Route path=":lang" element={<LangWrapper />}>
+        {/* Login layout - no main navigation */}
         <Route element={<LayoutLogin />}>
           <Route path="login" element={<LoginPage />} />
         </Route>
+
+        {/* Main app layout - includes Masthead, Navbar, Footer */}
         <Route element={<LayoutMain />}>
+          {/* Home routes - pathless parent with nested children */}
           <Route
-            index
             element={
               <ProtectedRoute routeKey="">
-                <HomePage />
+                <Outlet />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<HomePage />} />
+            {/* /perlu-kelulusan */}
+            <Route path="perlu-kelulusan" element={<PerluKelulusanPage />} />
+            {/* /tidak-lulus */}
+            <Route path="tidak-lulus" element={<TidakLulusPage />} />
+          </Route>
+
+          {/* Katalog Dokumen routes - nested structure with detail page */}
           <Route
             path="katalog-dokumen"
             element={
               <ProtectedRoute routeKey="katalog-dokumen">
-                <KatalogDokumenPage />
+                <Outlet />
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="katalog-dokumen/:DokumenID"
-            element={
-              <ProtectedRoute routeKey="katalog-dokumen">
-                <DokumenIDPage />
-              </ProtectedRoute>
-            }
-          />
+          >
+            {/* /katalog-dokumen */}
+            <Route index element={<KatalogDokumenPage />} />
+            {/* /katalog-dokumen/:DokumenID */}
+            <Route path=":DokumenID" element={<DokumenIDPage />} />{' '}
+          </Route>
+
+          {/* Standalone protected routes */}
           <Route
             path="muatnaik-dokumen"
             element={
@@ -151,6 +173,8 @@ export default function AppRoutes() {
               </ProtectedRoute>
             }
           />
+
+          {/* Error handling routes */}
           <Route
             path="404"
             element={
@@ -159,6 +183,7 @@ export default function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          {/* Catch-all for invalid routes */}
           <Route
             path="*"
             element={
@@ -172,6 +197,11 @@ export default function AppRoutes() {
     </Routes>
   )
 }
+
+/**
+ * Handles invalid routes by redirecting to /404.
+ * Validates language parameter and falls back to localStorage or 'ms'.
+ */
 
 function Redirect404Page() {
   const params = useParams()

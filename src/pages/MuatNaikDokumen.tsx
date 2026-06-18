@@ -66,21 +66,6 @@ export default function MuatNaikDokumenPage() {
     <>
       {progress !== null && (
         <div className="flex h-full justify-center items-center">
-          {/* 
-            template later remove
-          <ProgressResultChecker
-            progress={progress}
-            loadingDescription="Dokumen Sedang Diproses"
-            successTitle="Dokumen Berjaya Diluluskan"
-            successDescription="Dokumen akan disemak dan diluluskan oleh pegawai bertugas"
-            successButtonText="Kembali Ke Laman Utama"
-            errorTitle="Gagal Diluluskan!"
-            errorDescription="Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem"
-            errorButtonText="Kembali Ke Laman Utama"
-            errorUploadingTitle={'Dokumen Gagal Diupload'}
-            errorUploadingDescription={'Dokumen Gagal Diupload, semak dengan admin anda!'}
-            errorUploadingButtonText={'Kembali Ke Laman Utama'}
-          /> */}
           <ProgressResultChecker
             progress={progress}
             loadingDescription="Dokumen Sedang Diproses"

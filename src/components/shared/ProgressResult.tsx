@@ -50,13 +50,13 @@ interface ProgressResultCheckerProps {
   successTitle: string
   successDescription: string
   successButtonText: string
-  successButtonText2: string
+  successButtonText2?: string
   errorTitle: string
   errorDescription: string
   errorButtonText: string
-  errorUploadingTitle: string
-  errorUploadingDescription: string
-  errorUploadingButtonText: string
+  errorUploadingTitle?: string
+  errorUploadingDescription?: string
+  errorUploadingButtonText?: string
 }
 
 export default function ProgressResultChecker({

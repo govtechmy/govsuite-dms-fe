@@ -1,29 +1,20 @@
 import BookmarkIcon from '@/assets/Icons/Bookmark'
+import { useNavigate, useParams } from 'react-router-dom'
 
-export default function KategoriMesyuarat() {
-  const data = [
-    {
-      acronym: 'JKPPN',
-      description:
-        'Mesyuarat Jawatankuasa Perhubungan Antara Kerajaan Persekutuan dan Kerajaan Negeri',
-      tag: '174 Mesyuarat',
-    },
-    {
-      acronym: 'KSUKP',
-      description: 'Mesyuarat Ketua Setiausaha Kementerian dan Ketua Perkhidmatan',
-      tag: '174 Mesyuarat',
-    },
-    {
-      acronym: 'MBKM',
-      description: 'Mesyuarat Menteri Besar dan Ketua Menteri',
-      tag: '174 Mesyuarat',
-    },
-    {
-      acronym: 'MJM',
-      description: 'Mesyuarat Jemaah Menteri',
-      tag: '174 Mesyuarat',
-    },
-  ]
+interface KategoriMesyuaratItem {
+  acronym: string
+  description: string
+  tag: string
+}
+
+interface KategoriMesyuaratProps {
+  data: KategoriMesyuaratItem[]
+}
+
+export default function KategoriMesyuarat({ data }: KategoriMesyuaratProps) {
+  const navigate = useNavigate()
+  const { lang = 'ms' } = useParams()
+
   return (
     <div className="p-6 flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
@@ -38,7 +29,8 @@ export default function KategoriMesyuarat() {
         {data.map((item) => (
           <div
             key={item.acronym}
-            className="border border-otl-gray-200 rounded-lg p-3 gap-3 flex flex-col shadow-button"
+            className="border border-otl-gray-200 rounded-lg p-3 gap-3 flex flex-col shadow-button cursor-pointer"
+            onClick={() => navigate(`/${lang}/katalog-dokumen`)}
           >
             <div>
               <div className="font-body text-body-md font-semibold text-txt-black-900 pb-1.5">

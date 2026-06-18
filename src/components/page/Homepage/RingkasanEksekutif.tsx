@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
+import { useNavigate, useParams } from 'react-router-dom'
 
 interface RingkasanEksekutifCardInfo {
   jumlahDokumen: number | string
@@ -19,6 +20,9 @@ interface RingkasanEksekutifProps {
 }
 
 export default function RingkasanEksekutif({ cardInfo, Tahun }: RingkasanEksekutifProps) {
+  const navigate = useNavigate()
+  const { lang } = useParams<{ lang: string }>()
+
   return (
     <div>
       <h1 className="text-heading-3xs font-heading font-semibold">Selamat Datang,</h1>
@@ -53,18 +57,27 @@ export default function RingkasanEksekutif({ cardInfo, Tahun }: RingkasanEksekut
           label="Jumlah Dokumen"
           value={cardInfo.jumlahDokumen}
           variant="primary"
+          onClick={() => {
+            navigate(`/${lang}/katalog-dokumen`)
+          }}
         />
         <RingkasanEksekutifCard
           key="perlukan-kelulusan"
           label="Perlukan Kelulusan"
           value={cardInfo.perlukanKelulusan}
           variant="warning"
+          onClick={() => {
+            navigate(`/${lang}/perlu-kelulusan`)
+          }}
         />
         <RingkasanEksekutifCard
           key="dokumen-tidak-diluluskan"
           label="Dokumen tidak diluluskan"
           value={cardInfo.dokumenTidakDiluluskan}
           variant="danger"
+          onClick={() => {
+            navigate(`/${lang}/tidak-lulus`)
+          }}
         />
       </div>
     </div>

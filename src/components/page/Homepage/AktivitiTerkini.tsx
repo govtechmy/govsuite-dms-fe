@@ -1,48 +1,24 @@
 import Excerpts from '@/components/shared/Excerpts'
+import { useNavigate, useParams } from 'react-router-dom'
 
-export default function AktivitiTerkini() {
-  const data = [
-    {
-      date: '2026-01-10T00:00:00.000Z',
-      status: 'Diterbitkan',
-      classification: 'Rahsia Besar',
-      title: 'Minit Mesyuarat JKPPN (Januari 2026)',
-      type: 'Minit Mesyuarat',
-      unit: 'Unit K',
-    },
-    {
-      date: '2026-01-10T00:00:00.000Z',
-      status: 'Menunggu Kelulusan',
-      classification: 'Rahsia Besar',
-      title: 'Minit Mesyuarat JKPPN (Januari 2026)',
-      type: 'Minit Mesyuarat',
-      unit: 'Unit K',
-    },
-    {
-      date: '2026-01-10T00:00:00.000Z',
-      status: 'Diterbitkan',
-      classification: 'Rahsia Besar',
-      title: 'Minit Mesyuarat JKPPN (Januari 2026)',
-      type: 'Minit Mesyuarat',
-      unit: 'Unit K',
-    },
-    {
-      date: '2026-01-10T00:00:00.000Z',
-      status: 'Draf',
-      classification: 'Sulit',
-      title: 'Minit Mesyuarat JKPPN (Januari 2026)',
-      type: 'Minit Mesyuarat',
-      unit: 'Unit K',
-    },
-    {
-      date: '2026-01-10T00:00:00.000Z',
-      status: 'Diterbitkan',
-      classification: 'Terbuka',
-      title: 'Minit Mesyuarat JKPPN (Januari 2026)',
-      type: 'Minit Mesyuarat',
-      unit: 'Unit K',
-    },
-  ]
+export interface AktivitiTerkiniItem {
+  date: string
+  classification: string
+  status: string
+  type: string
+  unit: string
+  title: string
+  id: string
+}
+
+interface AktivitiTerkiniProps {
+  data: AktivitiTerkiniItem[]
+}
+
+export default function AktivitiTerkini({ data }: AktivitiTerkiniProps) {
+  const navigate = useNavigate()
+  const { lang } = useParams()
+  const activeLang = lang ?? localStorage.getItem('lang') ?? 'ms'
 
   return (
     <div className="p-6">
@@ -60,6 +36,7 @@ export default function AktivitiTerkini() {
             type={item.type}
             unit={item.unit}
             title={item.title}
+            onClick={() => navigate(`/${activeLang}/katalog-dokumen/${item.id}`)}
           />
         ))}
       </div>

@@ -19,9 +19,15 @@ type RingkasanEksekutifCardProps = {
   label: string | null | undefined
   value: number | string | null | undefined
   variant: CardVariant | null | undefined
+  onClick?: () => void
 }
 
-export function RingkasanEksekutifCard({ label, value, variant }: RingkasanEksekutifCardProps) {
+export function RingkasanEksekutifCard({
+  label,
+  value,
+  variant,
+  onClick,
+}: RingkasanEksekutifCardProps) {
   const safeVariant = variant ?? 'primary'
   const variantStyle = cardVariantStyles[safeVariant]
   const bgClass = variantStyle?.bgClass ?? 'bg-bg-primary-50'
@@ -31,7 +37,8 @@ export function RingkasanEksekutifCard({ label, value, variant }: RingkasanEksek
 
   return (
     <div
-      className={`relative overflow-hidden border-l-[10px] rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3 ${bgClass} ${borderClass}`}
+      className={`relative overflow-hidden border-l-[10px] rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3 ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''} ${bgClass} ${borderClass}`}
+      onClick={onClick}
     >
       <div className="text-5xl font-semibold text-txt-black-900">{displayValue}</div>
       <div className="text-body-m font-medium text-txt-black-700">{displayLabel}</div>

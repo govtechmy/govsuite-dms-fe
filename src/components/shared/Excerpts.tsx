@@ -10,11 +10,32 @@ export interface ExcerptsProps {
   title?: string
   type: string
   unit: string
+  onClick?: () => void
 }
 
-export default function Excerpts({ date, secretTag, statusTag, title, type, unit }: ExcerptsProps) {
+export default function Excerpts({
+  date,
+  secretTag,
+  statusTag,
+  title,
+  type,
+  unit,
+  onClick,
+}: ExcerptsProps) {
   return (
-    <div className="flex flex-row shadow-button rounded-lg">
+    <div
+      className={clx('flex flex-row shadow-button rounded-lg', onClick && 'cursor-pointer')}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (!onClick) return
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick()
+        }
+      }}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       <div
         className={clx(
           'border border-otl-gray-200 rounded-lg p-1.5 px-0 gap-3 rounded-r-none border-r-0 flex items-center shrink-0 justify-center'
@@ -25,11 +46,11 @@ export default function Excerpts({ date, secretTag, statusTag, title, type, unit
       <div className="border-r border-otl-divider"></div>
       <div
         className={clx(
-          'border border-otl-gray-200 rounded-lg p-3 gap-3  rounded-l-none flex-1 border-l-0'
+          'border border-otl-gray-200 rounded-lg p-3 gap-3 rounded-l-none flex-1 border-l-0 flex items-center'
         )}
       >
-        <div className="flex flex-col gap-1.5">
-          <div className="flex gap-1">
+        <div className="flex flex-col gap-1.5 flex-1">
+          <div className="flex flex-wrap gap-1">
             {renderStatusTag(statusTag)}
             {renderSecretTag(secretTag)}
           </div>

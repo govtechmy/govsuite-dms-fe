@@ -16,6 +16,8 @@ import {
   DialogClose,
 } from '@govtechmy/myds-react/dialog'
 import MetadataSummary from '@/components/shared/MetadataSummary'
+import { useState } from 'react'
+import ModalTakDiluluskan from './ModalTakDiluluskan'
 
 interface HeaderDokumenIDProps {
   title: string
@@ -25,6 +27,8 @@ interface HeaderDokumenIDProps {
   classification: string
   category: string
   unit: string
+  onApproveDokumen: () => void
+  onNotApproveDokumen: () => void
 }
 
 export function HeaderDokumenID({
@@ -35,7 +39,20 @@ export function HeaderDokumenID({
   classification,
   category,
   unit,
+  onApproveDokumen,
+  onNotApproveDokumen,
 }: HeaderDokumenIDProps) {
+  const [isTakDiluluskanOpen, setIsTakDiluluskanOpen] = useState(false)
+
+  const handleCloseTakDiluluskanModal = () => {
+    setIsTakDiluluskanOpen(false)
+  }
+
+  const handleConfirmTakDiluluskan = () => {
+    setIsTakDiluluskanOpen(false)
+    onNotApproveDokumen()
+  }
+
   const documentData = {
     lokasiFolder: 'JKKPN > 2020 - 2024 > 2024 > January > Minit Jemaah Menteri Bil. 12/2026',
     profilDokumen: 'Agenda Mesyuarat',
@@ -57,7 +74,21 @@ export function HeaderDokumenID({
       </div>
 
       <div className="relative z-10 flex w-full max-w-[1000px] flex-col gap-6">
-        <BreadcrumbBuilder path={path} />
+        <div className="flex justify-between">
+          <BreadcrumbBuilder path={path} />
+          <div className="flex gap-1">
+            <Button variant="danger-fill" onClick={() => setIsTakDiluluskanOpen(true)}>
+              Tidak Diluluskan
+            </Button>
+            <ModalTakDiluluskan
+              isOpen={isTakDiluluskanOpen}
+              onClose={handleCloseTakDiluluskanModal}
+              onConfirm={handleConfirmTakDiluluskan}
+            />
+            <Button onClick={onApproveDokumen}>Diluluskan</Button>
+          </div>
+        </div>
+
         {/* Document Header */}
         <div className="flex w-full items-end gap-3">
           {/* Date Card */}

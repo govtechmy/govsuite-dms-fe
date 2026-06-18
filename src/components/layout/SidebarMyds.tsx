@@ -120,10 +120,13 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
 
   const isMenuItemActive = (item: Omit<MenuItem, 'roles'>) => {
     const pathName = location.pathname
-    // Highlight 'paparan-utama' only for exact '/en' or '/ms'
+    const normalizedPath =
+      pathName.endsWith('/') && pathName.length > 1 ? pathName.slice(0, -1) : pathName
+
+    // Highlight 'paparan-utama' for the base homepage path and specific special paths.
     if (
-      (pathName === '/ms' || pathName === '/ms/' || pathName === '/en' || pathName === '/en/') &&
-      item.id === 'paparan-utama'
+      item.id === 'paparan-utama' &&
+      ['/ms', '/en', '/ms/perlu-kelulusan', '/ms/tidak-lulus'].includes(normalizedPath)
     ) {
       return true
     }
