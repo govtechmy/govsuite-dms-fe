@@ -45,7 +45,7 @@ export function renderSecretTag(secretTag: string) {
         Terbuka
       </Tag>
     )
-  } else if (tag === 'terhad') {
+  } else if (tag === 'TERHAD') {
     return <Tag size="small">Terhad</Tag>
   } else if (tag === 'SULIT') {
     return (
