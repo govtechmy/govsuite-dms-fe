@@ -24,7 +24,7 @@ import BantuanPage from './pages/Bantuan'
  * Used by ProtectedRoute to enforce role-based access control.
  */
 const ROUTE_PERMISSIONS: Record<string, string> = {
-  '': 'paparan-utama',
+  home: 'paparan-utama',
   'katalog-dokumen': 'katalog-dokumen',
   'muatnaik-dokumen': 'muatnaik-dokumen',
   'carian-dokumen': 'carian-dokumen',
@@ -97,7 +97,7 @@ export default function AppRoutes() {
           {/* Home routes - pathless parent with nested children */}
           <Route
             element={
-              <ProtectedRoute routeKey="">
+              <ProtectedRoute routeKey="home">
                 <Outlet />
               </ProtectedRoute>
             }

@@ -194,8 +194,8 @@ export default function TidakLulusPage() {
   }, [documents.pageNumber, documents.pageSize])
 
   return (
-    <RightSidePageLayoutWrapper>
-      <div className="flex flex-col gap-6">
+    <RightSidePageLayoutWrapper className="h-full">
+      <div className="flex h-full flex-col gap-6">
         <div className="flex flex-col gap-3">
           <div className="flex gap-3 items-center">
             <button
@@ -215,24 +215,26 @@ export default function TidakLulusPage() {
           <SelectCarianDokumenTidakLulus />
         </div>
 
-        {currentDocuments.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {currentDocuments.map((doc) => (
-              <Excerpts
-                key={doc.document_id}
-                date={doc.date || 'No Date Found'}
-                secretTag={doc.peringkat_keselamatan}
-                statusTag={doc.status}
-                title={doc.document_name || 'No Document Name Found'}
-                type={doc.type || 'No Type of Document Found'}
-                unit={doc.unit || 'No Unit Found'}
-                onClick={() => {
-                  setIsMetadataDialogOpen(true)
-                }}
-              />
-            ))}
-          </div>
-        )}
+        <div className="h-full">
+          {currentDocuments.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {currentDocuments.map((doc) => (
+                <Excerpts
+                  key={doc.document_id}
+                  date={doc.date || 'No Date Found'}
+                  secretTag={doc.peringkat_keselamatan}
+                  statusTag={doc.status}
+                  title={doc.document_name || 'No Document Name Found'}
+                  type={doc.type || 'No Type of Document Found'}
+                  unit={doc.unit || 'No Unit Found'}
+                  onClick={() => {
+                    setIsMetadataDialogOpen(true)
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
         <MetadataModalTidakLulus
           open={isMetadataDialogOpen}
