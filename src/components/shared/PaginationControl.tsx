@@ -1,12 +1,5 @@
 import { AutoPagination } from '@govtechmy/myds-react/pagination'
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../components/shared/SelectMydsFix'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './SelectMydsFix'
 
 type PaginationControlProps = {
   pageNumber: number
