@@ -1,7 +1,7 @@
 import MainHeading from '@/components/layout/MainHeading'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
-import SelectCarianDokumenPerluKelulusan from '@/components/page/Homepage/PerluKelulusan/SelectCarianDokumenPerluKelulusan'
 import MetadataModalTidakLulus from '@/components/page/Homepage/TidakLulus/MetadataModalTidakLulus'
+import SelectCarianDokumenTidakLulus from '@/components/page/Homepage/TidakLulus/SelectCarianDokumenTidakLulus'
 import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarKatalogDokumen'
 import Excerpts from '@/components/shared/Excerpts'
 import PaginationControl from '@/components/shared/PaginationControl'
@@ -212,7 +212,7 @@ export default function TidakLulusPage() {
             Terdapat {documents.totalRecords} dokumen tidak diluluskan.
           </p>
           <SearchBarKatalogDokumen />
-          <SelectCarianDokumenPerluKelulusan />
+          <SelectCarianDokumenTidakLulus />
         </div>
 
         {currentDocuments.length > 0 && (

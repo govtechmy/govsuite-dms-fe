@@ -1,4 +1,5 @@
 import BookmarkIcon from '@/assets/Icons/Bookmark'
+import type { KeyboardEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 interface KategoriMesyuaratItem {
@@ -14,6 +15,13 @@ interface KategoriMesyuaratProps {
 export default function KategoriMesyuarat({ data }: KategoriMesyuaratProps) {
   const navigate = useNavigate()
   const { lang = 'ms' } = useParams()
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      navigate(`/${lang}/katalog-dokumen`)
+    }
+  }
 
   return (
     <div className="p-6 flex flex-col gap-3">
@@ -31,6 +39,9 @@ export default function KategoriMesyuarat({ data }: KategoriMesyuaratProps) {
             key={item.acronym}
             className="border border-otl-gray-200 rounded-lg p-3 gap-3 flex flex-col shadow-button cursor-pointer"
             onClick={() => navigate(`/${lang}/katalog-dokumen`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={handleCardKeyDown}
           >
             <div>
               <div className="font-body text-body-md font-semibold text-txt-black-900 pb-1.5">
