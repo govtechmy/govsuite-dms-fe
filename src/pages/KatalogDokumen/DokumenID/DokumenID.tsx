@@ -4,8 +4,10 @@ import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/Head
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 export default function DokumenIDPage() {
+  const { lang = 'en' } = useParams<{ lang: string }>()
   const [progressApprove, setProgressApprove] = useState<ProgressState>(null)
   const [progressDisapprove, setProgressDisapprove] = useState<ProgressState>(null)
   // Mock data - replace with actual API data
@@ -70,8 +72,8 @@ export default function DokumenIDPage() {
             errorTitle="Dokumen Gagal Diluluskan!"
             errorDescription="Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem"
             errorButtonText="Kembali Ke Senarai Dokumen"
-            navigateSuccess="/ms/perlu-kelulusan"
-            navigateError="/ms/perlu-kelulusan"
+            navigateSuccess={`/${lang}/perlu-kelulusan`}
+            navigateError={`/${lang}/perlu-kelulusan`}
           />
         </div>
       )}
@@ -87,8 +89,8 @@ export default function DokumenIDPage() {
             errorTitle="Dokumen Gagal Diproses!"
             errorDescription="Sila cuba lagi atau hubungi pentadbir sistem."
             errorButtonText="Kembali Ke Senarai Dokumen"
-            navigateSuccess="/ms/perlu-kelulusan"
-            navigateError="/ms/perlu-kelulusan"
+            navigateSuccess={`/${lang}/perlu-kelulusan`}
+            navigateError={`/${lang}/perlu-kelulusan`}
           />
         </div>
       )}
