@@ -121,7 +121,7 @@ export default function AppRoutes() {
             {/* /katalog-dokumen */}
             <Route index element={<KatalogDokumenPage />} />
             {/* /katalog-dokumen/:DokumenID */}
-            <Route path=":DokumenID" element={<DokumenIDPage />} />{' '}
+            <Route path=":DokumenID" element={<DokumenIDPage />} />
           </Route>
 
           {/* Standalone protected routes */}
