@@ -31,16 +31,18 @@ export default function TambahFolderModal({
   existingFolders,
   trigger,
 }: TambahFolderModalProps) {
+  type FolderErrorType = 'duplicate' | 'createFailed' | null
+
   const [folderName, setFolderName] = useState<string>('')
   const [isCreating, setIsCreating] = useState<boolean>(false)
-  const [showError, setShowError] = useState<boolean>(false)
+  const [errorType, setErrorType] = useState<FolderErrorType>(null)
 
   const handleDialogOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen)
     if (!isOpen) {
       // Reset state when dialog closes
       setFolderName('')
-      setShowError(false)
+      setErrorType(null)
       setIsCreating(false)
     }
   }
@@ -55,28 +57,30 @@ export default function TambahFolderModal({
     )
 
     if (folderExists) {
-      setShowError(true)
+      setErrorType('duplicate')
       return
     }
 
     // Show loading state
     setIsCreating(true)
-    setShowError(false)
+    setErrorType(null)
 
     try {
       const isSuccess = await onAddFolder(trimmedName)
 
       if (!isSuccess) {
         setIsCreating(false)
+        setErrorType('createFailed')
         return
       }
 
       setIsCreating(false)
       setFolderName('')
-      setShowError(false)
+      setErrorType(null)
       onOpenChange(false)
     } catch {
       setIsCreating(false)
+      setErrorType('createFailed')
     }
   }
 
@@ -118,11 +122,11 @@ export default function TambahFolderModal({
                   value={folderName}
                   onChange={(e) => {
                     setFolderName(e.target.value)
-                    setShowError(false)
+                    setErrorType(null)
                   }}
                 />
               </div>
-              {!showError && (
+              {!errorType && (
                 <Callout>
                   <CalloutTitle>Informasi</CalloutTitle>
                   <CalloutContent>
@@ -131,11 +135,19 @@ export default function TambahFolderModal({
                   </CalloutContent>
                 </Callout>
               )}
-              {showError && (
+              {errorType === 'duplicate' && (
                 <Callout variant={'danger'}>
                   <CalloutTitle>Ralat</CalloutTitle>
                   <CalloutContent>
                     Nama folder ini telah wujud. Sila gunakan nama lain.
+                  </CalloutContent>
+                </Callout>
+              )}
+              {errorType === 'createFailed' && (
+                <Callout variant={'danger'}>
+                  <CalloutTitle>Ralat</CalloutTitle>
+                  <CalloutContent>
+                    Folder gagal dicipta. Sila cuba lagi. Jika masih gagal, hubungi admin anda!
                   </CalloutContent>
                 </Callout>
               )}

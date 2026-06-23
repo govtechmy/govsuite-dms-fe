@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
-import KatalogDisplay from '@/components/page/KatalogDokumen/KatalogDisplay.tsx'
+import KatalogDisplay from '@/components/page/KatalogDokumen/KatalogDisplay'
 import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarKatalogDokumen'
 import SelectKatalogDokumen from '@/components/page/KatalogDokumen/SelectKatalogDokumen'
 import { getCatalogBase, type CatalogBaseItem } from '@/services/catalog.svc'

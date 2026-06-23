@@ -112,6 +112,7 @@ export const initializeAuthAxios = ({
             }
 
             setAuthorizationHeader(originalRequest, newToken)
+            originalRequest._retry = true
             return authAxios(originalRequest)
           })
           .catch((queueError) => Promise.reject(queueError))

@@ -54,7 +54,6 @@ export const getCatalogBase = async (): Promise<CatalogBaseItem[]> => {
   const url = `${getEnv('VITE_API_BASE_URL')}/folder/main`
   try {
     const response = await authAxios.get(url)
-    console.log(`this is response for catalog base`, response)
     if (Array.isArray(response.data)) {
       return response.data
     }
@@ -76,7 +75,6 @@ export const getCatalogFoldersAndDocuments = async (
   const url = `${getEnv('VITE_API_BASE_URL')}/folder/record/${idFolder}`
   try {
     const response = await authAxios.get(url)
-    console.log(`response here is for catalog folders and docs`, response)
     const payload = response.data?.data ?? response.data
 
     return {
@@ -88,7 +86,7 @@ export const getCatalogFoldersAndDocuments = async (
       },
     }
   } catch (error) {
-    console.error('Error fetching catalog Base : ', error)
+    console.error('Error fetching Catalog Folders and Documents : ', error)
     throw error
   }
 }
