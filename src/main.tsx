@@ -2,6 +2,8 @@ import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { initializeAuthAxios } from './services/http'
+import { useAuthStore } from './store/AuthStore'
 
 if (import.meta.env.DEV) {
   console.info('[env]', {
@@ -11,6 +13,10 @@ if (import.meta.env.DEV) {
   })
 }
 
+initializeAuthAxios({
+  getToken: () => useAuthStore.getState().token,
+  refreshAccessToken: () => useAuthStore.getState().refreshAccessToken(),
+})
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Suspense fallback={<div>Loading...</div>}>

@@ -19,7 +19,7 @@ import { clx } from '@govtechmy/myds-react/utils'
 interface TambahFolderModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAddFolder: (folderName: string) => void
+  onAddFolder: (folderName: string) => Promise<boolean>
   existingFolders: string[]
   trigger?: React.ReactNode
 }
@@ -45,7 +45,7 @@ export default function TambahFolderModal({
     }
   }
 
-  const handleAddFolder = () => {
+  const handleAddFolder = async () => {
     const trimmedName = folderName.trim()
     if (!trimmedName) return
 
@@ -63,16 +63,21 @@ export default function TambahFolderModal({
     setIsCreating(true)
     setShowError(false)
 
-    // Simulate folder creation delay
-    setTimeout(() => {
-      onAddFolder(trimmedName)
+    try {
+      const isSuccess = await onAddFolder(trimmedName)
 
-      // Reset dialog state
+      if (!isSuccess) {
+        setIsCreating(false)
+        return
+      }
+
       setIsCreating(false)
       setFolderName('')
       setShowError(false)
       onOpenChange(false)
-    }, 1000)
+    } catch {
+      setIsCreating(false)
+    }
   }
 
   return (
@@ -147,7 +152,9 @@ export default function TambahFolderModal({
             <Button
               variant="primary-fill"
               disabled={!folderName.trim() || isCreating}
-              onClick={handleAddFolder}
+              onClick={() => {
+                void handleAddFolder()
+              }}
             >
               Tambah Folder
             </Button>

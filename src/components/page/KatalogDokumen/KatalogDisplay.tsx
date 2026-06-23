@@ -15,201 +15,230 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@govtechmy/myds-react/accordion'
+import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
+import { Spinner } from '@govtechmy/myds-react/spinner'
 import folderOpen from '@/assets/png/Folder_open.png'
 import folderClose from '@/assets/png/Folder_close.png'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
-import { getCatalogUnits } from '@/services/catalog.svc'
+import {
+  getCatalogFoldersAndDocuments,
+  postCreateFolder,
+  type CatalogBaseItem,
+  type CatalogFolderItem,
+  type CatalogDocumentItem,
+} from '@/services/catalog.svc'
 import Excerpts from '@/components/shared/Excerpts'
 import { clx } from '@govtechmy/myds-react/utils'
 import TambahFolderModal from './TambahFolderModal'
-import FolderGrid from '@/components/shared/FolderGrid'
+import FolderGrid, { type Folder } from '@/components/shared/FolderGrid'
 
-export interface Unit {
+interface KatalogDisplayProps {
+  catalogBase: CatalogBaseItem[]
+}
+
+interface PathNode {
+  id: string
   name: string
-  type: 'folder'
-  hasChildren: boolean
   path: string
-  value?: number
-  children?: Unit[]
 }
 
-interface KatalogUnitProps {
-  units: Unit[]
+interface UnitContentState {
+  folders: CatalogFolderItem[]
+  documents: CatalogDocumentItem[]
+  isLoading: boolean
+  error: string | null
 }
 
-export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps) {
+const EMPTY_CONTENT: UnitContentState = {
+  folders: [],
+  documents: [],
+  isLoading: false,
+  error: null,
+}
+
+export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
   const navigate = useNavigate()
   const { lang } = useParams<{ lang: string }>()
   const { setFolderPath } = useFolderLocationStore()
-  const [units, setUnits] = useState<Unit[]>(initialUnits)
+
   const [openUnits, setOpenUnits] = useState<string[]>([])
-  const [currentPaths, setCurrentPaths] = useState<Record<string, Unit[]>>({})
   const [dialogOpenUnit, setDialogOpenUnit] = useState<string | null>(null)
+  const [currentPaths, setCurrentPaths] = useState<Record<string, PathNode[]>>({})
+  const [unitContent, setUnitContent] = useState<Record<string, UnitContentState>>({})
   const [loadingFolders, setLoadingFolders] = useState<Record<string, boolean>>({})
 
-  const handleFolderClick = async (unitName: string, folder: Unit) => {
-    const loadingKey = `${unitName}-${folder.path}`
-    setLoadingFolders((prev) => ({ ...prev, [loadingKey]: true }))
+  const unitsById = catalogBase.reduce<Record<string, CatalogBaseItem>>((acc, unit) => {
+    acc[unit.id] = unit
+    return acc
+  }, {})
+
+  const updateUnitContent = (unitId: string, updates: Partial<UnitContentState>) => {
+    setUnitContent((prev) => ({
+      ...prev,
+      [unitId]: {
+        ...(prev[unitId] ?? EMPTY_CONTENT),
+        ...updates,
+      },
+    }))
+  }
+
+  const setUnitLoadingState = (unitId: string, isLoading: boolean, error: string | null = null) => {
+    updateUnitContent(unitId, { isLoading, error })
+  }
+
+  const fetchAndSetUnitContent = async (unitId: string, idFolder: string) => {
+    setUnitLoadingState(unitId, true, null)
 
     try {
-      // Always fetch from API when clicking a folder
-      const fetchedChildren = await getCatalogUnits(folder.path)
-
-      // Update the units state with the fetched children
-      setUnits((prevUnits) => {
-        return prevUnits.map((unit) => {
-          if (unit.name !== unitName) return unit
-
-          const currentPath = currentPaths[unitName] || []
-
-          // If we're at root level, update the root folder
-          if (currentPath.length === 0) {
-            return {
-              ...unit,
-              children: (unit.children || []).map((item) =>
-                item.path === folder.path
-                  ? { ...item, children: fetchedChildren, hasChildren: fetchedChildren.length > 0 }
-                  : item
-              ),
-            }
-          }
-
-          // Helper function to update nested children
-          const updateFolderChildren = (items: Unit[], targetPath: string): Unit[] => {
-            return items.map((item) => {
-              if (item.path === targetPath) {
-                return {
-                  ...item,
-                  children: fetchedChildren,
-                  hasChildren: fetchedChildren.length > 0,
-                }
-              }
-              if (item.children) {
-                return {
-                  ...item,
-                  children: updateFolderChildren(item.children, targetPath),
-                }
-              }
-              return item
-            })
-          }
-
-          return {
-            ...unit,
-            children: updateFolderChildren(unit.children || [], folder.path),
-          }
-        })
+      const data = await getCatalogFoldersAndDocuments(idFolder)
+      updateUnitContent(unitId, {
+        folders: data.folder.items,
+        documents: data.record.items,
+        isLoading: false,
+        error: null,
       })
-
-      // Navigate into the folder after loading
-      setCurrentPaths((prev) => ({
-        ...prev,
-        [unitName]: [...(prev[unitName] || []), { ...folder, children: fetchedChildren }],
-      }))
     } catch (error) {
-      console.error('Error fetching folder contents:', error)
-    } finally {
-      setLoadingFolders((prev) => ({ ...prev, [loadingKey]: false }))
+      const message = error instanceof Error ? error.message : 'Failed to fetch catalog data'
+      setUnitLoadingState(unitId, false, message)
     }
-  }
-
-  const handleBackClick = (unitName: string) => {
-    setCurrentPaths((prev) => ({
-      ...prev,
-      [unitName]: (prev[unitName] || []).slice(0, -1),
-    }))
-  }
-
-  const handleBreadcrumbClick = (unitName: string, index: number) => {
-    setCurrentPaths((prev) => ({
-      ...prev,
-      [unitName]: index === -1 ? [] : (prev[unitName] || []).slice(0, index + 1),
-    }))
   }
 
   const handleAccordionChange = (values: string[]) => {
+    const newlyOpened = values.filter((value) => !openUnits.includes(value))
     setOpenUnits(values)
-  }
 
-  const handleAddFolder = (folderName: string) => {
-    const unitName = dialogOpenUnit
-    if (!unitName) return
-    const currentPath = currentPaths[unitName] || []
+    newlyOpened.forEach((unitId) => {
+      const hasLoadedBefore = unitContent[unitId] !== undefined
+      if (!hasLoadedBefore) {
+        void fetchAndSetUnitContent(unitId, unitId)
+      }
 
-    // Get current unit
-    const currentUnit = units.find((u) => u.name === unitName)
-    if (!currentUnit) return
+      setCurrentPaths((prev) => {
+        if (prev[unitId] !== undefined) {
+          return prev
+        }
 
-    const basePath =
-      currentPath.length === 0 ? `/${currentUnit.name}` : currentPath[currentPath.length - 1].path
-
-    const newFolder: Unit = {
-      name: folderName,
-      type: 'folder',
-      hasChildren: false,
-      path: `${basePath}/${folderName}`,
-      value: 0,
-      children: [],
-    }
-
-    setUnits((prevUnits) => {
-      return prevUnits.map((unit) => {
-        if (unit.name !== unitName) return unit
-
-        if (currentPath.length === 0) {
-          // Add to root level
-          return {
-            ...unit,
-            hasChildren: true,
-            children: [...(unit.children || []), newFolder],
-          }
-        } else {
-          // Add to nested folder
-          const updateChildren = (items: Unit[], pathIndex: number): Unit[] => {
-            return items.map((item) => {
-              if (item.name === currentPath[pathIndex].name) {
-                if (pathIndex === currentPath.length - 1) {
-                  // This is the target folder
-                  return {
-                    ...item,
-                    hasChildren: true,
-                    children: [...(item.children || []), newFolder],
-                  }
-                } else {
-                  // Need to go deeper
-                  return {
-                    ...item,
-                    children: updateChildren(item.children || [], pathIndex + 1),
-                  }
-                }
-              }
-              return item
-            })
-          }
-
-          return {
-            ...unit,
-            children: updateChildren(unit.children || [], 0),
-          }
+        return {
+          ...prev,
+          [unitId]: [],
         }
       })
     })
   }
 
-  const handleUploadClick = (unitName: string) => {
-    const currentPath = currentPaths[unitName] || []
+  const handleFolderClick = async (unitId: string, folder: Folder) => {
+    const selectedFolder = (unitContent[unitId]?.folders ?? []).find(
+      (item) => item.fullPath === folder.path
+    )
+    if (!selectedFolder) return
 
-    // Build the folder path string
-    let pathString = unitName
+    const loadingKey = `${unitId}-${folder.path}`
+
+    setLoadingFolders((prev) => ({ ...prev, [loadingKey]: true }))
+
+    try {
+      await fetchAndSetUnitContent(unitId, selectedFolder.id)
+      setCurrentPaths((prev) => ({
+        ...prev,
+        [unitId]: [
+          ...(prev[unitId] ?? []),
+          {
+            id: selectedFolder.id,
+            name: folder.name,
+            path: folder.path,
+          },
+        ],
+      }))
+    } finally {
+      setLoadingFolders((prev) => ({ ...prev, [loadingKey]: false }))
+    }
+  }
+
+  const handleBackClick = async (unitId: string) => {
+    const unit = unitsById[unitId]
+    if (!unit) return
+
+    const currentPath = currentPaths[unitId] ?? []
+    if (currentPath.length === 0) return
+
+    const nextPath = currentPath.slice(0, -1)
+    setCurrentPaths((prev) => ({
+      ...prev,
+      [unitId]: nextPath,
+    }))
+
+    const targetId = nextPath.length === 0 ? unit.id : nextPath[nextPath.length - 1].id
+    await fetchAndSetUnitContent(unitId, targetId)
+  }
+
+  const handleBreadcrumbClick = async (unitId: string, index: number) => {
+    const unit = unitsById[unitId]
+    if (!unit) return
+
+    const currentPath = currentPaths[unitId] ?? []
+    const nextPath = index === -1 ? [] : currentPath.slice(0, index + 1)
+
+    setCurrentPaths((prev) => ({
+      ...prev,
+      [unitId]: nextPath,
+    }))
+
+    const targetId = nextPath.length === 0 ? unit.id : nextPath[nextPath.length - 1].id
+    await fetchAndSetUnitContent(unitId, targetId)
+  }
+
+  const handleAddFolder = async (folderName: string): Promise<boolean> => {
+    const unitId = dialogOpenUnit
+    if (!unitId) return false
+
+    const unit = unitsById[unitId]
+    if (!unit) return false
+
+    const currentPath = currentPaths[unitId] ?? []
+    const parentId = currentPath.length === 0 ? unit.id : currentPath[currentPath.length - 1].id
+
+    updateUnitContent(unitId, { error: null })
+
+    try {
+      const createdFolder = await postCreateFolder({
+        name: folderName,
+        parentId,
+      })
+
+      setUnitContent((prev) => {
+        const content = prev[unitId] ?? EMPTY_CONTENT
+        return {
+          ...prev,
+          [unitId]: {
+            ...content,
+            folders: [...content.folders, createdFolder],
+            error: null,
+          },
+        }
+      })
+
+      setDialogOpenUnit(null)
+      return true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to create folder'
+      updateUnitContent(unitId, { error: message })
+      return false
+    }
+  }
+
+  const handleUploadClick = (unitId: string) => {
+    const unit = unitsById[unitId]
+    if (!unit) return
+
+    const currentPath = currentPaths[unitId] ?? []
+
+    let pathString = unit.name
     if (currentPath.length > 0) {
       const pathNames = currentPath.map((item) => item.name)
-      pathString = [unitName, ...pathNames].join(' > ')
+      pathString = [unit.name, ...pathNames].join(' > ')
     }
 
-    // Set the folder path in the store
     setFolderPath(pathString)
-
-    // Navigate to the upload page
     navigate(`/${lang}/muatnaik-dokumen`)
   }
 
@@ -220,42 +249,39 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
       onValueChange={handleAccordionChange}
       className="space-y-6"
     >
-      {units.map((unit) => {
-        const isOpen = openUnits.includes(unit.name)
-        const currentPath = currentPaths[unit.name] || []
-        const allItems =
-          currentPath.length === 0
-            ? unit.children || []
-            : currentPath[currentPath.length - 1].children || []
+      {catalogBase.map((unit) => {
+        const unitState = unitContent[unit.id] ?? EMPTY_CONTENT
+        const currentPath = currentPaths[unit.id] ?? []
+        const isOpen = openUnits.includes(unit.id)
 
-        // Separate folders and documents
-        const currentFolders = allItems.filter((item) => item.type === 'folder')
-        const currentDocuments = allItems.filter((item) => item.type !== 'folder')
+        const currentFolders: Folder[] = unitState.folders.map((folder) => ({
+          name: folder.name,
+          path: folder.fullPath,
+          type: 'folder',
+          hasChildren: folder.hasChildren,
+        }))
 
-        // Get existing folder names for validation
         const existingFolderNames = currentFolders.map((folder) => folder.name)
 
         return (
-          <AccordionItem key={unit.name} value={unit.name} className="border-none">
+          <AccordionItem key={unit.id} value={unit.id} className="border-none">
             <div className="flex flex-col gap-1">
-              {/* Title Row */}
               <AccordionTrigger className="py-0 hover:no-underline">
                 <div className="flex w-full items-center gap-3 text-left">
                   {currentPath.length > 0 ? (
                     <>
-                      {/* Back Button */}
                       <div
                         role="button"
                         tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleBackClick(unit.name)
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void handleBackClick(unit.id)
                         }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleBackClick(unit.name)
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            void handleBackClick(unit.id)
                           }
                         }}
                         className="flex size-[18px] shrink-0 items-center justify-center text-txt-black-700 transition-colors hover:text-txt-black-900 cursor-pointer"
@@ -264,7 +290,6 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
                         <ArrowBackIcon />
                       </div>
 
-                      {/* Breadcrumb Path */}
                       <Breadcrumb>
                         <div className="relative h-[22px] shrink-0 pr-2">
                           <img
@@ -275,9 +300,9 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
                         </div>
                         <BreadcrumbItem>
                           <BreadcrumbLink
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleBreadcrumbClick(unit.name, -1)
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void handleBreadcrumbClick(unit.id, -1)
                             }}
                             className="cursor-pointer font-semibold text-[18px] leading-[26px] hover:text-txt-black-900"
                           >
@@ -285,7 +310,7 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
                           </BreadcrumbLink>
                         </BreadcrumbItem>
                         {currentPath.map((pathItem, index) => (
-                          <div key={pathItem.name} className="flex items-center">
+                          <div key={pathItem.id} className="flex items-center">
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
                               {index === currentPath.length - 1 ? (
@@ -294,9 +319,9 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
                                 </BreadcrumbPage>
                               ) : (
                                 <BreadcrumbLink
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleBreadcrumbClick(unit.name, index)
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    void handleBreadcrumbClick(unit.id, index)
                                   }}
                                   className="cursor-pointer font-semibold text-[18px] leading-[26px] hover:text-txt-black-900"
                                 >
@@ -326,19 +351,18 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
                 </div>
               </AccordionTrigger>
 
-              {/* Action Buttons */}
               {isOpen && (
                 <div className="flex items-center justify-end gap-1 pt-1">
                   <TambahFolderModal
-                    open={dialogOpenUnit === unit.name}
-                    onOpenChange={(open) => setDialogOpenUnit(open ? unit.name : null)}
+                    open={dialogOpenUnit === unit.id}
+                    onOpenChange={(open) => setDialogOpenUnit(open ? unit.id : null)}
                     onAddFolder={handleAddFolder}
                     existingFolders={existingFolderNames}
                     trigger={
                       <Button
                         variant="default-outline"
                         size="small"
-                        onClick={() => setDialogOpenUnit(unit.name)}
+                        onClick={() => setDialogOpenUnit(unit.id)}
                       >
                         <PlusIcon className="size-4" />
                         Tambah Folder
@@ -349,7 +373,7 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
                   <Button
                     variant="primary-fill"
                     size="small"
-                    onClick={() => handleUploadClick(unit.name)}
+                    onClick={() => handleUploadClick(unit.id)}
                   >
                     <UploadIcon className="h-4 w-4" />
                     Muat Naik Dokumen
@@ -362,45 +386,51 @@ export default function KatalogDisplay({ units: initialUnits }: KatalogUnitProps
               <div
                 className={clx(
                   'flex flex-col',
-                  currentFolders.length > 0 && currentDocuments.length > 0 && 'gap-6'
+                  currentFolders.length > 0 && unitState.documents.length > 0 && 'gap-6'
                 )}
               >
-                {/* Folder Grid */}
-                {currentFolders.length === 0 && currentDocuments.length === 0 ? (
-                  <FolderGrid
-                    folders={[]}
-                    loadingFolders={loadingFolders}
-                    unitName={unit.name}
-                    onFolderClick={(folder) => handleFolderClick(unit.name, folder)}
-                    emptyMessage="Tiada folder ditemui bagi unit ini"
-                  />
+                {unitState.isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Spinner size="large" />
+                  </div>
+                ) : unitState.error ? (
+                  <Callout variant="danger">
+                    <CalloutTitle>Ralat</CalloutTitle>
+                    <CalloutContent>{unitState.error}</CalloutContent>
+                  </Callout>
                 ) : (
-                  currentFolders.length > 0 && (
+                  <>
                     <FolderGrid
                       folders={currentFolders}
                       loadingFolders={loadingFolders}
-                      unitName={unit.name}
-                      onFolderClick={(folder) => handleFolderClick(unit.name, folder)}
+                      unitName={unit.id}
+                      onFolderClick={(folder) => {
+                        void handleFolderClick(unit.id, folder)
+                      }}
+                      emptyMessage={
+                        currentFolders.length === 0
+                          ? 'Tiada folder ditemui bagi unit ini'
+                          : undefined
+                      }
                     />
-                  )
-                )}
 
-                {/* Documents Section */}
-                {currentDocuments.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-otl-gray-200">
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {currentDocuments.map((doc: any) => (
-                      <Excerpts
-                        key={doc.path}
-                        date={doc.date}
-                        secretTag={doc.peringkat_keselamatan}
-                        statusTag={doc.status}
-                        title={doc.document_name}
-                        type={doc.meta_info?.documentType || doc.type}
-                        unit={unit.name}
-                      />
-                    ))}
-                  </div>
+                    {unitState.documents.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-otl-gray-200">
+                        {unitState.documents.map((doc) => (
+                          <Excerpts
+                            key={`${doc.id}-${doc.path}`}
+                            date={doc.recordDate}
+                            secretTag={doc.peringkat_keselamatan}
+                            statusTag={doc.status}
+                            title={doc.recordTitle || doc.fileName}
+                            type={doc.type}
+                            unit={unit.name}
+                            onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.id}`)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </AccordionContent>
