@@ -66,6 +66,11 @@ export interface CatalogFolderDocumentResponse {
   }
 }
 
+export interface CatalogSearchResponse {
+  items: CatalogDocumentItem[]
+  meta: CatalogListMeta
+}
+
 export interface CreateFolderPayload {
   name: string
   parentId?: string
@@ -74,6 +79,16 @@ export interface CreateFolderPayload {
 export interface CatalogPaginationParams {
   page?: number
   limit?: number
+}
+
+export interface DropdownUnit {
+  code: string
+  codeName: string
+}
+export interface DropdownJenisDokumen {
+  _id: string
+  code: string
+  codeName: string
 }
 
 export const getCatalogBase = async (): Promise<CatalogBaseItem[]> => {
@@ -106,7 +121,6 @@ export const getCatalogFoldersAndDocuments = async (
   const url = `${getEnv('VITE_API_BASE_URL')}/folder/record/${idFolder}?${query}`
   try {
     const response = await authAxios.get(url)
-
     const payload = response.data?.data ?? response.data
 
     return {
@@ -134,6 +148,91 @@ export const postCreateFolder = async (body: CreateFolderPayload): Promise<Catal
     return payload
   } catch (error) {
     console.error('Error creating folder : ', error)
+    throw error
+  }
+}
+
+export const getSearchKatalogItems = async ({
+  query,
+  unit,
+  jenisDokumen,
+  dateFrom,
+  dateTo,
+  page = 1,
+  limit = 15,
+}: {
+  query: string
+  unit?: string
+  jenisDokumen?: string
+  dateFrom?: string
+  dateTo?: string
+  page?: number
+  limit?: number
+}): Promise<CatalogSearchResponse> => {
+  const params = new URLSearchParams({
+    search: query,
+    page: String(page),
+    limit: String(limit),
+  })
+
+  if (unit) {
+    params.set('unit', unit)
+  }
+
+  if (jenisDokumen) {
+    params.set('jenisDokumen', jenisDokumen)
+  }
+
+  if (dateFrom) {
+    params.set('dateFrom', dateFrom)
+  }
+
+  if (dateTo) {
+    params.set('dateTo', dateTo)
+  }
+
+  const url = `${getEnv('VITE_API_BASE_URL')}/record?${params.toString()}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data.data
+    const items = payload?.items ?? []
+
+    return {
+      items,
+      meta: payload?.meta ?? {
+        ...DEFAULT_CATALOG_LIST_META,
+        currentPage: page,
+        pageSize: limit,
+        totalItems: items.length,
+        totalPages: Math.max(1, Math.ceil(items.length / limit)),
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching Catalog Folders and Documents : ', error)
+    throw error
+  }
+}
+
+export const getDropdownJenisDokumen = async (): Promise<DropdownJenisDokumen[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/lookup/profil`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data
+    return Array.isArray(payload) ? payload : []
+  } catch (error) {
+    console.error('Error fetching dropdown jenis dokumen : ', error)
+    throw error
+  }
+}
+
+export const getDropdownUnits = async (): Promise<DropdownUnit[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/units`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data
+    return Array.isArray(payload) ? payload : []
+  } catch (error) {
+    console.error('Error fetching dropdown units : ', error)
     throw error
   }
 }
