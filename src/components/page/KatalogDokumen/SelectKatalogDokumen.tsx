@@ -106,7 +106,7 @@ export default function SelectKatalogDokumen({
               <SelectContent>
                 <SelectItem value="semua">Semua</SelectItem>
                 {dropdownJenisDokumen.map((jenisDokumenValue) => (
-                  <SelectItem key={jenisDokumenValue._id} value={jenisDokumenValue.code}>
+                  <SelectItem key={jenisDokumenValue.id} value={jenisDokumenValue.code}>
                     {jenisDokumenValue.codeName}
                   </SelectItem>
                 ))}

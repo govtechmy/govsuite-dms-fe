@@ -86,7 +86,7 @@ export interface DropdownUnit {
   codeName: string
 }
 export interface DropdownJenisDokumen {
-  _id: string
+  id: string
   code: string
   codeName: string
 }
