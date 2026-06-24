@@ -19,7 +19,8 @@ export function NavbarMydsLogin() {
       <div className="flex gap-2.5 items-center justify-center">
         <JataNegaraIcon />
         <div className="text-lg leading-[26px] font-semibold font-heading">GOVSuiteDMS</div>
-        <Tag variant="primary">ADMIN</Tag>
+        {/* hide until finalize design */}
+        {/* <Tag variant="primary">ADMIN</Tag> */}
       </div>
     </Navbar>
   )
