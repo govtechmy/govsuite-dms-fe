@@ -55,17 +55,14 @@ export default function KatalogDokumenPage() {
         const data = await getDropdownUnits()
         setDropdownUnits(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch dropdown units')
         console.error('Error fetching dropdown units:', err)
       }
     }
     const fetchDropdownJenisDokumen = async () => {
       try {
-        setError(null)
         const data = await getDropdownJenisDokumen()
         setDropdownJenisDokumen(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch dropdown unit dokumen')
         console.error('Error fetching dropdown unit dokumen:', err)
       }
     }
