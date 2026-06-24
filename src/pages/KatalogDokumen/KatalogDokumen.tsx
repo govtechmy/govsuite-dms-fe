@@ -57,8 +57,6 @@ export default function KatalogDokumenPage() {
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch dropdown units')
         console.error('Error fetching dropdown units:', err)
-      } finally {
-        setIsLoading(false)
       }
     }
     const fetchDropdownJenisDokumen = async () => {
