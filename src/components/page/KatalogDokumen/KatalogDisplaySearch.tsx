@@ -5,6 +5,7 @@ import PaginationControl from '@/components/shared/PaginationControl'
 import MetadataModalTidakLulus from '@/components/page/Homepage/TidakLulus/MetadataModalTidakLulus'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
+import NormalizeWord from '@/utils/NormalizeWord'
 
 export interface KatalogSearchResultItem {
   id: string
@@ -13,9 +14,7 @@ export interface KatalogSearchResultItem {
   status: string
   recordTitle: string
   profileDocument?: string
-  unit?: {
-    name?: string
-  }
+  recordUnit: string
 }
 
 interface KatalogDisplaySearchProps {
@@ -74,8 +73,6 @@ export default function KatalogDisplaySearch({
         {documents.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {documents.map((doc) => {
-              const unit = doc.unit ?? {}
-
               return (
                 <Excerpts
                   key={`${doc.id}`}
@@ -83,8 +80,8 @@ export default function KatalogDisplaySearch({
                   secretTag={doc.peringkat_keselamatan}
                   statusTag={doc.status}
                   title={doc.recordTitle || 'Tiada Tajuk Rekod'}
-                  type={doc.profileDocument || 'Tiada Profil'}
-                  unit={unit.name || 'Tiada Nama Unit'}
+                  type={NormalizeWord(doc.profileDocument) || 'Tiada Profil'}
+                  unit={NormalizeWord(doc.recordUnit) || 'Tiada Nama Unit'}
                   onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.id}`)}
                 />
               )
