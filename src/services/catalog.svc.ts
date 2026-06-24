@@ -194,21 +194,35 @@ export const getSearchKatalogItems = async ({
   const url = `${getEnv('VITE_API_BASE_URL')}/record?${params.toString()}`
   try {
     const response = await authAxios.get(url)
-    const payload = response.data.data
-    const items = payload?.items ?? []
+    const payload = response.data?.data ?? response.data ?? {}
+    const items = Array.isArray(payload?.items) ? payload.items : []
+    const apiMeta = payload?.meta ?? {}
+    const currentPage = Number(apiMeta.currentPage ?? page)
+    const pageSize = Number(apiMeta.pageSize ?? limit)
+    const totalItems = Number(apiMeta.totalItems ?? payload?.totalItems ?? items.length)
+    const totalPages = Number(
+      apiMeta.totalPages ??
+        payload?.totalPages ??
+        Math.max(1, Math.ceil(totalItems / Math.max(1, pageSize)))
+    )
 
     return {
       items,
-      meta: payload?.meta ?? {
+      meta: {
         ...DEFAULT_CATALOG_LIST_META,
-        currentPage: page,
-        pageSize: limit,
-        totalItems: payload.totalItems,
-        totalPages: payload.totalPages,
+        ...apiMeta,
+        currentPage,
+        pageSize,
+        totalItems,
+        totalPages,
+        hasNextPage:
+          typeof apiMeta.hasNextPage === 'boolean' ? apiMeta.hasNextPage : currentPage < totalPages,
+        hasPreviousPage:
+          typeof apiMeta.hasPreviousPage === 'boolean' ? apiMeta.hasPreviousPage : currentPage > 1,
       },
     }
   } catch (error) {
-    console.error('Error fetching Catalog Folders and Documents : ', error)
+    console.error('Error fetching searched catalog items : ', error)
     throw error
   }
 }
