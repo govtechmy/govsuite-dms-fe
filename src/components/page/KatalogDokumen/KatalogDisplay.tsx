@@ -544,6 +544,9 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                     <div
                       className="h-[150px] overflow-y-auto pr-1"
                       onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
+                      role="region"
+                      aria-label="Senarai folder"
+                      tabIndex={0}
                     >
                       <FolderGrid
                         folders={currentFolders}
@@ -562,6 +565,9 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                       <div className="pt-6 border-t border-otl-gray-200">
                         <div
                           className="h-[270px] overflow-y-auto pr-1"
+                          role="region"
+                          aria-label="Senarai folder"
+                          tabIndex={0}
                           onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
                         >
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
