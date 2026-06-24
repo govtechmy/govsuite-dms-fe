@@ -203,8 +203,8 @@ export const getSearchKatalogItems = async ({
         ...DEFAULT_CATALOG_LIST_META,
         currentPage: page,
         pageSize: limit,
-        totalItems: items.length,
-        totalPages: Math.max(1, Math.ceil(items.length / limit)),
+        totalItems: payload.totalItems,
+        totalPages: payload.totalPages,
       },
     }
   } catch (error) {

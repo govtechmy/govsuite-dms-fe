@@ -44,8 +44,8 @@ export default function KatalogDokumenPage() {
         const data = await getCatalogBase()
         setCatalogBase(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch catalog data')
-        console.error('Error fetching catalog units:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch catalog Base')
+        console.error('Error fetching catalog Base:', err)
       } finally {
         setIsLoading(false)
       }
@@ -55,8 +55,8 @@ export default function KatalogDokumenPage() {
         const data = await getDropdownUnits()
         setDropdownUnits(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch catalog data')
-        console.error('Error fetching catalog units:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch dropdown units')
+        console.error('Error fetching dropdown units:', err)
       } finally {
         setIsLoading(false)
       }
@@ -67,8 +67,8 @@ export default function KatalogDokumenPage() {
         const data = await getDropdownJenisDokumen()
         setDropdownJenisDokumen(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch catalog data')
-        console.error('Error fetching catalog units:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch dropdown unit dokumen')
+        console.error('Error fetching dropdown unit dokumen:', err)
       }
     }
     fetchCatalogBase()
@@ -99,8 +99,8 @@ export default function KatalogDokumenPage() {
         setCatalogItems(data.items)
         setSearchMeta(data.meta)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch catalog data')
-        console.error('Error fetching catalog units:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch searching data')
+        console.error('Error fetching searching data:', err)
       } finally {
         setIsLoading(false)
       }
