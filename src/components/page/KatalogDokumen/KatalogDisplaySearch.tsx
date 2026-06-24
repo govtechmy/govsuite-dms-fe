@@ -1,8 +1,6 @@
-import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Excerpts from '@/components/shared/Excerpts'
 import PaginationControl from '@/components/shared/PaginationControl'
-import MetadataModalTidakLulus from '@/components/page/Homepage/TidakLulus/MetadataModalTidakLulus'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 import NormalizeWord from '@/utils/NormalizeWord'
@@ -29,8 +27,6 @@ interface KatalogDisplaySearchProps {
   onPageSizeChange: (newSize: number) => void
 }
 
-const lokasiFolder = 'Carian katalog dokumen'
-
 export default function KatalogDisplaySearch({
   documents,
   isLoading,
@@ -44,7 +40,6 @@ export default function KatalogDisplaySearch({
 }: KatalogDisplaySearchProps) {
   const navigate = useNavigate()
   const { lang } = useParams<{ lang: string }>()
-  const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -94,12 +89,6 @@ export default function KatalogDisplaySearch({
           </Callout>
         )}
       </div>
-
-      <MetadataModalTidakLulus
-        open={isMetadataDialogOpen}
-        onOpenChange={setIsMetadataDialogOpen}
-        lokasiFolder={lokasiFolder}
-      />
 
       <PaginationControl
         pageNumber={pageNumber}
