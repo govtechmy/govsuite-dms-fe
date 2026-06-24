@@ -18,6 +18,14 @@ export default function SearchBarKatalogDokumen() {
   const [query, setQuery] = useState(searchParams.get('search') || '')
   // const hasQuery = query.length > 0
 
+  const clearSearchAndFilters = (params: URLSearchParams) => {
+    params.delete('search')
+    params.delete('unit')
+    params.delete('jenisDokumen')
+    params.delete('dateFrom')
+    params.delete('dateTo')
+  }
+
   useEffect(() => {
     setQuery(searchParams.get('search') || '')
   }, [searchParams])
@@ -29,7 +37,7 @@ export default function SearchBarKatalogDokumen() {
     if (nextQuery) {
       params.set('search', nextQuery)
     } else {
-      params.delete('search')
+      clearSearchAndFilters(params)
     }
 
     navigate({ search: params.toString() })
@@ -37,7 +45,7 @@ export default function SearchBarKatalogDokumen() {
 
   const handleClear = () => {
     const params = new URLSearchParams(searchParams)
-    params.delete('search')
+    clearSearchAndFilters(params)
     setQuery('')
     navigate({ search: params.toString() })
   }

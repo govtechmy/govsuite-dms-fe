@@ -108,7 +108,7 @@ export default function KatalogDokumenPage() {
 
   useEffect(() => {
     setPageNumber(1)
-  }, [query])
+  }, [query, unit, jenisDokumen, dateFrom, dateTo])
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize)
