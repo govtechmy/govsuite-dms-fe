@@ -32,22 +32,48 @@ export interface CatalogDocumentItem {
   recordDate: string
   recordTitle: string
   recordUnit: string
-  documentProfil?: string
   path: string
+  profileDocument?: string
+}
+
+export interface CatalogListMeta {
+  currentPage: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+
+//fallback default for catalog list
+const DEFAULT_CATALOG_LIST_META: CatalogListMeta = {
+  currentPage: 1,
+  pageSize: 10,
+  totalItems: 0,
+  totalPages: 1,
+  hasNextPage: false,
+  hasPreviousPage: false,
 }
 
 export interface CatalogFolderDocumentResponse {
   folder: {
     items: CatalogFolderItem[]
+    meta: CatalogListMeta
   }
   record: {
     items: CatalogDocumentItem[]
+    meta: CatalogListMeta
   }
 }
 
 export interface CreateFolderPayload {
   name: string
   parentId?: string
+}
+
+export interface CatalogPaginationParams {
+  page?: number
+  limit?: number
 }
 
 export const getCatalogBase = async (): Promise<CatalogBaseItem[]> => {
@@ -70,19 +96,27 @@ export const getCatalogBase = async (): Promise<CatalogBaseItem[]> => {
 }
 
 export const getCatalogFoldersAndDocuments = async (
-  idFolder: string
+  idFolder: string,
+  pagination: CatalogPaginationParams = {}
 ): Promise<CatalogFolderDocumentResponse> => {
-  const url = `${getEnv('VITE_API_BASE_URL')}/folder/record/${idFolder}`
+  const query = new URLSearchParams({
+    page: String(pagination.page ?? 1),
+    limit: String(pagination.limit ?? 10),
+  }).toString()
+  const url = `${getEnv('VITE_API_BASE_URL')}/folder/record/${idFolder}?${query}`
   try {
     const response = await authAxios.get(url)
+
     const payload = response.data?.data ?? response.data
 
     return {
       folder: {
         items: payload?.folder?.items ?? [],
+        meta: payload?.folder?.meta ?? DEFAULT_CATALOG_LIST_META,
       },
       record: {
         items: payload?.record?.items ?? [],
+        meta: payload?.record?.meta ?? DEFAULT_CATALOG_LIST_META,
       },
     }
   } catch (error) {

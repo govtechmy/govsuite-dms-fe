@@ -44,7 +44,7 @@ export default function FolderGrid({
 
         return (
           <button
-            key={folder.path}
+            key={folder.name}
             onClick={() => onFolderClick(folder)}
             disabled={isLoading}
             className="flex flex-col items-center gap-3 rounded-xl p-3 border border-transparent hover:border-otl-gray-300 hover:bg-bg-secondary-50 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"

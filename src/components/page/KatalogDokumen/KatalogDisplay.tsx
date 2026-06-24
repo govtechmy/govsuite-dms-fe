@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, type UIEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@govtechmy/myds-react/button'
 import { ArrowBackIcon, PlusIcon, UploadIcon } from '@govtechmy/myds-react/icon'
@@ -26,6 +26,7 @@ import {
   type CatalogBaseItem,
   type CatalogFolderItem,
   type CatalogDocumentItem,
+  type CatalogListMeta,
 } from '@/services/catalog.svc'
 import Excerpts from '@/components/shared/Excerpts'
 import { clx } from '@govtechmy/myds-react/utils'
@@ -45,15 +46,33 @@ interface PathNode {
 interface UnitContentState {
   folders: CatalogFolderItem[]
   documents: CatalogDocumentItem[]
+  folderMeta: CatalogListMeta | null
+  recordMeta: CatalogListMeta | null
   isLoading: boolean
+  isLoadingMore: boolean
   error: string | null
 }
+
+interface UnitRequestState {
+  page: number
+  limit: number
+}
+
+const LAZY_BATCH_SIZE = 10
 
 const EMPTY_CONTENT: UnitContentState = {
   folders: [],
   documents: [],
+  folderMeta: null,
+  recordMeta: null,
   isLoading: false,
+  isLoadingMore: false,
   error: null,
+}
+
+const DEFAULT_REQUEST_STATE: UnitRequestState = {
+  page: 1,
+  limit: LAZY_BATCH_SIZE,
 }
 
 export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
@@ -65,7 +84,9 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
   const [dialogOpenUnit, setDialogOpenUnit] = useState<string | null>(null)
   const [currentPaths, setCurrentPaths] = useState<Record<string, PathNode[]>>({})
   const [unitContent, setUnitContent] = useState<Record<string, UnitContentState>>({})
+  const [unitRequestState, setUnitRequestState] = useState<Record<string, UnitRequestState>>({})
   const [loadingFolders, setLoadingFolders] = useState<Record<string, boolean>>({})
+  const appendRequestInFlightRef = useRef<Record<string, boolean>>({})
 
   const unitsById = catalogBase.reduce<Record<string, CatalogBaseItem>>((acc, unit) => {
     acc[unit.id] = unit
@@ -83,23 +104,83 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
   }
 
   const setUnitLoadingState = (unitId: string, isLoading: boolean, error: string | null = null) => {
-    updateUnitContent(unitId, { isLoading, error })
+    updateUnitContent(unitId, { isLoading, isLoadingMore: false, error })
   }
 
-  const fetchAndSetUnitContent = async (unitId: string, idFolder: string) => {
-    setUnitLoadingState(unitId, true, null)
+  const getRequestStateKey = (unitId: string, folderId: string) => {
+    return `${unitId}:${folderId}`
+  }
+
+  const getUnitRequestState = (unitId: string, folderId: string) => {
+    return unitRequestState[getRequestStateKey(unitId, folderId)] ?? DEFAULT_REQUEST_STATE
+  }
+
+  const getCurrentFolderId = (unitId: string) => {
+    const currentPath = currentPaths[unitId] ?? []
+    if (currentPath.length === 0) {
+      return unitId
+    }
+
+    return currentPath[currentPath.length - 1].id
+  }
+
+  const fetchAndSetUnitContent = async (
+    unitId: string,
+    idFolder: string,
+    options?: {
+      page?: number
+      limit?: number
+      append?: boolean
+    }
+  ) => {
+    const requestKey = getRequestStateKey(unitId, idFolder)
+    const previousRequest = getUnitRequestState(unitId, idFolder)
+    const append = options?.append ?? false
+    const nextPage = options?.page ?? (append ? previousRequest.page + 1 : 1)
+    const nextLimit = options?.limit ?? previousRequest.limit
+
+    if (append) {
+      updateUnitContent(unitId, { isLoadingMore: true, error: null })
+    } else {
+      setUnitLoadingState(unitId, true, null)
+    }
 
     try {
-      const data = await getCatalogFoldersAndDocuments(idFolder)
-      updateUnitContent(unitId, {
-        folders: data.folder.items,
-        documents: data.record.items,
-        isLoading: false,
-        error: null,
+      const data = await getCatalogFoldersAndDocuments(idFolder, {
+        page: nextPage,
+        limit: nextLimit,
       })
+      setUnitContent((prev) => {
+        const current = prev[unitId] ?? EMPTY_CONTENT
+
+        return {
+          ...prev,
+          [unitId]: {
+            ...current,
+            folders: append ? [...current.folders, ...data.folder.items] : data.folder.items,
+            documents: append ? [...current.documents, ...data.record.items] : data.record.items,
+            folderMeta: data.folder.meta,
+            recordMeta: data.record.meta,
+            isLoading: false,
+            isLoadingMore: false,
+            error: null,
+          },
+        }
+      })
+      setUnitRequestState((prev) => ({
+        ...prev,
+        [requestKey]: {
+          page: nextPage,
+          limit: nextLimit,
+        },
+      }))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch catalog data'
-      setUnitLoadingState(unitId, false, message)
+      updateUnitContent(unitId, {
+        isLoading: false,
+        isLoadingMore: false,
+        error: message,
+      })
     }
   }
 
@@ -137,7 +218,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
     setLoadingFolders((prev) => ({ ...prev, [loadingKey]: true }))
 
     try {
-      await fetchAndSetUnitContent(unitId, selectedFolder.id)
+      await fetchAndSetUnitContent(unitId, selectedFolder.id, { page: 1 })
       setCurrentPaths((prev) => ({
         ...prev,
         [unitId]: [
@@ -168,7 +249,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
     }))
 
     const targetId = nextPath.length === 0 ? unit.id : nextPath[nextPath.length - 1].id
-    await fetchAndSetUnitContent(unitId, targetId)
+    await fetchAndSetUnitContent(unitId, targetId, { page: 1 })
   }
 
   const handleBreadcrumbClick = async (unitId: string, index: number) => {
@@ -184,7 +265,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
     }))
 
     const targetId = nextPath.length === 0 ? unit.id : nextPath[nextPath.length - 1].id
-    await fetchAndSetUnitContent(unitId, targetId)
+    await fetchAndSetUnitContent(unitId, targetId, { page: 1 })
   }
 
   const handleAddFolder = async (folderName: string): Promise<boolean> => {
@@ -242,6 +323,38 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
     navigate(`/${lang}/muatnaik-dokumen`)
   }
 
+  const triggerAppendLoad = (unitId: string, hasMoreItems: boolean) => {
+    const unitState = unitContent[unitId] ?? EMPTY_CONTENT
+    if (
+      !hasMoreItems ||
+      unitState.isLoading ||
+      unitState.isLoadingMore ||
+      appendRequestInFlightRef.current[unitId]
+    ) {
+      return
+    }
+
+    appendRequestInFlightRef.current[unitId] = true
+    void fetchAndSetUnitContent(unitId, getCurrentFolderId(unitId), {
+      append: true,
+    }).finally(() => {
+      appendRequestInFlightRef.current[unitId] = false
+    })
+  }
+
+  const handleLazyLoadScroll = (
+    event: UIEvent<HTMLDivElement>,
+    unitId: string,
+    hasMoreItems: boolean
+  ) => {
+    const target = event.currentTarget
+    const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight
+
+    if (distanceToBottom <= 40) {
+      triggerAppendLoad(unitId, hasMoreItems)
+    }
+  }
+
   return (
     <Accordion
       type="multiple"
@@ -253,6 +366,13 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
         const unitState = unitContent[unit.id] ?? EMPTY_CONTENT
         const currentPath = currentPaths[unit.id] ?? []
         const isOpen = openUnits.includes(unit.id)
+        const hasMoreFolders =
+          unitState.folderMeta !== null &&
+          unitState.folders.length < unitState.folderMeta.totalItems
+        const hasMoreDocuments =
+          unitState.recordMeta !== null &&
+          unitState.documents.length < unitState.recordMeta.totalItems
+        const hasMoreItems = hasMoreFolders || hasMoreDocuments
 
         const currentFolders: Folder[] = unitState.folders.map((folder) => ({
           name: folder.name,
@@ -400,34 +520,41 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                   </Callout>
                 ) : (
                   <>
-                    <FolderGrid
-                      folders={currentFolders}
-                      loadingFolders={loadingFolders}
-                      unitName={unit.id}
-                      onFolderClick={(folder) => {
-                        void handleFolderClick(unit.id, folder)
-                      }}
-                      emptyMessage={
-                        currentFolders.length === 0
-                          ? 'Tiada folder ditemui bagi unit ini'
-                          : undefined
-                      }
-                    />
+                    <div
+                      className="h-[150px] overflow-y-auto pr-1"
+                      onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
+                    >
+                      <FolderGrid
+                        folders={currentFolders}
+                        loadingFolders={loadingFolders}
+                        unitName={unit.id}
+                        onFolderClick={(folder) => {
+                          void handleFolderClick(unit.id, folder)
+                        }}
+                      />
+                    </div>
 
                     {unitState.documents.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-otl-gray-200">
-                        {unitState.documents.map((doc) => (
-                          <Excerpts
-                            key={`${doc.id}-${doc.path}`}
-                            date={doc.recordDate}
-                            secretTag={doc.peringkat_keselamatan}
-                            statusTag={doc.status}
-                            title={doc.recordTitle || doc.fileName}
-                            type={doc.type}
-                            unit={unit.name}
-                            onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.id}`)}
-                          />
-                        ))}
+                      <div className="pt-6 border-t border-otl-gray-200">
+                        <div
+                          className="h-[270px] overflow-y-auto pr-1"
+                          onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
+                        >
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {unitState.documents.map((doc) => (
+                              <Excerpts
+                                key={`${doc.id}`}
+                                date={doc.recordDate || 'Tiada Tarikh'}
+                                secretTag={doc.peringkat_keselamatan}
+                                statusTag={doc.status}
+                                title={doc.recordTitle || 'Tiada Tajuk Rekod'}
+                                type={doc.profileDocument || 'Tiada Profil'}
+                                unit={unit.name || 'Tiada Nama Unit'}
+                                onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.id}`)}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
