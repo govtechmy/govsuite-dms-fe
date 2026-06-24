@@ -3,7 +3,7 @@ import Excerpts from '@/components/shared/Excerpts'
 import PaginationControl from '@/components/shared/PaginationControl'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
-import NormalizeWord from '@/utils/NormalizeWord'
+import normalizeWord from '@/utils/NormalizeWord'
 
 export interface KatalogSearchResultItem {
   id: string
@@ -75,8 +75,8 @@ export default function KatalogDisplaySearch({
                   secretTag={doc.peringkat_keselamatan}
                   statusTag={doc.status}
                   title={doc.recordTitle || 'Tiada Tajuk Rekod'}
-                  type={NormalizeWord(doc.profileDocument) || 'Tiada Profil'}
-                  unit={NormalizeWord(doc.recordUnit) || 'Tiada Nama Unit'}
+                  type={normalizeWord(doc.profileDocument) || 'Tiada Profil'}
+                  unit={normalizeWord(doc.recordUnit) || 'Tiada Nama Unit'}
                   onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.id}`)}
                 />
               )

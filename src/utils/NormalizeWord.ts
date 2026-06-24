@@ -1,4 +1,4 @@
-export default function NormalizeWord(value?: string | null): string {
+export default function normalizeWord(value?: string | null): string {
   if (!value) return ''
 
   return value
