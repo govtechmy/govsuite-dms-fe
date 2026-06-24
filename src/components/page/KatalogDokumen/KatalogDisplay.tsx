@@ -87,6 +87,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
   const [unitRequestState, setUnitRequestState] = useState<Record<string, UnitRequestState>>({})
   const [loadingFolders, setLoadingFolders] = useState<Record<string, boolean>>({})
   const appendRequestInFlightRef = useRef<Record<string, boolean>>({})
+  const latestRequestTokenRef = useRef<Record<string, number>>({})
 
   const unitsById = catalogBase.reduce<Record<string, CatalogBaseItem>>((acc, unit) => {
     acc[unit.id] = unit
@@ -124,6 +125,16 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
     return currentPath[currentPath.length - 1].id
   }
 
+  const createRequestToken = (unitId: string) => {
+    const nextToken = (latestRequestTokenRef.current[unitId] ?? 0) + 1
+    latestRequestTokenRef.current[unitId] = nextToken
+    return nextToken
+  }
+
+  const isLatestRequestToken = (unitId: string, requestToken: number) => {
+    return latestRequestTokenRef.current[unitId] === requestToken
+  }
+
   const fetchAndSetUnitContent = async (
     unitId: string,
     idFolder: string,
@@ -138,6 +149,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
     const append = options?.append ?? false
     const nextPage = options?.page ?? (append ? previousRequest.page + 1 : 1)
     const nextLimit = options?.limit ?? previousRequest.limit
+    const requestToken = createRequestToken(unitId)
 
     if (append) {
       updateUnitContent(unitId, { isLoadingMore: true, error: null })
@@ -150,6 +162,11 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
         page: nextPage,
         limit: nextLimit,
       })
+
+      if (!isLatestRequestToken(unitId, requestToken)) {
+        return
+      }
+
       setUnitContent((prev) => {
         const current = prev[unitId] ?? EMPTY_CONTENT
 
@@ -175,6 +192,10 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
         },
       }))
     } catch (error) {
+      if (!isLatestRequestToken(unitId, requestToken)) {
+        return
+      }
+
       const message = error instanceof Error ? error.message : 'Failed to fetch catalog data'
       updateUnitContent(unitId, {
         isLoading: false,
@@ -531,6 +552,9 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                         onFolderClick={(folder) => {
                           void handleFolderClick(unit.id, folder)
                         }}
+                        emptyMessage={
+                          currentFolders.length === 0 ? 'Tiada folder ditemui' : undefined
+                        }
                       />
                     </div>
 
@@ -544,7 +568,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                             {unitState.documents.map((doc) => (
                               <Excerpts
                                 key={`${doc.id}`}
-                                date={doc.recordDate || 'Tiada Tarikh'}
+                                date={doc.recordDate || ''}
                                 secretTag={doc.peringkat_keselamatan}
                                 statusTag={doc.status}
                                 title={doc.recordTitle || 'Tiada Tajuk Rekod'}
