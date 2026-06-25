@@ -53,10 +53,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen">
-      <div className="relative flex w-full min-h-screen px-[24px] lg:px-[36px] py-[32px] pb-[96px] overflow-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
+    <div className="relative h-full">
+      <div className="relative flex w-full min-h-full flex-col px-[24px] lg:px-[36px] py-[32px] pb-[32px] overflow-x-hidden bg-[radial-gradient(ellipse_5000px_3000px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)]">
         <Mask className="absolute inset-0 xl:w-full h-2/3 pointer-events-none" />
-        <div className="flex max-lg:flex-col items-center justify-center gap-12 w-full z-10">
+        <div className="flex flex-1 max-lg:flex-col items-center justify-center gap-12 w-full z-10">
           <div className="w-full lg:max-w-[600px] flex flex-col gap-6">
             <div className="w-full flex justify-center lg:justify-start">
               <img
@@ -120,9 +120,9 @@ export default function LoginPage() {
             handleHardcodedLogin={handleHardcodedLogin}
           />
         </div>
-      </div>
-      <div className="absolute bottom-6 left-1/2 w-full -translate-x-1/2 px-6 text-center text-body-xs text-txt-black-500 font-body">
-        Sistem ini hanya untuk kegunaan rasmi kerajaan. Sila pastikan kerahsiaan data terpelihara.
+        <div className="relative z-10 mt-6 w-full px-6 text-center text-body-xs text-txt-black-500 font-body">
+          Sistem ini hanya untuk kegunaan rasmi kerajaan. Sila pastikan kerahsiaan data terpelihara.
+        </div>
       </div>
     </div>
   )
