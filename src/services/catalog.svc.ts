@@ -158,6 +158,7 @@ export const getSearchKatalogItems = async ({
   jenisDokumen,
   dateFrom,
   dateTo,
+  status,
   page = 1,
   limit = 15,
 }: {
@@ -166,6 +167,7 @@ export const getSearchKatalogItems = async ({
   jenisDokumen?: string
   dateFrom?: string
   dateTo?: string
+  status?: string
   page?: number
   limit?: number
 }): Promise<CatalogSearchResponse> => {
@@ -189,6 +191,10 @@ export const getSearchKatalogItems = async ({
 
   if (dateTo) {
     params.set('dateTo', dateTo)
+  }
+
+  if (status) {
+    params.set('status', status)
   }
 
   const url = `${getEnv('VITE_API_BASE_URL')}/record?${params.toString()}`

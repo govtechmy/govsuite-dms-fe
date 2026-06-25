@@ -1,4 +1,3 @@
-import { useNavigate, useParams } from 'react-router-dom'
 import Excerpts from '@/components/shared/Excerpts'
 import PaginationControl from '@/components/shared/PaginationControl'
 import { Spinner } from '@govtechmy/myds-react/spinner'
@@ -16,6 +15,7 @@ export interface KatalogSearchResultItem {
 }
 
 interface KatalogDisplaySearchProps {
+  hasilCarianDisplay?: boolean
   documents: KatalogSearchResultItem[]
   isLoading: boolean
   error: string | null
@@ -25,9 +25,11 @@ interface KatalogDisplaySearchProps {
   totalRecords: number
   onPageChange: (newPage: number) => void
   onPageSizeChange: (newSize: number) => void
+  onItemClick: (id: string) => void
 }
 
 export default function KatalogDisplaySearch({
+  hasilCarianDisplay = true,
   documents,
   isLoading,
   error,
@@ -37,10 +39,8 @@ export default function KatalogDisplaySearch({
   totalRecords,
   onPageChange,
   onPageSizeChange,
+  onItemClick,
 }: KatalogDisplaySearchProps) {
-  const navigate = useNavigate()
-  const { lang } = useParams<{ lang: string }>()
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -60,9 +60,11 @@ export default function KatalogDisplaySearch({
 
   return (
     <div className="flex h-full flex-col gap-6">
-      <p className="text-body-sm font-medium text-txt-black-500">
-        {totalRecords} hasil carian untuk "{searchKeyword}"
-      </p>
+      {hasilCarianDisplay && (
+        <p className="text-body-sm font-medium text-txt-black-500">
+          {totalRecords} hasil carian untuk "{searchKeyword}"
+        </p>
+      )}
 
       <div className="h-full">
         {documents.length > 0 ? (
@@ -77,7 +79,7 @@ export default function KatalogDisplaySearch({
                   title={doc.recordTitle || 'Tiada Tajuk Rekod'}
                   type={normalizeWord(doc.profileDocument) || 'Tiada Profil'}
                   unit={normalizeWord(doc.recordUnit) || 'Tiada Nama Unit'}
-                  onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.id}`)}
+                  onClick={() => onItemClick(doc.id)}
                 />
               )
             })}

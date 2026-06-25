@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import KatalogDisplay from '@/components/page/KatalogDokumen/KatalogDisplay'
 import KatalogDisplaySearch from '@/components/page/KatalogDokumen/KatalogDisplaySearch'
@@ -20,7 +20,10 @@ import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 
 export default function KatalogDokumenPage() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { lang } = useParams<{ lang: string }>()
+  const activeLang = lang ?? localStorage.getItem('lang') ?? 'ms'
   const [catalogBase, setCatalogBase] = useState<CatalogBaseItem[]>([])
   const [catalogItems, setCatalogItems] = useState<CatalogDocumentItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -135,6 +138,7 @@ export default function KatalogDokumenPage() {
           totalRecords={searchMeta?.totalItems ?? catalogItems.length}
           onPageChange={setPageNumber}
           onPageSizeChange={handlePageSizeChange}
+          onItemClick={(id) => navigate(`/${activeLang}/katalog-dokumen/${id}`)}
         />
       ) : (
         <>

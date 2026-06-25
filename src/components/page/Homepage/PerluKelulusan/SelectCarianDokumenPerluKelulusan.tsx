@@ -9,11 +9,18 @@ import { Button } from '@govtechmy/myds-react/button'
 import { DateRangePicker } from '@govtechmy/myds-react/daterange-picker'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
 import { useSearchParams } from 'react-router-dom'
+import type { DropdownJenisDokumen, DropdownUnit } from '@/services/catalog.svc'
 
-export default function SelectCarianDokumenPerluKelulusan() {
+interface SelectCarianDokumenPerluKelulusanProps {
+  dropdownUnits: DropdownUnit[]
+  dropdownJenisDokumen: DropdownJenisDokumen[]
+}
+
+export default function SelectCarianDokumenPerluKelulusan({
+  dropdownUnits,
+  dropdownJenisDokumen,
+}: SelectCarianDokumenPerluKelulusanProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const unit = ['Unit A', 'Unit B']
-  const jenisDokumen = ['Minit Mesyuarat', 'Minit Mesyuarat2']
 
   const selectedJenisDokumen = searchParams.get('jenisDokumen') || ''
   const selectedUnit = searchParams.get('unit') || ''
@@ -78,9 +85,9 @@ export default function SelectCarianDokumenPerluKelulusan() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="semua">Semua</SelectItem>
-            {jenisDokumen.map((jenisDokumenValue) => (
-              <SelectItem key={jenisDokumenValue} value={jenisDokumenValue}>
-                {jenisDokumenValue}
+            {dropdownJenisDokumen.map((jenisDokumenValue) => (
+              <SelectItem key={jenisDokumenValue.id} value={jenisDokumenValue.code}>
+                {jenisDokumenValue.codeName}
               </SelectItem>
             ))}
           </SelectContent>
@@ -96,9 +103,9 @@ export default function SelectCarianDokumenPerluKelulusan() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="semua">Semua</SelectItem>
-            {unit.map((unitValue) => (
-              <SelectItem key={unitValue} value={unitValue}>
-                {unitValue}
+            {dropdownUnits.map((unitValue) => (
+              <SelectItem key={unitValue.code} value={unitValue.code}>
+                {unitValue.codeName}
               </SelectItem>
             ))}
           </SelectContent>

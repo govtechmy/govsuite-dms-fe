@@ -2,196 +2,97 @@ import MainHeading from '@/components/layout/MainHeading'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import MetadataModalTidakLulus from '@/components/page/Homepage/TidakLulus/MetadataModalTidakLulus'
 import SelectCarianDokumenTidakLulus from '@/components/page/Homepage/TidakLulus/SelectCarianDokumenTidakLulus'
+import KatalogDisplaySearch from '@/components/page/KatalogDokumen/KatalogDisplaySearch'
 import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarKatalogDokumen'
-import Excerpts from '@/components/shared/Excerpts'
-import PaginationControl from '@/components/shared/PaginationControl'
+import {
+  getSearchKatalogItems,
+  getDropdownJenisDokumen,
+  getDropdownUnits,
+  type CatalogDocumentItem,
+  type CatalogListMeta,
+  type DropdownJenisDokumen,
+  type DropdownUnit,
+} from '@/services/catalog.svc'
 import { ArrowBackIcon } from '@govtechmy/myds-react/icon'
-import { useState, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-
-// Mock data for documents requiring approval
-const mockDocuments = [
-  {
-    document_id: '0001',
-    path: '/docs/2024/budget-proposal.pdf',
-    date: '2024-06-15',
-    peringkat_keselamatan: 'Sulit',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Cadangan Bajet Tahunan 2025',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0002',
-    path: '/docs/2024/policy-review.pdf',
-    date: '2024-06-15',
-    peringkat_keselamatan: 'terbuka',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Semakan Dasar Pembangunan Sosial',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0003',
-    path: '/docs/2024/infrastructure-plan.pdf',
-    date: '2024-06-15',
-    peringkat_keselamatan: 'RAHSIA_BESAR',
-    status: 'TIDAK_DILULUSKAN',
-    document_name: 'Pelan Pembangunan Infrastruktur Negara',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0004',
-    path: '/docs/2024/education-reform.pdf',
-    date: '2024-06-12',
-    peringkat_keselamatan: 'rahsia',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Reformasi Sistem Pendidikan Tinggi',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0005',
-    path: '/docs/2024/healthcare-initiative.pdf',
-    date: '2024-06-11',
-    peringkat_keselamatan: 'Sulit',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Inisiatif Kesihatan Awam 2025',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0006',
-    path: '/docs/2024/economic-outlook.pdf',
-    date: '2024-06-10',
-    peringkat_keselamatan: 'terbuka',
-    status: 'Draf',
-    document_name: 'Tinjauan Ekonomi Suku Kedua 2024',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0007',
-    path: '/docs/2024/digital-transformation.pdf',
-    date: '2024-06-09',
-    peringkat_keselamatan: 'Sulit',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Transformasi Digital Sektor Awam',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0008',
-    path: '/docs/2024/environmental-policy.pdf',
-    date: '2024-06-08',
-    peringkat_keselamatan: 'terbuka',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Dasar Alam Sekitar Lestari',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0009',
-    path: '/docs/2024/trade-agreement.pdf',
-    date: '2024-06-07',
-    peringkat_keselamatan: 'RAHSIA_BESAR',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Perjanjian Perdagangan Serantau',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0010',
-    path: '/docs/2024/youth-program.pdf',
-    date: '2024-06-06',
-    peringkat_keselamatan: 'terbuka',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Program Pembangunan Belia Negara',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0011',
-    path: '/docs/2024/housing-scheme.pdf',
-    date: '2024-06-05',
-    peringkat_keselamatan: 'Sulit',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Skim Perumahan Mampu Milik Fasa 3',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0012',
-    path: '/docs/2024/transport-master-plan.pdf',
-    date: '2024-06-04',
-    peringkat_keselamatan: 'terbuka',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Pelan Induk Pengangkutan Awam',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0013',
-    path: '/docs/2024/youth-program.pdf',
-    date: '2024-06-06',
-    peringkat_keselamatan: 'terbuka',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Program Pembangunan Belia Negara',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0014',
-    path: '/docs/2024/housing-scheme.pdf',
-    date: '2024-06-05',
-    peringkat_keselamatan: 'Sulit',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Skim Perumahan Mampu Milik Fasa 3',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-  {
-    document_id: '0015',
-    path: '/docs/2024/transport-master-plan.pdf',
-    date: '2024-06-04',
-    peringkat_keselamatan: 'terbuka',
-    status: 'DALAM_SEMAKAN',
-    document_name: 'Pelan Induk Pengangkutan Awam',
-    type: 'Minit Mesyuarat',
-    unit: 'Unit K',
-  },
-]
-
-const lokasiFolder = 'JKKPN > 2025 - 2029 > 2025 > January > Minit Jemaah Menteri Bil. 12/2026'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 export default function TidakLulusPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { lang } = useParams()
   const activeLang = lang ?? localStorage.getItem('lang') ?? 'ms'
+  const query = searchParams.get('search')?.trim() || ''
+  const unit = searchParams.get('unit') || ''
+  const jenisDokumen = searchParams.get('jenisDokumen') || ''
+  const dateFrom = searchParams.get('dateFrom') || ''
+  const dateTo = searchParams.get('dateTo') || ''
+
+  const [catalogItems, setCatalogItems] = useState<CatalogDocumentItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [pageNumber, setPageNumber] = useState(1)
+  const [pageSize, setPageSize] = useState(15)
+  const [searchMeta, setSearchMeta] = useState<CatalogListMeta | null>(null)
+  const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
+  const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
   const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false)
 
-  const [documents, setDocuments] = useState({
-    pageNumber: 1,
-    pageSize: 15,
-    totalRecords: mockDocuments.length,
-  })
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const [unitsData, jenisDokumenData] = await Promise.all([
+          getDropdownUnits(),
+          getDropdownJenisDokumen(),
+        ])
+        setDropdownUnits(unitsData)
+        setDropdownJenisDokumen(jenisDokumenData)
+      } catch (err) {
+        console.error('Error fetching dropdown data:', err)
+      }
+    }
 
-  const setPaginationNumber = (newPage: number) => {
-    setDocuments((prev) => ({ ...prev, pageNumber: newPage }))
+    fetchDropdownData()
+  }, [])
+
+  useEffect(() => {
+    const fetchSearch = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const data = await getSearchKatalogItems({
+          query,
+          unit,
+          jenisDokumen,
+          dateFrom,
+          dateTo,
+          page: pageNumber,
+          limit: pageSize,
+          status: 'TIDAK_DILULUSKAN',
+        })
+        setCatalogItems(data.items)
+        setSearchMeta(data.meta)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch searching data')
+        console.error('Error fetching searching data:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchSearch()
+  }, [query, unit, jenisDokumen, dateFrom, dateTo, pageNumber, pageSize])
+
+  useEffect(() => {
+    setPageNumber(1)
+  }, [query, unit, jenisDokumen, dateFrom, dateTo])
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize)
+    setPageNumber(1)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const setPaginationSize = ([_reset, newSize]: [boolean, number]) => {
-    setDocuments((prev) => ({ ...prev, pageSize: newSize, pageNumber: 1 }))
-  }
-
-  // Calculate current page documents
-  const currentDocuments = useMemo(() => {
-    const startIndex = (documents.pageNumber - 1) * documents.pageSize
-    const endIndex = startIndex + documents.pageSize
-    return mockDocuments.slice(startIndex, endIndex)
-  }, [documents.pageNumber, documents.pageSize])
+  const totalRecords = searchMeta?.totalItems ?? catalogItems.length
 
   return (
     <RightSidePageLayoutWrapper className="h-full">
@@ -209,51 +110,33 @@ export default function TidakLulusPage() {
             <MainHeading>Dokumen Tidak Diluluskan</MainHeading>
           </div>
           <p className="text-body-sm font-medium text-txt-black-500">
-            Terdapat {documents.totalRecords} dokumen tidak diluluskan.
+            Terdapat {totalRecords} dokumen tidak diluluskan.
           </p>
           <SearchBarKatalogDokumen />
-          <SelectCarianDokumenTidakLulus />
-        </div>
-
-        <div className="h-full">
-          {currentDocuments.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {currentDocuments.map((doc) => (
-                <Excerpts
-                  key={doc.document_id}
-                  date={doc.date || 'No Date Found'}
-                  secretTag={doc.peringkat_keselamatan}
-                  statusTag={doc.status}
-                  title={doc.document_name || 'No Document Name Found'}
-                  type={doc.type || 'No Type of Document Found'}
-                  unit={doc.unit || 'No Unit Found'}
-                  onClick={() => {
-                    setIsMetadataDialogOpen(true)
-                  }}
-                />
-              ))}
-            </div>
-          )}
+          <SelectCarianDokumenTidakLulus
+            dropdownUnits={dropdownUnits}
+            dropdownJenisDokumen={dropdownJenisDokumen}
+          />
         </div>
 
         <MetadataModalTidakLulus
           open={isMetadataDialogOpen}
           onOpenChange={setIsMetadataDialogOpen}
-          lokasiFolder={lokasiFolder}
+          lokasiFolder={'JKKPN > 2025 - 2029 > 2025 > January > Minit Jemaah Menteri Bil. 12/2026'}
         />
 
-        <PaginationControl
-          pageNumber={documents?.pageNumber ?? 1}
-          pageSize={documents?.pageSize ?? 15}
-          totalRecords={documents?.totalRecords ?? 0}
-          onPageChange={(newPage): number => {
-            setPaginationNumber(newPage)
-            return newPage
-          }}
-          onPageSizeChange={(newSize: number) => {
-            setPaginationSize([true, newSize])
-          }}
-          pageSizeOptions={[15, 30, 45, 60]}
+        <KatalogDisplaySearch
+          hasilCarianDisplay={false}
+          documents={catalogItems}
+          isLoading={isLoading}
+          error={error}
+          searchKeyword={query || 'semua dokumen'}
+          pageNumber={pageNumber}
+          pageSize={pageSize}
+          totalRecords={totalRecords}
+          onPageChange={setPageNumber}
+          onPageSizeChange={handlePageSizeChange}
+          onItemClick={() => setIsMetadataDialogOpen(true)}
         />
       </div>
     </RightSidePageLayoutWrapper>
