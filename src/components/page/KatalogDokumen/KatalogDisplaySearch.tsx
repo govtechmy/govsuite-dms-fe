@@ -7,11 +7,11 @@ import normalizeWord from '@/utils/NormalizeWord'
 export interface KatalogSearchResultItem {
   id: string
   recordDate: string
-  peringkat_keselamatan: string
+  accessLevel: string
   status: string
   recordTitle: string
   profileDocument?: string
-  recordUnit: string
+  unit: string
 }
 
 interface KatalogDisplaySearchProps {
@@ -74,11 +74,11 @@ export default function KatalogDisplaySearch({
                 <Excerpts
                   key={`${doc.id}`}
                   date={doc.recordDate || ''}
-                  secretTag={doc.peringkat_keselamatan}
+                  secretTag={doc.accessLevel}
                   statusTag={doc.status}
                   title={doc.recordTitle || 'Tiada Tajuk Rekod'}
                   type={normalizeWord(doc.profileDocument) || 'Tiada Profil'}
-                  unit={normalizeWord(doc.recordUnit) || 'Tiada Nama Unit'}
+                  unit={normalizeWord(doc.unit) || 'Tiada Nama Unit'}
                   onClick={() => onItemClick(doc.id)}
                 />
               )

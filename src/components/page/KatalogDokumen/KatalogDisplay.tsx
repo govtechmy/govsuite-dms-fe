@@ -575,7 +575,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                               <Excerpts
                                 key={`${doc.id}`}
                                 date={doc.recordDate || ''}
-                                secretTag={doc.peringkat_keselamatan}
+                                secretTag={doc.accessLevel}
                                 statusTag={doc.status}
                                 title={doc.recordTitle || 'Tiada Tajuk Rekod'}
                                 type={doc.profileDocument || 'Tiada Profil'}

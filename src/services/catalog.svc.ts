@@ -28,10 +28,10 @@ export interface CatalogDocumentItem {
   folderId: string
   fileName: string
   status: string
-  peringkat_keselamatan: string
+  accessLevel: string
   recordDate: string
   recordTitle: string
-  recordUnit: string
+  unit: string
   path: string
   profileDocument?: string
 }
@@ -234,7 +234,7 @@ export const getSearchKatalogItems = async ({
 }
 
 export const getDropdownJenisDokumen = async (): Promise<DropdownJenisDokumen[]> => {
-  const url = `${getEnv('VITE_API_BASE_URL')}/lookup/profil`
+  const url = `${getEnv('VITE_API_BASE_URL')}/lookup/profile`
   try {
     const response = await authAxios.get(url)
     const payload = response.data?.data
