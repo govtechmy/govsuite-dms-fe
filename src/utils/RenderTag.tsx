@@ -3,7 +3,7 @@ import NormalizeWord from './NormalizeWord'
 
 export function renderStatusTag(statusTag: string) {
   if (!statusTag) return null
-  const tag = statusTag
+  const tag = statusTag.toUpperCase()
   if (tag === 'DITERBITKAN') {
     return (
       <Tag mode="pill" size="small" variant="success">
@@ -39,7 +39,7 @@ export function renderStatusTag(statusTag: string) {
 
 export function renderSecretTag(secretTag: string) {
   if (!secretTag) return null
-  const tag = secretTag
+  const tag = secretTag.toUpperCase()
   if (tag === 'TERBUKA') {
     return (
       <Tag size="small" variant="success">
