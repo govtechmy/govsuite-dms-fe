@@ -33,7 +33,7 @@ export interface CatalogDocumentItem {
   recordTitle: string
   unit: string
   path: string
-  profileDocument?: string
+  documentProfile?: string
 }
 
 export interface CatalogListMeta {

@@ -578,7 +578,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                                 secretTag={doc.accessLevel}
                                 statusTag={doc.status}
                                 title={doc.recordTitle || 'Tiada Tajuk Rekod'}
-                                type={doc.profileDocument || 'Tiada Profil'}
+                                type={doc.documentProfile || 'Tiada Profil'}
                                 unit={unit.name || 'Tiada Nama Unit'}
                                 onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.id}`)}
                               />

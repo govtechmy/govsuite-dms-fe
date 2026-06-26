@@ -10,7 +10,7 @@ export interface KatalogSearchResultItem {
   accessLevel: string
   status: string
   recordTitle: string
-  profileDocument?: string
+  documentProfile?: string
   unit: string
 }
 
@@ -77,7 +77,7 @@ export default function KatalogDisplaySearch({
                   secretTag={doc.accessLevel}
                   statusTag={doc.status}
                   title={doc.recordTitle || 'Tiada Tajuk Rekod'}
-                  type={normalizeWord(doc.profileDocument) || 'Tiada Profil'}
+                  type={normalizeWord(doc.documentProfile) || 'Tiada Profil'}
                   unit={normalizeWord(doc.unit) || 'Tiada Nama Unit'}
                   onClick={() => onItemClick(doc.id)}
                 />
