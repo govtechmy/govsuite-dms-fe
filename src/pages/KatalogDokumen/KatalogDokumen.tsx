@@ -4,7 +4,7 @@ import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import KatalogDisplay from '@/components/page/KatalogDokumen/KatalogDisplay'
 import KatalogDisplaySearch from '@/components/page/KatalogDokumen/KatalogDisplaySearch'
 import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarKatalogDokumen'
-import SelectKatalogDokumen from '@/components/page/KatalogDokumen/SelectKatalogDokumen'
+import SelectCarianDokumen from '@/components/shared/SelectCarianDokumen'
 import {
   getCatalogBase,
   getDropdownJenisDokumen,
@@ -122,9 +122,11 @@ export default function KatalogDokumenPage() {
       </h1>
       <div className="flex flex-col gap-3">
         <SearchBarKatalogDokumen />
-        <SelectKatalogDokumen
+        <SelectCarianDokumen
           dropdownUnits={dropdownUnits}
           dropdownJenisDokumen={dropdownJenisDokumen}
+          showOnlyWhenSearchQuery
+          resetPageOnFilterChange={false}
         />
       </div>
       {query ? (

@@ -1,9 +1,9 @@
 import MainHeading from '@/components/layout/MainHeading'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import MetadataModalTidakLulus from '@/components/page/Homepage/TidakLulus/MetadataModalTidakLulus'
-import SelectCarianDokumenTidakLulus from '@/components/page/Homepage/TidakLulus/SelectCarianDokumenTidakLulus'
 import KatalogDisplaySearch from '@/components/page/KatalogDokumen/KatalogDisplaySearch'
 import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarKatalogDokumen'
+import SelectCarianDokumen from '@/components/shared/SelectCarianDokumen'
 import {
   getSearchKatalogItems,
   getDropdownJenisDokumen,
@@ -14,12 +14,12 @@ import {
   type DropdownUnit,
 } from '@/services/catalog.svc'
 import { ArrowBackIcon } from '@govtechmy/myds-react/icon'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 export default function TidakLulusPage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { lang } = useParams()
   const activeLang = lang ?? localStorage.getItem('lang') ?? 'ms'
   const query = searchParams.get('search')?.trim() || ''
@@ -27,12 +27,12 @@ export default function TidakLulusPage() {
   const jenisDokumen = searchParams.get('jenisDokumen') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
+  const pageNumber = Math.max(1, Number(searchParams.get('page')) || 1)
+  const pageSize = Math.max(1, Number(searchParams.get('limit')) || 15)
 
   const [catalogItems, setCatalogItems] = useState<CatalogDocumentItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pageNumber, setPageNumber] = useState(1)
-  const [pageSize, setPageSize] = useState(15)
   const [searchMeta, setSearchMeta] = useState<CatalogListMeta | null>(null)
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
@@ -83,13 +83,17 @@ export default function TidakLulusPage() {
     fetchSearch()
   }, [query, unit, jenisDokumen, dateFrom, dateTo, pageNumber, pageSize])
 
-  useEffect(() => {
-    setPageNumber(1)
-  }, [query, unit, jenisDokumen, dateFrom, dateTo])
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set('page', String(newPage))
+    setSearchParams(params)
+  }
 
   const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize)
-    setPageNumber(1)
+    const params = new URLSearchParams(searchParams)
+    params.set('limit', String(newSize))
+    params.set('page', '1')
+    setSearchParams(params)
   }
 
   const totalRecords = searchMeta?.totalItems ?? catalogItems.length
@@ -113,7 +117,7 @@ export default function TidakLulusPage() {
             Terdapat {totalRecords} dokumen tidak diluluskan.
           </p>
           <SearchBarKatalogDokumen />
-          <SelectCarianDokumenTidakLulus
+          <SelectCarianDokumen
             dropdownUnits={dropdownUnits}
             dropdownJenisDokumen={dropdownJenisDokumen}
           />
@@ -134,7 +138,7 @@ export default function TidakLulusPage() {
           pageNumber={pageNumber}
           pageSize={pageSize}
           totalRecords={totalRecords}
-          onPageChange={setPageNumber}
+          onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
           onItemClick={() => setIsMetadataDialogOpen(true)}
         />

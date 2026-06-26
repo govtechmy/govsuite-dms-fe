@@ -24,6 +24,7 @@ export default function SearchBarKatalogDokumen() {
     params.delete('jenisDokumen')
     params.delete('dateFrom')
     params.delete('dateTo')
+    params.set('page', '1')
   }
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function SearchBarKatalogDokumen() {
 
     if (nextQuery) {
       params.set('search', nextQuery)
+      params.set('page', '1')
     } else {
       clearSearchAndFilters(params)
     }

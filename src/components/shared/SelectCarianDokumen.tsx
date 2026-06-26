@@ -5,22 +5,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
+import type { DropdownJenisDokumen, DropdownUnit } from '@/services/catalog.svc'
 import { Button } from '@govtechmy/myds-react/button'
 import { DateRangePicker } from '@govtechmy/myds-react/daterange-picker'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
 import { useSearchParams } from 'react-router-dom'
-import type { DropdownJenisDokumen, DropdownUnit } from '@/services/catalog.svc'
 
-interface SelectCarianDokumenPerluKelulusanProps {
+interface SelectCarianDokumenProps {
   dropdownUnits: DropdownUnit[]
   dropdownJenisDokumen: DropdownJenisDokumen[]
+  showOnlyWhenSearchQuery?: boolean
+  resetPageOnFilterChange?: boolean
 }
 
-export default function SelectCarianDokumenPerluKelulusan({
+export default function SelectCarianDokumen({
   dropdownUnits,
   dropdownJenisDokumen,
-}: SelectCarianDokumenPerluKelulusanProps) {
+  showOnlyWhenSearchQuery = false,
+  resetPageOnFilterChange = true,
+}: SelectCarianDokumenProps) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const hasSearchQuery = Boolean(searchParams.get('search')?.trim())
 
   const selectedJenisDokumen = searchParams.get('jenisDokumen') || ''
   const selectedUnit = searchParams.get('unit') || ''
@@ -34,6 +39,9 @@ export default function SelectCarianDokumenPerluKelulusan({
     } else {
       params.delete('jenisDokumen')
     }
+    if (resetPageOnFilterChange) {
+      params.set('page', '1')
+    }
     setSearchParams(params)
   }
 
@@ -43,6 +51,9 @@ export default function SelectCarianDokumenPerluKelulusan({
       params.set('unit', value)
     } else {
       params.delete('unit')
+    }
+    if (resetPageOnFilterChange) {
+      params.set('page', '1')
     }
     setSearchParams(params)
   }
@@ -59,6 +70,9 @@ export default function SelectCarianDokumenPerluKelulusan({
     } else {
       params.delete('dateTo')
     }
+    if (resetPageOnFilterChange) {
+      params.set('page', '1')
+    }
     setSearchParams(params)
   }
 
@@ -68,30 +82,19 @@ export default function SelectCarianDokumenPerluKelulusan({
     params.delete('unit')
     params.delete('dateFrom')
     params.delete('dateTo')
+    if (resetPageOnFilterChange) {
+      params.set('page', '1')
+    }
     setSearchParams(params)
   }
 
+  if (showOnlyWhenSearchQuery && !hasSearchQuery) {
+    return <div className="flex justify-between items-start" />
+  }
+
   return (
-    <div className="flex justify-between ">
-      <div className="flex gap-1">
-        <Select
-          size={'small'}
-          variant="outline"
-          value={selectedJenisDokumen}
-          onValueChange={handleJenisDokumenChange}
-        >
-          <SelectTrigger>
-            <SelectValue label="Jenis Dokumen" placeholder="Semua" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="semua">Semua</SelectItem>
-            {dropdownJenisDokumen.map((jenisDokumenValue) => (
-              <SelectItem key={jenisDokumenValue.id} value={jenisDokumenValue.code}>
-                {jenisDokumenValue.codeName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="flex justify-between items-start">
+      <div className="flex flex-row flex-wrap gap-2">
         <Select
           size={'small'}
           variant="outline"
@@ -106,6 +109,24 @@ export default function SelectCarianDokumenPerluKelulusan({
             {dropdownUnits.map((unitValue) => (
               <SelectItem key={unitValue.code} value={unitValue.code}>
                 {unitValue.codeName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          size={'small'}
+          variant="outline"
+          value={selectedJenisDokumen}
+          onValueChange={handleJenisDokumenChange}
+        >
+          <SelectTrigger>
+            <SelectValue label="Jenis Dokumen" placeholder="Semua" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="semua">Semua</SelectItem>
+            {dropdownJenisDokumen.map((jenisDokumenValue) => (
+              <SelectItem key={jenisDokumenValue.id} value={jenisDokumenValue.code}>
+                {jenisDokumenValue.codeName}
               </SelectItem>
             ))}
           </SelectContent>
@@ -132,10 +153,12 @@ export default function SelectCarianDokumenPerluKelulusan({
           )}
         </div>
       </div>
-      <Button variant="default-outline" className="gap-2" onClick={handleReset}>
-        <ReloadIcon />
-        <div>Set Semula</div>
-      </Button>
+      <div className="w-[126px] shrink-0">
+        <Button variant="default-outline" className="w-full gap-2" onClick={handleReset}>
+          <ReloadIcon />
+          <div>Set Semula</div>
+        </Button>
+      </div>
     </div>
   )
 }
