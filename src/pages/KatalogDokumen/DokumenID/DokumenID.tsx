@@ -9,6 +9,8 @@ import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/service
 import normalizeWord from '@/utils/NormalizeWord'
 import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
 import { downloadFile } from '@/utils/downloadFile'
+import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval.svc'
+import extractBackendError from '@/utils/extractBackendError'
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
@@ -18,24 +20,76 @@ export default function DokumenIDPage() {
   const [dokumenFetchError, setDokumenFetchError] = useState<PdfGarageError | null>(null)
   const [pdfData, setPdfData] = useState<PdfGarageBase | null>(null)
   const [metadataDocument, setMetadataDocument] = useState<MetadataDocument | null>(null)
+  const [approvalError, setApprovalError] = useState<{ code: string; message: string } | null>(null)
+  const [disapprovalError, setDisapprovalError] = useState<{
+    code: string
+    message: string
+  } | null>(null)
 
   // Create search plugin instance
   const searchPluginInstance = searchPlugin()
 
-  const handleApproveDokumen = () => {
+  const handleApproveDokumen = async () => {
     setProgressApprove('loading')
+    setApprovalError(null)
 
-    window.setTimeout(() => {
+    if (!DokumenID) {
+      setProgressApprove('error')
+      setApprovalError({
+        code: 'BAD_REQUEST',
+        message: 'Dokumen ID tidak ditemui.',
+      })
+      return
+    }
+
+    try {
+      await putDocumentApproval(DokumenID)
+
       setProgressApprove('success')
-    }, 2000)
+    } catch (error) {
+      console.error('Error approving document:', error)
+      const backendError = extractBackendError(error)
+      setApprovalError({
+        code: backendError?.code ?? 'REQUEST_FAILED',
+        message:
+          backendError?.message ??
+          (error instanceof Error ? error.message : 'Permintaan kelulusan gagal diproses.'),
+      })
+      setProgressApprove('error')
+    }
   }
 
-  const handleNotApproveDokumen = () => {
+  const handleNotApproveDokumen = async (reason: string) => {
     setProgressDisapprove('loading')
+    setDisapprovalError(null)
 
-    window.setTimeout(() => {
+    if (!DokumenID) {
+      setProgressDisapprove('error')
+      setDisapprovalError({
+        code: 'BAD_REQUEST',
+        message: 'Dokumen ID tidak ditemui.',
+      })
+      return
+    }
+
+    try {
+      await putDocumentNotApproved({
+        recordId: DokumenID,
+        body: { reason },
+      })
+
       setProgressDisapprove('success')
-    }, 2000)
+    } catch (error) {
+      console.error('Error rejecting document:', error)
+      const backendError = extractBackendError(error)
+      setDisapprovalError({
+        code: backendError?.code ?? 'REQUEST_FAILED',
+        message:
+          backendError?.message ??
+          (error instanceof Error ? error.message : 'Permintaan penolakan gagal diproses.'),
+      })
+      setProgressDisapprove('error')
+    }
   }
 
   const handleDownloadDokumen = (recordTitle: string) => {
@@ -143,9 +197,13 @@ export default function DokumenIDPage() {
             loadingDescription="Dokumen sedang dimuatkan. Sila tunggu sebentar."
             errorTitle="Dokumen Gagal Dimuatkan"
             errorDescription={
-              dokumenFetchError
-                ? `${dokumenFetchError.code}: ${dokumenFetchError.message}`
-                : 'Sila muat semula halaman ini atau kembali ke katalog dokumen.'
+              <div className="flex flex-col gap-2 items-center justify-center">
+                <div>Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem.</div>
+                <div>
+                  {dokumenFetchError?.code ?? 'REQUEST_FAILED'} :{' '}
+                  {dokumenFetchError?.message ?? 'Gagal memuatkan dokumen.'}
+                </div>
+              </div>
             }
             errorButtonText="Kembali Ke Katalog Dokumen"
             navigateError={`/${lang}/katalog-dokumen`}
@@ -160,9 +218,13 @@ export default function DokumenIDPage() {
             loadingDescription="Dokumen sedang dimuatkan. Sila tunggu sebentar."
             errorTitle="Dokumen Gagal Dimuatkan"
             errorDescription={
-              dokumenFetchError
-                ? `${dokumenFetchError.code}: ${dokumenFetchError.message}`
-                : 'Sila muat semula halaman ini atau kembali ke katalog dokumen.'
+              <div className="flex flex-col gap-2 items-center justify-center">
+                <div>Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem.</div>
+                <div>
+                  {dokumenFetchError?.code ?? 'REQUEST_FAILED'} :{' '}
+                  {dokumenFetchError?.message ?? 'Gagal memuatkan dokumen.'}
+                </div>
+              </div>
             }
             errorButtonText="Kembali Ke Katalog Dokumen"
             navigateError={`/${lang}/katalog-dokumen`}
@@ -178,7 +240,15 @@ export default function DokumenIDPage() {
             successDescription="Dokumen telah berjaya diluluskan dan diterbitkan."
             successButtonText="Kembali Ke Senarai Dokumen"
             errorTitle="Dokumen Gagal Diluluskan!"
-            errorDescription="Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem"
+            errorDescription={
+              <div className="flex flex-col gap-2 items-center justify-center">
+                <div>Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem.</div>
+                <div>
+                  {approvalError?.code ?? 'REQUEST_FAILED'} :{' '}
+                  {approvalError?.message ?? 'Permintaan kelulusan gagal diproses.'}
+                </div>
+              </div>
+            }
             errorButtonText="Kembali Ke Senarai Dokumen"
             navigateSuccess={`/${lang}/perlu-kelulusan`}
             navigateError={`/${lang}/perlu-kelulusan`}
@@ -195,7 +265,15 @@ export default function DokumenIDPage() {
             successDescription="Dokumen telah dihantar semula kepada pewujud untuk tindakan seterusnya."
             successButtonText="Kembali Ke Senarai Dokumen"
             errorTitle="Dokumen Gagal Diproses!"
-            errorDescription="Sila cuba lagi atau hubungi pentadbir sistem."
+            errorDescription={
+              <div className="flex flex-col gap-2 items-center justify-center">
+                <div>Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem.</div>
+                <div>
+                  {disapprovalError?.code ?? 'REQUEST_FAILED'} :{' '}
+                  {disapprovalError?.message ?? 'Permintaan penolakan gagal diproses.'}
+                </div>
+              </div>
+            }
             errorButtonText="Kembali Ke Senarai Dokumen"
             navigateSuccess={`/${lang}/perlu-kelulusan`}
             navigateError={`/${lang}/perlu-kelulusan`}

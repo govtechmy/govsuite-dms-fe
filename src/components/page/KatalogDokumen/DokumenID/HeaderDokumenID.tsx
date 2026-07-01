@@ -37,7 +37,7 @@ interface HeaderDokumenIDProps {
   documentProfileCode?: string
   metadataDocument?: MetadataDocument | null
   onApproveDokumen: () => void
-  onNotApproveDokumen: () => void
+  onNotApproveDokumen: (reason: string) => void
   onDownloadDokumen: (recordTitle: string) => void
 }
 
@@ -60,9 +60,9 @@ export function HeaderDokumenID({
     setIsTakDiluluskanOpen(false)
   }
 
-  const handleConfirmTakDiluluskan = () => {
+  const handleConfirmTakDiluluskan = (reason: string) => {
     setIsTakDiluluskanOpen(false)
-    onNotApproveDokumen()
+    onNotApproveDokumen(reason)
   }
 
   return (
@@ -74,17 +74,19 @@ export function HeaderDokumenID({
       <div className="relative z-10 flex w-full max-w-[1000px] flex-col gap-6">
         <div className="flex justify-between">
           <BreadcrumbBuilder path={path} />
-          <div className="flex gap-1">
-            <Button variant="danger-fill" onClick={() => setIsTakDiluluskanOpen(true)}>
-              Tidak Diluluskan
-            </Button>
-            <ModalTakDiluluskan
-              isOpen={isTakDiluluskanOpen}
-              onClose={handleCloseTakDiluluskanModal}
-              onConfirm={handleConfirmTakDiluluskan}
-            />
-            <Button onClick={onApproveDokumen}>Diluluskan</Button>
-          </div>
+          {status === 'DALAM_SEMAKAN' && (
+            <div className="flex gap-1">
+              <Button variant="danger-fill" onClick={() => setIsTakDiluluskanOpen(true)}>
+                Tidak Diluluskan
+              </Button>
+              <ModalTakDiluluskan
+                isOpen={isTakDiluluskanOpen}
+                onClose={handleCloseTakDiluluskanModal}
+                onConfirm={handleConfirmTakDiluluskan}
+              />
+              <Button onClick={onApproveDokumen}>Diluluskan</Button>
+            </div>
+          )}
         </div>
 
         {/* Document Header */}

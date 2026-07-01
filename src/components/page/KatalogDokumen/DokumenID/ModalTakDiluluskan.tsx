@@ -21,7 +21,7 @@ import { useState } from 'react'
 interface ModalTakDiluluskanProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: (reason: string) => void
 }
 
 export default function ModalTakDiluluskan({
@@ -42,9 +42,19 @@ export default function ModalTakDiluluskan({
   }
 
   const handleConfirm = () => {
+    let reason = 'TIDAK_LENGKAP'
+
+    if (selectedReason === 'format-tidak-tepat') {
+      reason = 'TIDAK_TEPAT'
+    } else if (selectedReason === 'tidak-lengkap') {
+      reason = 'TIDAK_LENGKAP'
+    } else if (selectedReason === 'sebab-lain') {
+      reason = `LAIN_LAIN : ${customReason.trim()}`
+    }
+
     setSelectedReason('')
     setCustomReason('')
-    onConfirm()
+    onConfirm(reason)
   }
 
   const handleOpenChange = (open: boolean) => {
@@ -64,13 +74,13 @@ export default function ModalTakDiluluskan({
           <Radio>
             <RadioItem>
               <RadioButton
-                value="maklumat-tidak-lengkap"
-                id="maklumat-tidak-lengkap"
-                onClick={() => setSelectedReason('maklumat-tidak-lengkap')}
+                value="tidak-lengkap"
+                id="tidak-lengkap"
+                onClick={() => setSelectedReason('tidak-lengkap')}
               />
               <div className="grid">
-                <RadioLabel htmlFor="maklumat-tidak-lengkap">Maklumat tidak lengkap</RadioLabel>
-                <RadioHintText htmlFor="maklumat-tidak-lengkap">
+                <RadioLabel htmlFor="tidak-lengkap">Maklumat tidak lengkap</RadioLabel>
+                <RadioHintText htmlFor="tidak-lengkap">
                   Maklumat penting tidak terdapat dalam dokumen
                 </RadioHintText>
               </div>

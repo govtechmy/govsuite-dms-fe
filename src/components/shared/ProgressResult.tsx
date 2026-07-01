@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 interface ProgressResultProps {
   icon: ReactNode
   title?: string
-  description?: string
+  description?: ReactNode
   buttonDisplay?: boolean
   buttonText?: string
   onButtonClick?: () => void
@@ -46,16 +46,16 @@ interface ProgressResultCheckerProps {
   navigateSuccess2?: string
   navigateError?: string
   navigateUploadingError?: string
-  loadingDescription: string
+  loadingDescription: ReactNode
   successTitle?: string
-  successDescription?: string
+  successDescription?: ReactNode
   successButtonText?: string
   successButtonText2?: string
   errorTitle: string
-  errorDescription: string
+  errorDescription: ReactNode
   errorButtonText: string
   errorUploadingTitle?: string
-  errorUploadingDescription?: string
+  errorUploadingDescription?: ReactNode
   errorUploadingButtonText?: string
 }
 
