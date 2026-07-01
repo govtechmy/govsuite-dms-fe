@@ -8,6 +8,7 @@ import { useParams } from 'react-router-dom'
 import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
 import normalizeWord from '@/utils/NormalizeWord'
 import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
+import { downloadFile } from '@/utils/downloadFile'
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
@@ -37,6 +38,19 @@ export default function DokumenIDPage() {
     }, 2000)
   }
 
+  const handleDownloadDokumen = (recordTitle: string) => {
+    if (!pdfData?.url) {
+      return
+    }
+
+    downloadFile({
+      url: pdfData.url,
+      fileName: recordTitle,
+      fallback: `dokumen-${DokumenID}`,
+      fileExtension: pdfData.meta?.fileExtension,
+    })
+  }
+
   useEffect(() => {
     const fetchPDFData = async () => {
       try {
@@ -62,6 +76,7 @@ export default function DokumenIDPage() {
         }
 
         setPdfData(result.data)
+        console.log(result.data)
         setDokumenFetchState('success')
       } catch (err) {
         setDokumenFetchState('error')
@@ -113,6 +128,7 @@ export default function DokumenIDPage() {
               unit={normalizeWord(pdfData.document?.unit || 'Unit tidak dijumpai')}
               onApproveDokumen={handleApproveDokumen}
               onNotApproveDokumen={handleNotApproveDokumen}
+              onDownloadDokumen={handleDownloadDokumen}
             />
           )}
           <SearchBarDokumenID searchPluginInstance={searchPluginInstance} />

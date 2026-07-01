@@ -38,6 +38,7 @@ interface HeaderDokumenIDProps {
   metadataDocument?: MetadataDocument | null
   onApproveDokumen: () => void
   onNotApproveDokumen: () => void
+  onDownloadDokumen: (recordTitle: string) => void
 }
 
 export function HeaderDokumenID({
@@ -51,6 +52,7 @@ export function HeaderDokumenID({
   metadataDocument,
   onApproveDokumen,
   onNotApproveDokumen,
+  onDownloadDokumen,
 }: HeaderDokumenIDProps) {
   const [isTakDiluluskanOpen, setIsTakDiluluskanOpen] = useState(false)
 
@@ -113,7 +115,12 @@ export function HeaderDokumenID({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
-            <Button variant="default-outline" size="small" className="gap-1.5">
+            <Button
+              variant="default-outline"
+              size="small"
+              className="gap-1.5"
+              onClick={() => onDownloadDokumen(recordTitle)}
+            >
               <DownloadIcon className="size-4" />
               Muat Turun
             </Button>
