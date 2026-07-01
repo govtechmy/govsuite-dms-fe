@@ -36,19 +36,22 @@ export default function RingkasanEksekutif({ cardInfo, Tahun }: RingkasanEksekut
           Berikut adalah status dokumen terkini.
         </div>
 
-        <Select size={'small'} variant="outline">
-          <SelectTrigger>
-            <SelectValue label="Tahun" placeholder="2026" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Tahun">2026</SelectItem>
-            {Tahun.map((TahunValue) => (
-              <SelectItem key={TahunValue} value={TahunValue}>
-                {TahunValue}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* HIDDEN DUE TO CHANGE LATER IMPLEMENT YET */}
+        <div className="hidden">
+          <Select size={'small'} variant="outline">
+            <SelectTrigger>
+              <SelectValue label="Tahun" placeholder="2026" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Tahun">2026</SelectItem>
+              {Tahun.map((TahunValue) => (
+                <SelectItem key={TahunValue} value={TahunValue}>
+                  {TahunValue}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 w-full">
