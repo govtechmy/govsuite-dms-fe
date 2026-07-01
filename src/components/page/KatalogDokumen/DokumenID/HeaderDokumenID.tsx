@@ -18,27 +18,37 @@ import {
 import MetadataSummary from '@/components/shared/MetadataSummary'
 import { useState } from 'react'
 import ModalTakDiluluskan from './ModalTakDiluluskan'
+import type { MetadataDocument } from '@/services/metadata.svc'
 
+// rework metadata info once finalized
 interface HeaderDokumenIDProps {
-  title: string
-  path: string
-  date: string
-  status: string
-  classification: string
-  category: string
+  type?: string
+  id?: string
+  recordId?: string
+  folderId?: string
+  fileName?: string
+  status?: string
+  accessLevel: string
+  recordDate: string
+  recordTitle: string
   unit: string
+  path?: string
+  documentProfile?: string
+  documentProfileCode?: string
+  metadataDocument?: MetadataDocument | null
   onApproveDokumen: () => void
   onNotApproveDokumen: () => void
 }
 
 export function HeaderDokumenID({
-  title,
+  recordTitle,
   path,
-  date,
+  recordDate,
   status,
-  classification,
-  category,
+  accessLevel,
+  documentProfileCode,
   unit,
+  metadataDocument,
   onApproveDokumen,
   onNotApproveDokumen,
 }: HeaderDokumenIDProps) {
@@ -51,20 +61,6 @@ export function HeaderDokumenID({
   const handleConfirmTakDiluluskan = () => {
     setIsTakDiluluskanOpen(false)
     onNotApproveDokumen()
-  }
-
-  const documentData = {
-    lokasiFolder: 'JKKPN > 2020 - 2024 > 2024 > January > Minit Jemaah Menteri Bil. 12/2026',
-    profilDokumen: 'Agenda Mesyuarat',
-    tahapKeselamatan: 'Terhad',
-    ringkasan: 'Minit Jemaah menteri membincangkan mengenai status terkini projek tebatan banjir',
-    tajuk: 'Minit Jemaah Menteri Bil. 12/2026',
-    tarikhMesyuarat: '10/01/2026',
-    klasifikasiFail: 'JPM(R)12014/57 Jilid 51',
-    namaPewujud: 'Mohd Muzakkir Zamani Bin Fairuzzaki',
-    tempatMesyuarat: 'ABC Hall',
-    bilanganHelaian: '25',
-    jenisKemasukan: '-',
   }
 
   return (
@@ -92,22 +88,24 @@ export function HeaderDokumenID({
         {/* Document Header */}
         <div className="flex w-full items-end gap-3">
           {/* Date Card */}
-          <DateCard date={date} size="lg" className="shadow-sm border border-otl-gray-200" />
+          <DateCard date={recordDate} size="lg" className="shadow-sm border border-otl-gray-200" />
 
           {/* Content */}
           <div className="flex flex-1 flex-col gap-1.5">
             {/* Tags */}
             <div className="flex items-start gap-1">
-              {renderStatusTag(status)}
-              {renderSecretTag(classification)}
+              {renderStatusTag(status || 'No Status')}
+              {renderSecretTag(accessLevel)}
             </div>
 
             {/* Title */}
-            <h1 className="line-clamp-2 text-base font-semibold text-txt-black-900">{title}</h1>
+            <h1 className="line-clamp-2 text-base font-semibold text-txt-black-900">
+              {recordTitle}
+            </h1>
 
             {/* Metadata */}
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-medium text-txt-black-500">{category}</span>
+              <span className="text-sm font-medium text-txt-black-500">{documentProfileCode}</span>
               <div className="size-1 rounded-full bg-txt-black-500" />
               <span className="text-sm font-medium text-txt-black-500">{unit}</span>
             </div>
@@ -136,7 +134,7 @@ export function HeaderDokumenID({
                     Dialog content goes here.
                   </DialogDescription>
                   <div className="flex flex-col gap-6">
-                    <MetadataSummary docInfo={documentData} />
+                    <MetadataSummary metadata={metadataDocument} />
                   </div>
                 </DialogContent>
                 <DialogFooter>

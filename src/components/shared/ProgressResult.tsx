@@ -47,9 +47,9 @@ interface ProgressResultCheckerProps {
   navigateError?: string
   navigateUploadingError?: string
   loadingDescription: string
-  successTitle: string
-  successDescription: string
-  successButtonText: string
+  successTitle?: string
+  successDescription?: string
+  successButtonText?: string
   successButtonText2?: string
   errorTitle: string
   errorDescription: string

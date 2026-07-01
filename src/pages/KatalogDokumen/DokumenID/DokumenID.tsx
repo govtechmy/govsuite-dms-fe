@@ -3,25 +3,20 @@ import DokumenContentID from '@/components/page/KatalogDokumen/DokumenID/Dokumen
 import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/HeaderDokumenID'
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
+import normalizeWord from '@/utils/NormalizeWord'
+import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
 
 export default function DokumenIDPage() {
-  const { lang = 'en' } = useParams<{ lang: string }>()
+  const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
   const [progressApprove, setProgressApprove] = useState<ProgressState>(null)
   const [progressDisapprove, setProgressDisapprove] = useState<ProgressState>(null)
-  // Mock data - replace with actual API data
-  const document = {
-    title: 'Minit Jemaah Menteri Bil. 12/2026',
-    path: 'JKPPN/2020-2024/2024/January/Minit Jemaah Menteri Bil. 12/2026',
-    date: '2024-01-10',
-    status: 'Diterbitkan',
-    classification: 'Terhad',
-    category: 'Minit Mesyuarat',
-    unit: 'Unit K',
-    // Mock PDF URL - replace with actual document URL
-    pdfUrl: '/MinitMesyuaratSample.pdf',
-  }
+  const [dokumenFetchState, setDokumenFetchState] = useState<ProgressState>(null)
+  const [dokumenFetchError, setDokumenFetchError] = useState<PdfGarageError | null>(null)
+  const [pdfData, setPdfData] = useState<PdfGarageBase | null>(null)
+  const [metadataDocument, setMetadataDocument] = useState<MetadataDocument | null>(null)
 
   // Create search plugin instance
   const searchPluginInstance = searchPlugin()
@@ -42,23 +37,120 @@ export default function DokumenIDPage() {
     }, 2000)
   }
 
+  useEffect(() => {
+    const fetchPDFData = async () => {
+      try {
+        setDokumenFetchState('loading')
+        setDokumenFetchError(null)
+        setPdfData(null)
+
+        if (!DokumenID) {
+          setDokumenFetchState('error')
+          setDokumenFetchError({
+            code: 'BAD_REQUEST',
+            message: 'Dokumen ID tidak ditemui.',
+          })
+          return
+        }
+
+        const result = await getPdfGarage({ id: DokumenID })
+
+        if (!result.success) {
+          setDokumenFetchState('error')
+          setDokumenFetchError(result.error)
+          return
+        }
+
+        setPdfData(result.data)
+        setDokumenFetchState('success')
+      } catch (err) {
+        setDokumenFetchState('error')
+        setDokumenFetchError({
+          code: 'REQUEST_FAILED',
+          message: err instanceof Error ? err.message : 'Gagal memuatkan dokumen.',
+        })
+        console.error('Error fetching PDF data:', err)
+      }
+    }
+
+    const fetchMetadata = async () => {
+      try {
+        if (!DokumenID) {
+          setMetadataDocument(null)
+          return
+        }
+        const data = await getMetadata({ recordId: DokumenID })
+        setMetadataDocument(data)
+      } catch (error) {
+        setMetadataDocument(null)
+        console.error('Error fetching metadata:', error)
+      }
+    }
+
+    fetchPDFData()
+    fetchMetadata()
+  }, [DokumenID])
+
+  const isApprovalProgressIdle = progressApprove === null && progressDisapprove === null
+
   return (
     <>
-      {progressApprove === null && progressDisapprove === null && (
+      {isApprovalProgressIdle && dokumenFetchState === 'success' && pdfData && (
         <div className="flex w-full flex-col overflow-auto">
-          <HeaderDokumenID
-            title={document.title}
-            path={document.path}
-            date={document.date}
-            status={document.status}
-            classification={document.classification}
-            category={document.category}
-            unit={document.unit}
-            onApproveDokumen={handleApproveDokumen}
-            onNotApproveDokumen={handleNotApproveDokumen}
-          />
+          {pdfData && (
+            <HeaderDokumenID
+              metadataDocument={metadataDocument}
+              recordTitle={pdfData.document?.recordTitle ?? 'Title tidak dijumpai'}
+              path={pdfData.document?.path ?? 'Path tidak dijumpai'}
+              recordDate={pdfData.document?.recordDate ?? 'Tarikh tidak dijumpai'}
+              status={pdfData.document?.status ?? 'Status tidak dijumpai'}
+              accessLevel={normalizeWord(
+                pdfData.document?.accessLevel || 'Klasifikasi tidak dijumpai'
+              )}
+              documentProfileCode={normalizeWord(
+                pdfData.document?.documentProfileCode || 'Kategori tidak dijumpai'
+              )}
+              unit={normalizeWord(pdfData.document?.unit || 'Unit tidak dijumpai')}
+              onApproveDokumen={handleApproveDokumen}
+              onNotApproveDokumen={handleNotApproveDokumen}
+            />
+          )}
           <SearchBarDokumenID searchPluginInstance={searchPluginInstance} />
-          <DokumenContentID pdfUrl={document.pdfUrl} searchPluginInstance={searchPluginInstance} />
+          <DokumenContentID pdfUrl={pdfData.url} searchPluginInstance={searchPluginInstance} />
+        </div>
+      )}
+
+      {isApprovalProgressIdle && dokumenFetchState === 'loading' && (
+        <div className="flex w-full h-full">
+          <ProgressResultChecker
+            progress={dokumenFetchState}
+            loadingDescription="Dokumen sedang dimuatkan. Sila tunggu sebentar."
+            errorTitle="Dokumen Gagal Dimuatkan"
+            errorDescription={
+              dokumenFetchError
+                ? `${dokumenFetchError.code}: ${dokumenFetchError.message}`
+                : 'Sila muat semula halaman ini atau kembali ke katalog dokumen.'
+            }
+            errorButtonText="Kembali Ke Katalog Dokumen"
+            navigateError={`/${lang}/katalog-dokumen`}
+          />
+        </div>
+      )}
+
+      {isApprovalProgressIdle && dokumenFetchState === 'error' && (
+        <div className="flex w-full h-full">
+          <ProgressResultChecker
+            progress={dokumenFetchState}
+            loadingDescription="Dokumen sedang dimuatkan. Sila tunggu sebentar."
+            errorTitle="Dokumen Gagal Dimuatkan"
+            errorDescription={
+              dokumenFetchError
+                ? `${dokumenFetchError.code}: ${dokumenFetchError.message}`
+                : 'Sila muat semula halaman ini atau kembali ke katalog dokumen.'
+            }
+            errorButtonText="Kembali Ke Katalog Dokumen"
+            navigateError={`/${lang}/katalog-dokumen`}
+          />
         </div>
       )}
       {progressApprove && (

@@ -1,4 +1,4 @@
-import { renderSecretTag } from '@/utils/RenderTag'
+import type { MetadataDocument, MetadataItem } from '@/services/metadata.svc'
 import {
   SummaryList,
   SummaryListHeader,
@@ -8,99 +8,115 @@ import {
   SummaryListDetail,
   SummaryListAction,
 } from '@govtechmy/myds-react/summary-list'
-import type { DocPreviewInfo } from '@/components/page/MuatNaik/MuatNaikDokumenForm'
+import normalizeWord from '@/utils/NormalizeWord'
 
 interface MetadataSummaryProps {
-  docInfo: DocPreviewInfo
+  metadata?: MetadataDocument | null
 }
 
-export default function MetadataSummary({ docInfo }: MetadataSummaryProps) {
+const SECTION_TITLE_MAP: Record<string, string> = {
+  recordData: 'Profil Dokumen (Repositori)',
+  requiredMetadata: 'Dublin Core (Metadata)',
+  metadata: 'Metadata Tambahan (Repository)',
+}
+
+const RECORD_DATA_TERM_MAP: Record<string, string> = {
+  id: 'ID Rekod',
+  path: 'Lokasi Folder',
+  documentProfile: 'Profil Dokumen',
+  recordDescription: 'Ringkasan (Pilihan)',
+  accessLevel: 'Tahap Keselamatan',
+  unit: 'Unit',
+}
+
+function getSectionTitle(title?: string): string {
+  if (!title) return 'No Title'
+
+  return SECTION_TITLE_MAP[title] ?? title
+}
+
+function toRecordDataDisplayValue(key: string, value: unknown): string {
+  if (key === 'unit' || key === 'accessLevel') {
+    const normalizedValue = normalizeWord(
+      value === null || value === undefined ? '' : String(value)
+    )
+    return String(normalizedValue ?? '') || '-'
+  }
+
+  return String(value ?? '') || '-'
+}
+
+function renderMetadataRows(items: MetadataItem[]) {
+  return items.map((item, index) => (
+    <SummaryListRow key={`${item.title}-${index}`}>
+      <SummaryListTerm className="font-medium">{item.title}</SummaryListTerm>
+      <SummaryListDetail>{String(item.value ?? '') || '-'}</SummaryListDetail>
+      <SummaryListAction></SummaryListAction>
+    </SummaryListRow>
+  ))
+}
+
+export default function MetadataSummary({ metadata }: MetadataSummaryProps) {
+  const recordDataEntries = metadata?.recordData ? Object.entries(metadata.recordData) : []
+  const hasRecordData = recordDataEntries.length > 0
+  const hasRequiredMetadata = (metadata?.requiredMetadata.length ?? 0) > 0
+  const hasMetadata = (metadata?.metadata.length ?? 0) > 0
+
+  if (!metadata || (!hasRecordData && !hasRequiredMetadata && !hasMetadata)) {
+    return (
+      <SummaryList>
+        <SummaryListHeader className="font-body text-body-md font-semibold">
+          Metadata
+        </SummaryListHeader>
+        <SummaryListBody>
+          <SummaryListRow>
+            <SummaryListTerm className="font-medium">Tiada Maklumat Ditemui</SummaryListTerm>
+            <SummaryListDetail>-</SummaryListDetail>
+            <SummaryListAction></SummaryListAction>
+          </SummaryListRow>
+        </SummaryListBody>
+      </SummaryList>
+    )
+  }
+
   return (
     <>
-      <SummaryList>
-        <SummaryListHeader className="font-body text-body-md font-semibold">
-          Profil Dokumen (Repositori)
-        </SummaryListHeader>
-        <SummaryListBody>
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Lokasi Folder</SummaryListTerm>
-            <SummaryListDetail>{docInfo.lokasiFolder}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
+      {hasRecordData && (
+        <SummaryList>
+          <SummaryListHeader className="font-body text-body-md font-semibold">
+            {getSectionTitle('recordData')}
+          </SummaryListHeader>
+          <SummaryListBody>
+            {recordDataEntries.map(([key, value], index) => (
+              <SummaryListRow key={`${key}-${index}`}>
+                <SummaryListTerm className="font-medium">
+                  {RECORD_DATA_TERM_MAP[key] ?? key}
+                </SummaryListTerm>
+                <SummaryListDetail>{toRecordDataDisplayValue(key, value)}</SummaryListDetail>
+                <SummaryListAction></SummaryListAction>
+              </SummaryListRow>
+            ))}
+          </SummaryListBody>
+        </SummaryList>
+      )}
 
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Profil Dokumen</SummaryListTerm>
-            <SummaryListDetail>{docInfo.profilDokumen}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
+      {hasRequiredMetadata && (
+        <SummaryList>
+          <SummaryListHeader className="font-body text-body-md font-semibold">
+            {getSectionTitle('requiredMetadata')}
+          </SummaryListHeader>
+          <SummaryListBody>{renderMetadataRows(metadata.requiredMetadata)}</SummaryListBody>
+        </SummaryList>
+      )}
 
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Ringkasan (Pilihan)</SummaryListTerm>
-            <SummaryListDetail>{docInfo.ringkasan || '-'}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
-        </SummaryListBody>
-      </SummaryList>
-
-      <SummaryList>
-        <SummaryListHeader className="font-body text-body-md font-semibold">
-          Dublin Core (Metadata)
-        </SummaryListHeader>
-
-        <SummaryListBody>
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Tajuk</SummaryListTerm>
-            <SummaryListDetail>{docInfo.tajuk}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
-
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Tarikh Mesyuarat</SummaryListTerm>
-            <SummaryListDetail>{docInfo.tarikhMesyuarat}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
-
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Klasifikasi Fail</SummaryListTerm>
-            <SummaryListDetail className="py-2">
-              {renderSecretTag(docInfo.klasifikasiFail)}
-            </SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
-
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Nama Pewujud</SummaryListTerm>
-            <SummaryListDetail>{docInfo.namaPewujud}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
-        </SummaryListBody>
-      </SummaryList>
-
-      <SummaryList>
-        <SummaryListHeader className="font-body text-body-md font-semibold">
-          Metadata Tambahan (Repositori)
-        </SummaryListHeader>
-
-        <SummaryListBody>
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Tempat Mesyuarat</SummaryListTerm>
-            <SummaryListDetail>{docInfo.tempatMesyuarat || '-'}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
-
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Bilangan Helaian</SummaryListTerm>
-            <SummaryListDetail>{docInfo.bilanganHelaian || '-'}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
-
-          <SummaryListRow>
-            <SummaryListTerm className="font-medium">Jenis Kemasukan Rekod</SummaryListTerm>
-            <SummaryListDetail>{docInfo.jenisKemasukan || '-'}</SummaryListDetail>
-            <SummaryListAction></SummaryListAction>
-          </SummaryListRow>
-        </SummaryListBody>
-      </SummaryList>
+      {hasMetadata && (
+        <SummaryList>
+          <SummaryListHeader className="font-body text-body-md font-semibold">
+            {getSectionTitle('metadata')}
+          </SummaryListHeader>
+          <SummaryListBody>{renderMetadataRows(metadata.metadata)}</SummaryListBody>
+        </SummaryList>
+      )}
     </>
   )
 }
