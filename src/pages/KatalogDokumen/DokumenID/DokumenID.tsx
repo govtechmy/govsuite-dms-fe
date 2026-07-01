@@ -197,7 +197,7 @@ export default function DokumenIDPage() {
             errorTitle="Dokumen Gagal Dimuatkan"
             errorDescription={
               <div className="flex flex-col gap-2 items-center justify-center">
-                <div>Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem.</div>
+                <div>Dokumen gagal dimuatkan, sila cuba lagi atau hubungi pentadbir sistem.</div>
                 <div>
                   {dokumenFetchError?.code ?? 'REQUEST_FAILED'} :{' '}
                   {dokumenFetchError?.message ?? 'Gagal memuatkan dokumen.'}
@@ -218,7 +218,7 @@ export default function DokumenIDPage() {
             errorTitle="Dokumen Gagal Dimuatkan"
             errorDescription={
               <div className="flex flex-col gap-2 items-center justify-center">
-                <div>Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem.</div>
+                <div>Dokumen gagal dimuatkan, sila cuba lagi atau hubungi pentadbir sistem.</div>
                 <div>
                   {dokumenFetchError?.code ?? 'REQUEST_FAILED'} :{' '}
                   {dokumenFetchError?.message ?? 'Gagal memuatkan dokumen.'}
