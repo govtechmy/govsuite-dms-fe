@@ -58,7 +58,9 @@ export const downloadFile = ({ url, fileName, fallback, fileExtension }: Downloa
     .then((blob) => {
       const objectUrl = URL.createObjectURL(blob)
       triggerDownload(objectUrl)
-      URL.revokeObjectURL(objectUrl)
+      setTimeout(() => {
+        URL.revokeObjectURL(objectUrl)
+      }, 0)
     })
     .catch(() => {
       // Fallback for endpoints that do not allow blob fetch due to CORS.
