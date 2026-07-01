@@ -5,17 +5,17 @@ import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/cal
 import normalizeWord from '@/utils/NormalizeWord'
 
 export interface KatalogSearchResultItem {
-  type?: string
-  id?: string
-  recordId?: string
-  folderId?: string
-  fileName?: string
-  status?: string
+  type: string
+  id: string
+  recordId: string
+  folderId: string
+  fileName: string
+  status: string
   accessLevel: string
   recordDate: string
   recordTitle: string
   unit: string
-  path?: string
+  path: string
   documentProfile?: string
   documentProfileCode?: string
 }
@@ -31,7 +31,7 @@ interface KatalogDisplaySearchProps {
   totalRecords: number
   onPageChange: (newPage: number) => void
   onPageSizeChange: (newSize: number) => void
-  onItemClick: (id: string) => void
+  onItemClick: (id: string, item?: KatalogSearchResultItem) => void
 }
 
 export default function KatalogDisplaySearch({
@@ -85,7 +85,7 @@ export default function KatalogDisplaySearch({
                   title={doc.recordTitle || 'Tiada Tajuk Rekod'}
                   type={normalizeWord(doc.documentProfile) || 'Tiada Profil'}
                   unit={normalizeWord(doc.unit) || 'Tiada Nama Unit'}
-                  onClick={() => onItemClick(doc.recordId || 'TiadaRekod')}
+                  onClick={() => onItemClick(doc.recordId || 'TiadaRekod', doc)}
                 />
               )
             })}

@@ -46,6 +46,10 @@ interface ProgressResultCheckerProps {
   navigateSuccess2?: string
   navigateError?: string
   navigateUploadingError?: string
+  onSuccessClick?: () => void
+  onSuccessClick2?: () => void
+  onErrorClick?: () => void
+  onUploadingErrorClick?: () => void
   loadingDescription: ReactNode
   successTitle?: string
   successDescription?: ReactNode
@@ -68,14 +72,18 @@ export default function ProgressResultChecker({
   successButtonText2,
   navigateSuccess = '/ms',
   navigateSuccess2 = '/ms',
+  onSuccessClick,
+  onSuccessClick2,
   errorTitle,
   errorDescription,
   errorButtonText,
   navigateError = '/ms',
+  onErrorClick,
   errorUploadingTitle,
   errorUploadingDescription,
   errorUploadingButtonText,
   navigateUploadingError = '/ms',
+  onUploadingErrorClick,
 }: ProgressResultCheckerProps) {
   const navigate = useNavigate()
 
@@ -93,8 +101,8 @@ export default function ProgressResultChecker({
           buttonText2={successButtonText2}
           buttonDisplay={true}
           buttonDisplay2={true}
-          onButtonClick={() => navigate(`${navigateSuccess}`)}
-          onButtonClick2={() => (window.location.href = `${navigateSuccess2}`)}
+          onButtonClick={onSuccessClick ?? (() => navigate(`${navigateSuccess}`))}
+          onButtonClick2={onSuccessClick2 ?? (() => (window.location.href = `${navigateSuccess2}`))}
         />
       )}
       {progress === 'error' && errorTitle && errorDescription && errorButtonText && (
@@ -104,7 +112,7 @@ export default function ProgressResultChecker({
           description={errorDescription}
           buttonText={errorButtonText}
           buttonDisplay={true}
-          onButtonClick={() => navigate(`${navigateError}`)}
+          onButtonClick={onErrorClick ?? (() => navigate(`${navigateError}`))}
         />
       )}
       {progress === 'errorUploading' &&
@@ -117,7 +125,7 @@ export default function ProgressResultChecker({
             description={errorUploadingDescription}
             buttonText={errorUploadingButtonText}
             buttonDisplay={true}
-            onButtonClick={() => navigate(`${navigateUploadingError}`)}
+            onButtonClick={onUploadingErrorClick ?? (() => navigate(`${navigateUploadingError}`))}
           />
         )}
     </>

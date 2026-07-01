@@ -1,4 +1,5 @@
 import { clx } from '@govtechmy/myds-react/utils'
+import { formatISODate } from '@/utils/formatDate'
 
 export interface DateCardProps {
   className?: string
@@ -7,7 +8,7 @@ export interface DateCardProps {
 }
 
 export const DateCard: React.FC<DateCardProps> = ({ className, date, size }) => {
-  const _date = (date ? new Date(date) : new Date()).toDateString().split(' ')
+  const _date = formatISODate(date)
 
   return (
     <div

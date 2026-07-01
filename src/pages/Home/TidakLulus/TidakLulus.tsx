@@ -37,6 +37,7 @@ export default function TidakLulusPage() {
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
   const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false)
+  const [selectedDocument, setSelectedDocument] = useState<CatalogDocumentItem | null>(null)
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -126,7 +127,7 @@ export default function TidakLulusPage() {
         <MetadataModalTidakLulus
           open={isMetadataDialogOpen}
           onOpenChange={setIsMetadataDialogOpen}
-          lokasiFolder={'JKKPN > 2025 - 2029 > 2025 > January > Minit Jemaah Menteri Bil. 12/2026'}
+          selectedDocument={selectedDocument}
         />
 
         <KatalogDisplaySearch
@@ -140,7 +141,12 @@ export default function TidakLulusPage() {
           totalRecords={totalRecords}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          onItemClick={() => setIsMetadataDialogOpen(true)}
+          onItemClick={(id, clickedItem) => {
+            const selectedItem =
+              clickedItem ?? catalogItems.find((doc) => doc.recordId === id) ?? null
+            setSelectedDocument(selectedItem)
+            setIsMetadataDialogOpen(true)
+          }}
         />
       </div>
     </RightSidePageLayoutWrapper>
