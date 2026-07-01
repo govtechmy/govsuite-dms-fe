@@ -130,7 +130,6 @@ export default function DokumenIDPage() {
         }
 
         setPdfData(result.data)
-        console.log(result.data)
         setDokumenFetchState('success')
       } catch (err) {
         setDokumenFetchState('error')

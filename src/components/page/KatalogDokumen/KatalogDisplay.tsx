@@ -580,7 +580,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                                 title={doc.recordTitle || 'Tiada Tajuk Rekod'}
                                 type={doc.documentProfile || 'Tiada Profil'}
                                 unit={unit.name || 'Tiada Nama Unit'}
-                                onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.id}`)}
+                                onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.recordId}`)}
                               />
                             ))}
                           </div>
