@@ -90,6 +90,7 @@ export default function CarianDokumenPage() {
           jenisDokumen,
           dateFrom,
           dateTo,
+          sort,
           page: nextPage,
           limit: LAZY_BATCH_SIZE,
         })
@@ -156,6 +157,7 @@ export default function CarianDokumenPage() {
       fetchDocumentInfo,
       jenisDokumen,
       query,
+      sort,
       setDocumentInfo,
       setDocumentRecords,
       setIsLoadingSearch,

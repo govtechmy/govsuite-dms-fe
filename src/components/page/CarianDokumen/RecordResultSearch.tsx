@@ -47,7 +47,7 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
     }
 
     setSelectedDocumentId(id)
-    setSelectedKeywordId('1')
+    setSelectedKeywordId(null)
     void fetchDocumentInfo(id)
   }
 

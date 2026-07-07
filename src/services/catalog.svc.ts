@@ -253,6 +253,7 @@ export const getSearchRecordCarianDokumen = async ({
   jenisDokumen,
   dateFrom,
   dateTo,
+  sort,
   status,
   page = 1,
   limit = 10,
@@ -262,6 +263,7 @@ export const getSearchRecordCarianDokumen = async ({
   jenisDokumen?: string
   dateFrom?: string
   dateTo?: string
+  sort?: string
   status?: string
   page?: number
   limit?: number
@@ -286,6 +288,10 @@ export const getSearchRecordCarianDokumen = async ({
 
   if (dateTo) {
     params.set('dateTo', dateTo)
+  }
+
+  if (sort) {
+    params.set('sort', sort)
   }
 
   if (status) {
