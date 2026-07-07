@@ -4,7 +4,7 @@ import EmptySearchState from '@/components/page/CarianDokumen/EmptySearchState'
 import SearchLoadingState from '@/components/page/CarianDokumen/SearchLoadingState'
 import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCarianDokumen'
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
-import SelectCarianDokumenCarian from '@/components/shared/selectCarianDokumenCarian'
+import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
 import {
   getDropdownJenisDokumen,
   getDropdownUnits,
@@ -261,7 +261,7 @@ export default function CarianDokumenPage() {
         <MainHeading>Carian Dokumen</MainHeading>
         <div className="flex flex-col gap-3">
           <SearchBarCarianDokumen />
-          <SelectCarianDokumenCarian />
+          <SelectCarianDokumenWithStore />
         </div>
       </RightSidePageLayoutWrapper>
 

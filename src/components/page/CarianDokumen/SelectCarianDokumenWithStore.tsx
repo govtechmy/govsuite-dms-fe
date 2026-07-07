@@ -11,17 +11,17 @@ import { ReloadIcon } from '@govtechmy/myds-react/icon'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
 
-interface SelectCarianDokumenCarianProps {
+interface SelectCarianDokumenWithStoreProps {
   showOnlyWhenSearchQuery?: boolean
   resetPageOnFilterChange?: boolean
 }
 
 const SEARCH_LIMIT = '10'
 
-export default function SelectCarianDokumenCarian({
+export default function SelectCarianDokumenWithStore({
   showOnlyWhenSearchQuery = false,
   resetPageOnFilterChange = true,
-}: SelectCarianDokumenCarianProps) {
+}: SelectCarianDokumenWithStoreProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const dropdownUnits = useSearchStore((state) => state.dropdownUnits)
   const dropdownJenisDokumen = useSearchStore((state) => state.dropdownJenisDokumen)
