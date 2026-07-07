@@ -25,10 +25,23 @@ export default function PratontonSearchResult({
   const { lang } = useParams()
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
+  const [isReferenceCopied, setIsReferenceCopied] = useState(false)
 
   useEffect(() => {
     setIsPdfLoaded(false)
   }, [documentInfo?.documentID])
+
+  useEffect(() => {
+    if (!isReferenceCopied) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setIsReferenceCopied(false)
+    }, 2000)
+
+    return () => window.clearTimeout(timer)
+  }, [isReferenceCopied])
 
   const handleBukaPratonton = () => {
     if (documentInfo?.documentID) {
@@ -39,6 +52,33 @@ export default function PratontonSearchResult({
   const handleDocumentLoad = () => {
     setIsPdfLoaded(true)
     onDocumentLoad?.()
+  }
+
+  const handleCopyReference = async () => {
+    const reference = documentInfo?.referencePath?.trim()
+    if (!reference) {
+      return
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(reference)
+      } else {
+        const textArea = document.createElement('textarea')
+        textArea.value = reference
+        textArea.setAttribute('readonly', '')
+        textArea.style.position = 'absolute'
+        textArea.style.left = '-9999px'
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+
+      setIsReferenceCopied(true)
+    } catch {
+      setIsReferenceCopied(false)
+    }
   }
 
   return (
@@ -66,8 +106,14 @@ export default function PratontonSearchResult({
         </div>
       </div>
       <div className="flex justify-between items-center">
-        <Button variant="default-outline" size="small" className="gap-1.5">
-          Salin Rujukan
+        <Button
+          variant="default-outline"
+          size="small"
+          className="gap-1.5"
+          onClick={handleCopyReference}
+          disabled={!documentInfo?.referencePath}
+        >
+          {isReferenceCopied ? 'Rujukan Disalin !' : 'Salin Rujukan'}
         </Button>
         <Button size="small" className="gap-1.5" onClick={handleBukaPratonton}>
           Buka Pratonton

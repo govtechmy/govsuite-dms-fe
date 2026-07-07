@@ -297,9 +297,9 @@ export const getSearchRecordCarianDokumen = async ({
     const response = await authAxios.get(url)
     const payload = response.data?.data ?? response.data ?? {}
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
-      ? payload.items.map((item: { recordId?: string; title?: string; recordTitle?: string }) => ({
+      ? payload.items.map((item: { recordId?: string; title?: string }) => ({
           recordId: String(item?.recordId ?? ''),
-          title: String(item?.title ?? item?.recordTitle ?? ''),
+          title: String(item?.title ?? ''),
         }))
       : []
     const apiMeta = payload?.meta ?? {}
