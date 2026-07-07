@@ -72,6 +72,19 @@ export interface CatalogSearchResponse {
   meta: CatalogListMeta
 }
 
+export interface RecordSearchItem {
+  recordId: string
+  title: string
+}
+
+export interface RecordSearchResponse {
+  search: {
+    keyword: string
+  }
+  items: RecordSearchItem[]
+  meta: CatalogListMeta
+}
+
 export interface CreateFolderPayload {
   name: string
   parentId?: string
@@ -214,6 +227,95 @@ export const getSearchKatalogItems = async ({
     )
 
     return {
+      items,
+      meta: {
+        ...DEFAULT_CATALOG_LIST_META,
+        ...apiMeta,
+        currentPage,
+        pageSize,
+        totalItems,
+        totalPages,
+        hasNextPage:
+          typeof apiMeta.hasNextPage === 'boolean' ? apiMeta.hasNextPage : currentPage < totalPages,
+        hasPreviousPage:
+          typeof apiMeta.hasPreviousPage === 'boolean' ? apiMeta.hasPreviousPage : currentPage > 1,
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching searched catalog items : ', error)
+    throw error
+  }
+}
+
+export const getSearchRecordCarianDokumen = async ({
+  query,
+  unit,
+  jenisDokumen,
+  dateFrom,
+  dateTo,
+  status,
+  page = 1,
+  limit = 10,
+}: {
+  query: string
+  unit?: string
+  jenisDokumen?: string
+  dateFrom?: string
+  dateTo?: string
+  status?: string
+  page?: number
+  limit?: number
+}): Promise<RecordSearchResponse> => {
+  const params = new URLSearchParams({
+    search: query,
+    page: String(page),
+    limit: String(limit),
+  })
+
+  if (unit) {
+    params.set('unit', unit)
+  }
+
+  if (jenisDokumen) {
+    params.set('jenisDokumen', jenisDokumen)
+  }
+
+  if (dateFrom) {
+    params.set('dateFrom', dateFrom)
+  }
+
+  if (dateTo) {
+    params.set('dateTo', dateTo)
+  }
+
+  if (status) {
+    params.set('status', status)
+  }
+
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/search?${params.toString()}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data ?? {}
+    const items: RecordSearchItem[] = Array.isArray(payload?.items)
+      ? payload.items.map((item: { recordId?: string; title?: string; recordTitle?: string }) => ({
+          recordId: String(item?.recordId ?? ''),
+          title: String(item?.title ?? item?.recordTitle ?? ''),
+        }))
+      : []
+    const apiMeta = payload?.meta ?? {}
+    const currentPage = Number(apiMeta.currentPage ?? page)
+    const pageSize = Number(apiMeta.pageSize ?? limit)
+    const totalItems = Number(apiMeta.totalItems ?? payload?.totalItems ?? items.length)
+    const totalPages = Number(
+      apiMeta.totalPages ??
+        payload?.totalPages ??
+        Math.max(1, Math.ceil(totalItems / Math.max(1, pageSize)))
+    )
+
+    return {
+      search: {
+        keyword: String(payload?.search?.keyword ?? query),
+      },
       items,
       meta: {
         ...DEFAULT_CATALOG_LIST_META,

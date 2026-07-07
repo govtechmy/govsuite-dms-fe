@@ -6,29 +6,58 @@ import {
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
 import { clx } from '@govtechmy/myds-react/utils'
+import { useSearchStore } from '@/store/SearchStore'
+import type { UIEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
-interface DocumentRecord {
-  documentId: string
-  title: string
-}
+const SCROLL_THRESHOLD = 40
+const LAZY_BATCH_SIZE = 10
 
 interface RecordResultSearchProps {
-  documentRecords?: DocumentRecord[]
-  selectedDocumentId?: string | null
-  sortBy?: string
-  onDocumentSelect?: (id: string) => void
-  onSortChange?: (value: string) => void
+  onLazyLoad: () => void
 }
 
-export default function RecordResultSearch({
-  documentRecords = [],
-  selectedDocumentId,
-  sortBy = 'latest',
-  onDocumentSelect,
-  onSortChange,
-}: RecordResultSearchProps) {
+export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const documentRecords = useSearchStore((state) => state.documentRecords)
+  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
+  const sortBy = useSearchStore((state) => state.sort)
+  const setSort = useSearchStore((state) => state.setSort)
+  const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
+  const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
+  const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
+
   const handleSortChange = (value: string) => {
-    onSortChange?.(value)
+    const params = new URLSearchParams(searchParams)
+    if (value) {
+      params.set('sort', value)
+    } else {
+      params.delete('sort')
+    }
+    params.set('page', '1')
+    params.set('limit', String(LAZY_BATCH_SIZE))
+
+    setSort(value)
+    setSearchParams(params)
+  }
+
+  const handleDocumentSelect = (id: string) => {
+    if (selectedDocumentId === id) {
+      return
+    }
+
+    setSelectedDocumentId(id)
+    setSelectedKeywordId('1')
+    void fetchDocumentInfo(id)
+  }
+
+  const handleLazyLoadScroll = (event: UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget
+    const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight
+
+    if (distanceToBottom <= SCROLL_THRESHOLD) {
+      onLazyLoad()
+    }
   }
 
   return (
@@ -49,12 +78,12 @@ export default function RecordResultSearch({
       </div>
 
       {/* Documents List */}
-      <div className="flex w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2">
-        <div className="flex flex-col gap-0 overflow-y-auto">
+      <div className="flex w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2 h-[300px]">
+        <div className="flex h-full flex-col gap-0 overflow-y-auto" onScroll={handleLazyLoadScroll}>
           {documentRecords.map((record) => (
             <button
               key={record.documentId}
-              onClick={() => onDocumentSelect?.(record.documentId)}
+              onClick={() => handleDocumentSelect(record.documentId)}
               className={clx(
                 'flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left transition-colors',
                 selectedDocumentId === record.documentId

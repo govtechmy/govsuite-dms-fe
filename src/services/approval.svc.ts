@@ -24,17 +24,27 @@ interface NotApprovedWorkflowStateUpdateData {
 }
 
 export const putDocumentApproval = async (recordId: string): Promise<WorkflowStateUpdateData> => {
-  const url = `${getEnv('VITE_API_BASE_URL')}/record/approved/${recordId}`
-  const response = await authAxios.put<WorkflowStateUpdateData>(url)
-  return response.data
+  try {
+    const url = `${getEnv('VITE_API_BASE_URL')}/record/approved/${recordId}`
+    const response = await authAxios.put<WorkflowStateUpdateData>(url)
+    return response.data
+  } catch (error) {
+    console.error('Error approving document:', error)
+    throw error
+  }
 }
 
 export const putDocumentNotApproved = async ({
   recordId,
   body,
 }: PutDocumentNotApprovedParams): Promise<NotApprovedWorkflowStateUpdateData> => {
-  const url = `${getEnv('VITE_API_BASE_URL')}/record/rejected/${recordId}`
+  try {
+    const url = `${getEnv('VITE_API_BASE_URL')}/record/rejected/${recordId}`
 
-  const response = await authAxios.put<NotApprovedWorkflowStateUpdateData>(url, body)
-  return response.data
+    const response = await authAxios.put<NotApprovedWorkflowStateUpdateData>(url, body)
+    return response.data
+  } catch (error) {
+    console.error('Error rejecting document:', error)
+    throw error
+  }
 }

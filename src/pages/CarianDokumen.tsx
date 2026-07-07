@@ -1,9 +1,18 @@
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
+import MainHeading from '@/components/layout/MainHeading'
 import EmptySearchState from '@/components/page/CarianDokumen/EmptySearchState'
 import SearchLoadingState from '@/components/page/CarianDokumen/SearchLoadingState'
-import SearchResultsState from '@/components/page/CarianDokumen/SearchResultsState'
-import { useEffect, useState } from 'react'
+import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCarianDokumen'
+import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
+import SelectCarianDokumenCarian from '@/components/shared/selectCarianDokumenCarian'
+import {
+  getDropdownJenisDokumen,
+  getDropdownUnits,
+  getSearchRecordCarianDokumen,
+} from '@/services/catalog.svc'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useSearchStore } from '@/store/SearchStore'
 
 export interface DocumentRecord {
   documentId: string
@@ -30,144 +39,202 @@ export interface DocumentInfoResponse {
   }
 }
 
+const LAZY_BATCH_SIZE = 10
+
 export default function CarianDokumenPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const query = searchParams.get('query')?.trim() || ''
-  const jenisDokumen = searchParams.get('jenisDokumen') || ''
-  const unit = searchParams.get('unit') || ''
-  const dateFrom = searchParams.get('dateFrom') || ''
-  const dateTo = searchParams.get('dateTo') || ''
-  const sort = searchParams.get('sort') || 'latest'
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false)
-  const [documentRecords, setDocumentRecords] = useState<DocumentRecord[]>([])
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
-  const [keywordRecords, setKeywordRecords] = useState<KeywordRecord | null>(null)
-  const [selectedKeywordId, setSelectedKeywordId] = useState<string | null>(null)
-  const [documentInfo, setDocumentInfo] = useState<DocumentInfoResponse['data'] | null>(null)
+  const [searchParams] = useSearchParams()
+  const latestSearchRequestTokenRef = useRef(0)
+  const hadSearchQueryRef = useRef(false)
+  const appendRequestInFlightRef = useRef(false)
+  const currentPageRef = useRef(1)
 
-  const handleDocumentSelect = (id: string) => {
-    if (selectedDocumentId !== id) {
-      setSelectedDocumentId(id)
-      setSelectedKeywordId('1')
-      fetchKeywordRecords(id)
-      fetchDocumentInfo(id)
-    }
-  }
+  const query = useSearchStore((state) => state.query)
+  const jenisDokumen = useSearchStore((state) => state.jenisDokumen)
+  const unit = useSearchStore((state) => state.unit)
+  const dateFrom = useSearchStore((state) => state.dateFrom)
+  const dateTo = useSearchStore((state) => state.dateTo)
+  const sort = useSearchStore((state) => state.sort)
+  const isLoadingSearch = useSearchStore((state) => state.isLoadingSearch)
+  const documentRecords = useSearchStore((state) => state.documentRecords)
+  const searchMeta = useSearchStore((state) => state.searchMeta)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const setFromSearchParams = useSearchStore((state) => state.setFromSearchParams)
+  const setIsLoadingSearch = useSearchStore((state) => state.setIsLoadingSearch)
+  const setDocumentRecords = useSearchStore((state) => state.setDocumentRecords)
+  const setDocumentInfo = useSearchStore((state) => state.setDocumentInfo)
+  const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
+  const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
+  const setSearchMeta = useSearchStore((state) => state.setSearchMeta)
+  const setDropdownUnits = useSearchStore((state) => state.setDropdownUnits)
+  const setDropdownJenisDokumen = useSearchStore((state) => state.setDropdownJenisDokumen)
+  const resetSearchState = useSearchStore((state) => state.resetSearchState)
+  const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
-  const handleKeywordSelect = (id: string) => {
-    setSelectedKeywordId(id)
-  }
+  const fetchAndSetDocumentRecords = useCallback(
+    async (options?: { append?: boolean }) => {
+      const append = options?.append ?? false
+      const nextPage = append ? currentPageRef.current + 1 : 1
+      const requestToken = ++latestSearchRequestTokenRef.current
 
-  const handleSortChange = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value) {
-      newParams.set('sort', value)
-    } else {
-      newParams.delete('sort')
-    }
-    setSearchParams(newParams)
-  }
+      if (append) {
+        setIsLoadingMore(true)
+      } else {
+        setSelectedKeywordId(null)
+        setIsLoadingSearch(true)
+      }
 
-  useEffect(() => {
-    if (!query) {
-      setDocumentRecords([])
-      setKeywordRecords(null)
-      setDocumentInfo(null)
-      setSelectedDocumentId(null)
-      setSelectedKeywordId(null)
+      try {
+        const backendResponse = await getSearchRecordCarianDokumen({
+          query,
+          unit,
+          jenisDokumen,
+          dateFrom,
+          dateTo,
+          page: nextPage,
+          limit: LAZY_BATCH_SIZE,
+        })
+
+        if (requestToken !== latestSearchRequestTokenRef.current) {
+          return
+        }
+
+        currentPageRef.current = backendResponse.meta.currentPage || nextPage
+        setSearchMeta(backendResponse.meta)
+
+        const documents = backendResponse.items.map((item) => ({
+          documentId: item.recordId,
+          title: item.title,
+        }))
+
+        if (append) {
+          const existingIds = new Set(
+            useSearchStore.getState().documentRecords.map((document) => document.documentId)
+          )
+          const dedupedAppendDocuments = documents.filter(
+            (document) => !existingIds.has(document.documentId)
+          )
+
+          if (dedupedAppendDocuments.length > 0) {
+            const currentRecords = useSearchStore.getState().documentRecords
+            setDocumentRecords([...currentRecords, ...dedupedAppendDocuments])
+          }
+          return
+        }
+
+        setDocumentRecords(documents)
+
+        if (documents.length > 0) {
+          setSelectedDocumentId(documents[0].documentId)
+          await Promise.allSettled([fetchDocumentInfo(documents[0].documentId)])
+        } else {
+          setSelectedDocumentId(null)
+          setDocumentInfo(null)
+        }
+      } catch (error) {
+        if (requestToken !== latestSearchRequestTokenRef.current) {
+          return
+        }
+
+        console.error('Search error:', error)
+        if (!append) {
+          setDocumentRecords([])
+          setSearchMeta(null)
+        }
+      } finally {
+        if (append) {
+          setIsLoadingMore(false)
+        }
+
+        if (!append && requestToken === latestSearchRequestTokenRef.current) {
+          setIsLoadingSearch(false)
+        }
+      }
+    },
+    [
+      dateFrom,
+      dateTo,
+      fetchDocumentInfo,
+      jenisDokumen,
+      query,
+      setDocumentInfo,
+      setDocumentRecords,
+      setIsLoadingSearch,
+      setSearchMeta,
+      setSelectedDocumentId,
+      setSelectedKeywordId,
+      unit,
+    ]
+  )
+
+  const triggerAppendLoad = useCallback(() => {
+    if (
+      !searchMeta?.hasNextPage ||
+      isLoadingSearch ||
+      isLoadingMore ||
+      appendRequestInFlightRef.current
+    ) {
       return
     }
 
-    const fetchDocumentRecords = async () => {
-      // Reset selections at the start of a new search
-      setSelectedKeywordId(null)
-      setIsLoadingSearch(true)
+    appendRequestInFlightRef.current = true
+    void fetchAndSetDocumentRecords({ append: true }).finally(() => {
+      appendRequestInFlightRef.current = false
+    })
+  }, [fetchAndSetDocumentRecords, isLoadingMore, isLoadingSearch, searchMeta?.hasNextPage])
+
+  useEffect(() => {
+    setFromSearchParams({
+      query: searchParams.get('search')?.trim() || '',
+      jenisDokumen: searchParams.get('jenisDokumen') || '',
+      unit: searchParams.get('unit') || '',
+      dateFrom: searchParams.get('dateFrom') || '',
+      dateTo: searchParams.get('dateTo') || '',
+      sort: searchParams.get('sort') || 'latest',
+      pageNumber: Math.max(1, Number(searchParams.get('page')) || 1),
+      pageSize: LAZY_BATCH_SIZE,
+    })
+  }, [searchParams, setFromSearchParams])
+
+  useEffect(() => {
+    const fetchDropdownData = async () => {
       try {
-        // Step 1: Fetch backend search response first
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-
-        // Mock backend response - structure from backend
-        const backendResponse: BackendSearchResponse = {
-          data: {
-            keyword: 'Tindakan',
-            document: [
-              { documentId: 'abc10001', title: 'Agenda Mesyuarat JKPPN (Mei 2026)' },
-              { documentId: 'abc10002', title: 'Minit Mesyuarat JKPPN (Mei 2026)' },
-              { documentId: 'abc10003', title: 'Agenda Mesyuarat JKPPN (April 2026)' },
-              { documentId: 'abc10004', title: 'Minit Mesyuarat JKPPN (April 2026)' },
-              { documentId: 'abc10005', title: 'Agenda Mesyuarat JKPPN (Mac 2026)' },
-              { documentId: 'abc10006', title: 'Minit Mesyuarat JKPPN (Mac 2026)' },
-              { documentId: 'abc10007', title: 'Agenda Mesyuarat JKPPN (Februari 2026)' },
-              { documentId: 'abc10008', title: 'Minit Mesyuarat JKPPN (Februari 2026)' },
-              { documentId: 'abc10009', title: 'Agenda Mesyuarat JKPPN (Januari 2026)' },
-              { documentId: 'abc10010', title: 'Minit Mesyuarat JKPPN (Januari 2026)' },
-            ],
-          },
-        }
-
-        // Extract documents from backend response
-        const documents = backendResponse.data.document
-        setDocumentRecords(documents)
-
-        // Step 2: After settling the fetch, fetch keyword records AND document info in parallel
-        if (documents.length > 0) {
-          setSelectedDocumentId(documents[0].documentId)
-          // Fetch both in parallel
-          await Promise.allSettled([
-            fetchKeywordRecords(documents[0].documentId),
-            fetchDocumentInfo(documents[0].documentId),
-          ])
-        }
-      } catch (error) {
-        console.error('Search error:', error)
-        setDocumentRecords([])
-      } finally {
-        setIsLoadingSearch(false)
+        const [unitsData, jenisDokumenData] = await Promise.all([
+          getDropdownUnits(),
+          getDropdownJenisDokumen(),
+        ])
+        setDropdownUnits(unitsData)
+        setDropdownJenisDokumen(jenisDokumenData)
+      } catch (err) {
+        console.error('Error fetching dropdown data:', err)
       }
     }
 
-    fetchDocumentRecords()
-  }, [query, jenisDokumen, unit, dateFrom, dateTo, sort])
+    fetchDropdownData()
+  }, [setDropdownJenisDokumen, setDropdownUnits])
 
-  // Fetch keyword records for a specific document (triggered when a document is selected)
-  const fetchKeywordRecords = async (documentId: string) => {
-    try {
-      // Mock data - EXACT backend response structure
-      const mockKeywords: KeywordRecord = {
-        keyword: 'Tindakan',
-        documentID: documentId,
-        dataPage: [
-          { page1: Math.floor(Math.random() * 10) + 1 },
-          { page3: Math.floor(Math.random() * 10) + 1 },
-        ],
+  useEffect(() => {
+    if (!query) {
+      if (hadSearchQueryRef.current) {
+        resetSearchState()
       }
-
-      setKeywordRecords(mockKeywords)
-    } catch (error) {
-      console.error('Keyword records error:', error)
-      setKeywordRecords(null)
+      hadSearchQueryRef.current = false
+      currentPageRef.current = 1
+      return
     }
-  }
 
-  // Fetch document info for a specific document (triggered when a document is selected)
-  const fetchDocumentInfo = async (documentId: string) => {
-    try {
-      // Mock backend response - structure from backend
-      const mockDocInfo: DocumentInfoResponse = {
-        data: {
-          documentID: documentId,
-          path: `www.something.com/pdf/${documentId}`,
-        },
-      }
-
-      setDocumentInfo(mockDocInfo.data)
-    } catch (error) {
-      console.error('Document info error:', error)
-      setDocumentInfo(null)
-    }
-  }
-
-  // Initial search - fetch document records matching the query
+    hadSearchQueryRef.current = true
+    currentPageRef.current = 1
+    void fetchAndSetDocumentRecords({ append: false })
+  }, [
+    fetchAndSetDocumentRecords,
+    dateFrom,
+    dateTo,
+    query,
+    resetSearchState,
+    sort,
+    unit,
+    jenisDokumen,
+  ])
 
   // Homepage with no search, currently imitating a single page of page search instead of 2
   if (!query) {
@@ -189,17 +256,30 @@ export default function CarianDokumenPage() {
 
   // Re-query or results view
   return (
-    <SearchResultsState
-      isLoadingSearchPage={isLoadingSearch}
-      documentRecords={documentRecords}
-      keywordRecords={keywordRecords}
-      selectedDocumentId={selectedDocumentId}
-      selectedKeywordId={selectedKeywordId}
-      documentInfo={documentInfo}
-      sortBy={sort}
-      onDocumentSelect={handleDocumentSelect}
-      onKeywordSelect={handleKeywordSelect}
-      onSortChange={handleSortChange}
-    />
+    <div className="flex flex-col gap-6 w-full h-full">
+      <RightSidePageLayoutWrapper className="pb-0 flex flex-col gap-6">
+        <MainHeading>Carian Dokumen</MainHeading>
+        <div className="flex flex-col gap-3">
+          <SearchBarCarianDokumen />
+          <SelectCarianDokumenCarian />
+        </div>
+      </RightSidePageLayoutWrapper>
+
+      {isLoadingSearch ? (
+        <div className="flex flex-col items-center justify-center gap-4 py-12 h-full">
+          <SearchLoadingState />
+        </div>
+      ) : documentRecords.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-4 py-12 h-full">
+          <div className="text-body-sm text-txt-black-500 text-center max-w-md">
+            Tiada dokumen ditemui. Sila lakukan carian semula.
+          </div>
+        </div>
+      ) : (
+        <div className="min-h-0">
+          <DisplaySearchResults onLazyLoad={triggerAppendLoad} />
+        </div>
+      )}
+    </div>
   )
 }

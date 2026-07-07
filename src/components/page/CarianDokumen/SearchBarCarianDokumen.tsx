@@ -8,26 +8,64 @@ import {
   SearchBarHint,
 } from '@govtechmy/myds-react/search-bar'
 import { Pill } from '@govtechmy/myds-react/pill'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { clx } from '@govtechmy/myds-react/utils'
+import { useSearchStore } from '@/store/SearchStore'
 
 interface SearchBarCarianDokumenProps {
   className?: string
 }
+
+const SEARCH_LIMIT = '10'
+
 export default function SearchBarCarianDokumen({ className }: SearchBarCarianDokumenProps) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const setQuery = useSearchStore((state) => state.setQuery)
+  const resetSearchState = useSearchStore((state) => state.resetSearchState)
   const [hasFocus, setHasFocus] = useState(false)
-  const [query, setQuery] = useState(searchParams.get('query') || '')
-  const hasQuery = query.length > 0
+  const [search, setSearch] = useState(searchParams.get('search') || '')
+  const hasSearch = search.length > 0
+
+  const clearSearchAndFilters = (params: URLSearchParams) => {
+    params.delete('search')
+    params.delete('unit')
+    params.delete('jenisDokumen')
+    params.delete('dateFrom')
+    params.delete('dateTo')
+    params.delete('sort')
+    params.set('page', '1')
+    params.set('limit', SEARCH_LIMIT)
+  }
+
+  useEffect(() => {
+    setSearch(searchParams.get('search') || '')
+  }, [searchParams])
 
   const handleSearch = () => {
-    if (query.trim()) {
-      const params = new URLSearchParams()
-      params.set('query', query.trim())
-      navigate({ search: params.toString() })
+    const nextSearch = search.trim()
+    const params = new URLSearchParams(searchParams)
+
+    if (nextSearch) {
+      params.set('search', nextSearch)
+      params.set('page', '1')
+      params.set('limit', SEARCH_LIMIT)
+      setQuery(nextSearch)
+    } else {
+      clearSearchAndFilters(params)
+      resetSearchState()
     }
+
+    navigate({ search: params.toString() })
+  }
+
+  const handleClear = () => {
+    const params = new URLSearchParams(searchParams)
+    clearSearchAndFilters(params)
+    setSearch('')
+    resetSearchState()
+    navigate({ search: params.toString() })
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -49,23 +87,23 @@ export default function SearchBarCarianDokumen({ className }: SearchBarCarianDok
         <SearchBarInputContainer>
           <SearchBarInput
             placeholder="Carian melalui kata kunci"
-            value={query}
-            onValueChange={setQuery}
+            value={search}
+            onValueChange={setSearch}
             onFocus={() => setHasFocus(true)}
             onBlur={() => setHasFocus(false)}
             onKeyDown={handleKeyDown}
           />
-          {query && <SearchBarClearButton onClick={() => setQuery('')} />}
+          {search && <SearchBarClearButton onClick={handleClear} />}
 
-          {!hasFocus && !hasQuery && (
+          {!hasFocus && !hasSearch && (
             <SearchBarHint className="hidden lg:flex">
               Tekan <Pill size="small">/</Pill> untuk cari
             </SearchBarHint>
           )}
           <SearchBarSearchButton onClick={handleSearch} />
         </SearchBarInputContainer>
-        <SearchBarResults open={hasQuery && hasFocus} hidden></SearchBarResults>
-        {!hasQuery && (
+        <SearchBarResults open={hasSearch && hasFocus} hidden></SearchBarResults>
+        {!hasSearch && (
           <div className="w-full border border-otl-primary-200 rounded-lg bg-bg-primary-50 px-3 py-4 flex flex-col gap-2 text-body-sm">
             <div className="text-txt-black-700 font-semibold">Tips membuat carian</div>
             <div className="text-txt-black-500">

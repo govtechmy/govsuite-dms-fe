@@ -5,26 +5,30 @@ import type { SearchPlugin } from '@react-pdf-viewer/search'
 import '@react-pdf-viewer/core/lib/styles/index.css'
 import '@react-pdf-viewer/search/lib/styles/index.css'
 import '@/utils/pdfWorker'
+import SearchInPdf from './SearchInPdf'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-
-interface DocumentInfo {
-  documentID: string
-  path: string
-}
+import { useSearchStore } from '@/store/SearchStore'
 
 interface PratontonSearchResultProps {
-  documentInfo?: DocumentInfo | null
+  previewSearchQuery?: string
   searchPluginInstance: SearchPlugin
   onDocumentLoad?: () => void
 }
 
 export default function PratontonSearchResult({
-  documentInfo,
+  previewSearchQuery = '',
   searchPluginInstance,
   onDocumentLoad,
 }: PratontonSearchResultProps) {
   const navigate = useNavigate()
   const { lang } = useParams()
+  const documentInfo = useSearchStore((state) => state.documentInfo)
+  const [isPdfLoaded, setIsPdfLoaded] = useState(false)
+
+  useEffect(() => {
+    setIsPdfLoaded(false)
+  }, [documentInfo?.documentID])
 
   const handleBukaPratonton = () => {
     if (documentInfo?.documentID) {
@@ -32,8 +36,13 @@ export default function PratontonSearchResult({
     }
   }
 
+  const handleDocumentLoad = () => {
+    setIsPdfLoaded(true)
+    onDocumentLoad?.()
+  }
+
   return (
-    <div className="w-full border border-otl-gray-200 bg-bg-gray-50 p-6 border-l-0 gap-6 flex flex-col">
+    <div className="flex h-full min-h-0 w-full flex-col gap-6 border border-otl-gray-200 border-l-0 bg-bg-gray-50 p-6">
       <div className="flex justify-between items-center">
         <p className="flex-1 text-body-md font-semibold text-txt-black-900">Pratonton</p>
         <Button variant="default-outline" size="small" className="gap-1.5">
@@ -41,12 +50,18 @@ export default function PratontonSearchResult({
           Muat Turun
         </Button>
       </div>
-      <div className="border border-otl-gray-200 bg-bg-white w-full h-full rounded-lg overflow-hidden">
-        <div className="h-[600px] overflow-auto">
+      <SearchInPdf
+        searchPluginInstance={searchPluginInstance}
+        previewSearchQuery={previewSearchQuery}
+        documentId={documentInfo?.documentID}
+        isPdfLoaded={isPdfLoaded}
+      />
+      <div className="h-full min-h-0 w-full overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
+        <div className="h-full min-h-0 overflow-auto">
           <Viewer
-            fileUrl="/MinitMesyuaratSample.pdf"
+            fileUrl={documentInfo?.path || ''}
             plugins={[searchPluginInstance]}
-            onDocumentLoad={onDocumentLoad}
+            onDocumentLoad={handleDocumentLoad}
           />
         </div>
       </div>
