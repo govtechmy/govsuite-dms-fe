@@ -20,6 +20,7 @@ interface RecordResultSearchProps {
 export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const documentRecords = useSearchStore((state) => state.documentRecords)
+  const totalItems = useSearchStore((state) => state.searchMeta?.totalItems)
   const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
   const sortBy = useSearchStore((state) => state.sort)
   const setSort = useSearchStore((state) => state.setSort)
@@ -64,7 +65,7 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
     <div className="flex w-full flex-col gap-3">
       <div className="flex w-full items-center justify-center gap-6">
         <p className="flex-1 text-body-md font-semibold text-txt-black-900">
-          {documentRecords.length} Rekod Ditemui
+          {totalItems && totalItems > 0 ? `${totalItems} Rekod Ditemui` : 'Tiada '}
         </p>
         <Select size="small" variant="outline" value={sortBy} onValueChange={handleSortChange}>
           <SelectTrigger>
