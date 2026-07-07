@@ -108,17 +108,8 @@ export default function CarianDokumenPage() {
         }))
 
         if (append) {
-          const existingIds = new Set(
-            useSearchStore.getState().documentRecords.map((document) => document.documentId)
-          )
-          const dedupedAppendDocuments = documents.filter(
-            (document) => !existingIds.has(document.documentId)
-          )
-
-          if (dedupedAppendDocuments.length > 0) {
-            const currentRecords = useSearchStore.getState().documentRecords
-            setDocumentRecords([...currentRecords, ...dedupedAppendDocuments])
-          }
+          const currentRecords = useSearchStore.getState().documentRecords
+          setDocumentRecords([...currentRecords, ...documents])
           return
         }
 

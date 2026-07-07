@@ -81,9 +81,9 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
       {/* Documents List */}
       <div className="flex w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2 h-[300px]">
         <div className="flex h-full flex-col gap-0 overflow-y-auto" onScroll={handleLazyLoadScroll}>
-          {documentRecords.map((record) => (
+          {documentRecords.map((record, index) => (
             <button
-              key={record.documentId}
+              key={index}
               onClick={() => handleDocumentSelect(record.documentId)}
               className={clx(
                 'flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left transition-colors',
