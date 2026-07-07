@@ -123,9 +123,17 @@ export default function MetadataModalTidakLulus({
                   </SummaryListRow>
 
                   <SummaryListRow>
-                    <SummaryListTerm className="font-medium">Nama Pemuat Naik</SummaryListTerm>
+                    <SummaryListTerm className="font-medium">Tajuk</SummaryListTerm>
                     <SummaryListDetail>
                       {selectedDocument?.recordTitle || 'Tiada Info'}
+                    </SummaryListDetail>
+                    <SummaryListAction></SummaryListAction>
+                  </SummaryListRow>
+
+                  <SummaryListRow>
+                    <SummaryListTerm className="font-medium">Nama Pemuat Naik</SummaryListTerm>
+                    <SummaryListDetail>
+                      {selectedDocument?.createdBy || 'Tiada Info'}
                     </SummaryListDetail>
                     <SummaryListAction></SummaryListAction>
                   </SummaryListRow>
