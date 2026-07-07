@@ -35,6 +35,7 @@ export interface CatalogDocumentItem {
   path: string
   documentProfile?: string
   reason?: string
+  createdBy?: string
 }
 
 export interface CatalogListMeta {
