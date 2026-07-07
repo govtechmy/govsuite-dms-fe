@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { deleteRecord, resendRecord } from '@/services/deleteResend'
 import extractBackendError from '@/utils/extractBackendError'
 
@@ -14,8 +14,14 @@ export function useResubmitDokumen(recordId?: string) {
   const [resubmitError, setResubmitError] = useState<ResubmitErrorState | null>(null)
   const [progressDelete, setProgressDelete] = useState<ResubmitProgressState>(null)
   const [deleteError, setDeleteError] = useState<ResubmitErrorState | null>(null)
+  const isActionInFlightRef = useRef(false)
 
   const handleResubmitClick = async () => {
+    if (isActionInFlightRef.current) {
+      return
+    }
+
+    isActionInFlightRef.current = true
     setProgressResubmit('loading')
     setResubmitError(null)
 
@@ -25,6 +31,7 @@ export function useResubmitDokumen(recordId?: string) {
         code: 'BAD_REQUEST',
         message: 'Dokumen ID tidak ditemui.',
       })
+      isActionInFlightRef.current = false
       return
     }
 
@@ -41,6 +48,8 @@ export function useResubmitDokumen(recordId?: string) {
         code: backendError?.code ?? 'REQUEST_FAILED',
         message: backendError?.message ?? 'Permintaan hantar semula gagal diproses.',
       })
+    } finally {
+      isActionInFlightRef.current = false
     }
   }
 
@@ -52,6 +61,11 @@ export function useResubmitDokumen(recordId?: string) {
   }
 
   const handleDeleteClick = async () => {
+    if (isActionInFlightRef.current) {
+      return
+    }
+
+    isActionInFlightRef.current = true
     setProgressDelete('loading')
     setDeleteError(null)
 
@@ -61,6 +75,7 @@ export function useResubmitDokumen(recordId?: string) {
         code: 'BAD_REQUEST',
         message: 'Dokumen ID tidak ditemui.',
       })
+      isActionInFlightRef.current = false
       return
     }
 
@@ -77,6 +92,8 @@ export function useResubmitDokumen(recordId?: string) {
         code: backendError?.code ?? 'REQUEST_FAILED',
         message: backendError?.message ?? 'Permintaan hapus dokumen gagal diproses.',
       })
+    } finally {
+      isActionInFlightRef.current = false
     }
   }
 
