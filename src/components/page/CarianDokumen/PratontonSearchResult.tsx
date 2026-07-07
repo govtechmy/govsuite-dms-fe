@@ -9,6 +9,7 @@ import SearchInPdf from './SearchInPdf'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
+import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
   previewSearchQuery?: string
@@ -24,8 +25,13 @@ export default function PratontonSearchResult({
   const navigate = useNavigate()
   const { lang } = useParams()
   const documentInfo = useSearchStore((state) => state.documentInfo)
+  const documentRecords = useSearchStore((state) => state.documentRecords)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const [isReferenceCopied, setIsReferenceCopied] = useState(false)
+
+  const currentDocumentTitle = documentRecords.find(
+    (documentRecord) => documentRecord.documentId === documentInfo?.documentID
+  )?.title
 
   useEffect(() => {
     setIsPdfLoaded(false)
@@ -52,6 +58,18 @@ export default function PratontonSearchResult({
   const handleDocumentLoad = () => {
     setIsPdfLoaded(true)
     onDocumentLoad?.()
+  }
+
+  const handleDownloadDokumen = () => {
+    if (!documentInfo?.path || !currentDocumentTitle) {
+      return
+    }
+
+    downloadFile({
+      url: documentInfo.path,
+      fileName: currentDocumentTitle,
+      fallback: `dokumen-${documentInfo.documentID}`,
+    })
   }
 
   const handleCopyReference = async () => {
@@ -85,7 +103,13 @@ export default function PratontonSearchResult({
     <div className="flex h-full min-h-0 w-full flex-col gap-6 border border-otl-gray-200 border-l-0 bg-bg-gray-50 p-6">
       <div className="flex justify-between items-center">
         <p className="flex-1 text-body-md font-semibold text-txt-black-900">Pratonton</p>
-        <Button variant="default-outline" size="small" className="gap-1.5">
+        <Button
+          variant="default-outline"
+          size="small"
+          className="gap-1.5"
+          onClick={handleDownloadDokumen}
+          disabled={!documentInfo?.path || !currentDocumentTitle}
+        >
           <DownloadIcon className="size-4" />
           Muat Turun
         </Button>
