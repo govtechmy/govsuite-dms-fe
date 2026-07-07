@@ -61,14 +61,14 @@ export default function PratontonSearchResult({
   }
 
   const handleDownloadDokumen = () => {
-    if (!documentInfo?.path || !currentDocumentTitle) {
+    if (!documentInfo?.path) {
       return
     }
 
     downloadFile({
       url: documentInfo.path,
-      fileName: currentDocumentTitle,
-      fallback: `dokumen-${documentInfo.documentID}`,
+      fileName: currentDocumentTitle ?? '',
+      fallback: documentInfo.documentID ? `dokumen-${documentInfo.documentID}` : 'dokumen',
     })
   }
 
@@ -108,7 +108,7 @@ export default function PratontonSearchResult({
           size="small"
           className="gap-1.5"
           onClick={handleDownloadDokumen}
-          disabled={!documentInfo?.path || !currentDocumentTitle}
+          disabled={!documentInfo?.path}
         >
           <DownloadIcon className="size-4" />
           Muat Turun
