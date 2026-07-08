@@ -1,11 +1,12 @@
 services:
   govsuite-dms-fe:
     build:
-      context: .
-      dockerfile: Dockerfile
-    image: govsuite-dms-fe:latest
-    container_name: govsuite-dms-fe
+      context: ${COMPOSE_BUILD_CONTEXT:-.}
+      dockerfile: ${COMPOSE_DOCKERFILE:-Dockerfile}
+    image: ${COMPOSE_IMAGE:-govsuite-dms-fe:latest}
+    container_name: ${COMPOSE_CONTAINER_NAME:-govsuite-dms-fe}
     ports:
-      - '8080:80'
-    env_file: .env
-    restart: unless-stopped
+      - '${COMPOSE_PORT:-8080}:80'
+    env_file:
+      - .env
+    restart: ${COMPOSE_RESTART_POLICY:-unless-stopped}
