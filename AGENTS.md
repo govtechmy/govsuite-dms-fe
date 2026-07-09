@@ -90,12 +90,14 @@ Every route is prefixed with `/:lang` (`en` or `ms`). The hierarchy is:
 
 ---
 
+<!-- 
 ## Internationalisation (i18n)
 
 - All user-facing strings **must** use `useTranslation()` → `t('key')`.
 - Keys live in `src/locales/en/en-GB.json` and `src/locales/ms/ms-MY.json`.
 - Both files must be updated together — a key missing from either file is a bug.
 - Locale files are flat JSON (`{ "key": "value" }`). Do not nest unless the existing file already nests.
+ -->
 
 ---
 
