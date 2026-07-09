@@ -64,14 +64,14 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     lastSearchRef.current = searchId
 
     // Highlight all matches and jump to specific occurrence (following DokumenID pattern)
-    const timer = setTimeout(() => {
+    const frameId = window.requestAnimationFrame(() => {
       highlight(keywordText).then(() => {
         const matchIndex = occurrenceNumber
         jumpToMatch(matchIndex)
       })
-    }, 100)
+    })
 
-    return () => clearTimeout(timer)
+    return () => window.cancelAnimationFrame(frameId)
   }, [selectedKeywordId, keyword, highlight, jumpToMatch])
 
   return (

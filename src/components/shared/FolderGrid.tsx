@@ -16,6 +16,8 @@ interface FolderGridProps {
   loadingFolders: Record<string, boolean>
   unitName: string
   onFolderClick: (folder: Folder) => void
+  onFolderDoubleClick?: (folder: Folder) => void
+  selectedFolderPath?: string
   emptyMessage?: string
 }
 
@@ -24,6 +26,8 @@ export default function FolderGrid({
   loadingFolders,
   unitName,
   onFolderClick,
+  onFolderDoubleClick,
+  selectedFolderPath,
   emptyMessage = 'Tiada folder ditemui',
 }: FolderGridProps) {
   if (folders.length === 0) {
@@ -41,13 +45,19 @@ export default function FolderGrid({
       {folders.map((folder) => {
         const loadingKey = `${unitName}-${folder.path}`
         const isLoading = loadingFolders[loadingKey]
+        const isSelected = selectedFolderPath === folder.path
 
         return (
           <button
             key={folder.name}
             onClick={() => onFolderClick(folder)}
+            onDoubleClick={() => onFolderDoubleClick?.(folder)}
             disabled={isLoading}
-            className="flex flex-col items-center gap-3 rounded-xl p-3 border border-transparent hover:border-otl-gray-300 hover:bg-bg-secondary-50 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex flex-col items-center gap-3 rounded-xl p-3 border transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus-primary ${
+              isSelected
+                ? 'border-primary-600 bg-primary-50'
+                : 'border-transparent hover:border-otl-gray-300 hover:bg-bg-secondary-50'
+            }`}
           >
             <div className="relative flex h-20 items-center justify-center rounded-md p-1.5">
               {isLoading ? (

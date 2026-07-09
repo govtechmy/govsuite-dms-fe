@@ -69,18 +69,12 @@ export default function MuatNaikDokumenPage() {
           <ProgressResultChecker
             progress={progress}
             loadingDescription="Dokumen Sedang Diproses"
-            successTitle="Berjaya Disimpan & Dihantar!"
-            successDescription="Dokumen akan disemak dan diluluskan oleh pegawai bertugas"
-            successButtonText="Kembali Ke Katalog Dokumen"
-            successButtonText2="Muat Naik Dokumen Baru"
             errorTitle="Gagal Diluluskan!"
             errorDescription="Dokumen gagal diluluskan, sila cuba lagi atau hubungi pentadbir sistem"
             errorButtonText="Kembali Ke Laman Utama"
             errorUploadingTitle={'Dokumen Gagal Diupload'}
             errorUploadingDescription={'Dokumen Gagal Diupload, semak dengan admin anda!'}
             errorUploadingButtonText={'Kembali Ke Laman Utama'}
-            navigateSuccess="/ms/katalog-dokumen"
-            navigateSuccess2="/ms/muatnaik-dokumen"
             navigateError="/ms"
             navigateUploadingError="/ms"
           />

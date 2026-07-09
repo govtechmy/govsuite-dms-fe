@@ -1,13 +1,23 @@
 import { create } from 'zustand'
 
+export interface FolderSelection {
+  path: string
+  id: string
+}
+
 export type FolderLocationStore = {
-  folderPath: string
-  setFolderPath: (path: string) => void
-  resetFolderPath: () => void
+  folderSelection: FolderSelection
+  setFolderSelection: (selection: FolderSelection) => void
+  resetFolderSelection: () => void
+}
+
+const EMPTY_SELECTION: FolderSelection = {
+  path: '',
+  id: '',
 }
 
 export const useFolderLocationStore = create<FolderLocationStore>((set) => ({
-  folderPath: '',
-  setFolderPath: (path: string) => set({ folderPath: path }),
-  resetFolderPath: () => set({ folderPath: '' }),
+  folderSelection: EMPTY_SELECTION,
+  setFolderSelection: (selection: FolderSelection) => set({ folderSelection: selection }),
+  resetFolderSelection: () => set({ folderSelection: EMPTY_SELECTION }),
 }))

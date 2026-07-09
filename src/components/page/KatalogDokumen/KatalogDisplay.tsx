@@ -78,7 +78,7 @@ const DEFAULT_REQUEST_STATE: UnitRequestState = {
 export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
   const navigate = useNavigate()
   const { lang } = useParams<{ lang: string }>()
-  const { setFolderPath } = useFolderLocationStore()
+  const { setFolderSelection } = useFolderLocationStore()
 
   const [openUnits, setOpenUnits] = useState<string[]>([])
   const [dialogOpenUnit, setDialogOpenUnit] = useState<string | null>(null)
@@ -335,12 +335,15 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
     const currentPath = currentPaths[unitId] ?? []
 
     let pathString = unit.name
+    let selectedId = unit.id
+
     if (currentPath.length > 0) {
       const pathNames = currentPath.map((item) => item.name)
       pathString = [unit.name, ...pathNames].join(' > ')
+      selectedId = currentPath[currentPath.length - 1].id
     }
 
-    setFolderPath(pathString)
+    setFolderSelection({ path: pathString, id: selectedId })
     navigate(`/${lang}/muatnaik-dokumen`)
   }
 

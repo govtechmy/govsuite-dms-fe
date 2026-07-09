@@ -48,7 +48,7 @@ export default function MuatNaikDokumenForm({
   onPreview,
   onReset,
 }: MuatNaikDokumenFormProps) {
-  const { folderPath, resetFolderPath } = useFolderLocationStore()
+  const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const [selectedPeringkatKeselamatan, setSelectedPeringkatKeselamatan] = useState('')
   const [ringkasan, setRingkasan] = useState('')
   const [tajuk, setTajuk] = useState('')
@@ -103,25 +103,22 @@ export default function MuatNaikDokumenForm({
 
       setUploadErrorMessage('')
       setUploadState(2) // uploading state
-      // Simulate file processing
-      setTimeout(() => {
-        setUploadState(3) // uploaded state
-        setPreviewDocumentInfoData({
+      setUploadState(3) // uploaded state
+      setPreviewDocumentInfoData({
+        fileName: file.name.split('.')[0],
+      })
+      setSelectedFile({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        body: {
           fileName: file.name.split('.')[0],
-        })
-        setSelectedFile({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          body: {
-            fileName: file.name.split('.')[0],
-            originalFileName: file.name,
-            fileType: file.type,
-            fileSize: file.size,
-            fileExtension: file.name.split('.').pop() || '',
-          },
-        })
-      }, 1000)
+          originalFileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          fileExtension: file.name.split('.').pop() || '',
+        },
+      })
     }
   }
 
@@ -138,7 +135,7 @@ export default function MuatNaikDokumenForm({
 
   const handlePreviewClick = () => {
     onPreview({
-      lokasiFolder: folderPath,
+      lokasiFolder: folderSelection.path,
       profilDokumen: selectedProfile,
       tahapKeselamatan: selectedPeringkatKeselamatan,
       ringkasan,
@@ -163,7 +160,7 @@ export default function MuatNaikDokumenForm({
     setTempatMesyuarat('')
     setBilanganHelaian('')
     setJenisKemasukan('')
-    resetFolderPath()
+    resetFolderSelection()
     handleResetClick()
     onReset?.()
   }
@@ -180,7 +177,7 @@ export default function MuatNaikDokumenForm({
       <div className="flex flex-col gap-3 text-body-md font-medium font-body text-txt-black-700 max-w-[460px]">
         <div className="flex flex-col gap-1.5">
           <div>Lokasi Folder</div>
-          <ModalLokasiFolder />
+          <ModalLokasiFolder selectedPath={folderSelection.path} />
         </div>
         <div className="flex flex-col gap-1.5">
           <div>Profil Dokumen</div>
