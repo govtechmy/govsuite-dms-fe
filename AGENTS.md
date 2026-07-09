@@ -90,7 +90,7 @@ Every route is prefixed with `/:lang` (`en` or `ms`). The hierarchy is:
 
 ---
 
-<!-- 
+<!--
 ## Internationalisation (i18n)
 
 - All user-facing strings **must** use `useTranslation()` → `t('key')`.
