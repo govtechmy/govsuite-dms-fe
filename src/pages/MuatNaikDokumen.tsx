@@ -4,12 +4,25 @@ import ProgressResultChecker from '@/components/shared/ProgressResult'
 import type { DocPreviewInfo } from '@/components/page/MuatNaik/MuatNaikDokumenForm'
 import MuatNaikDokumenForm from '@/components/page/MuatNaik/MuatNaikDokumenForm'
 import PratontonRekod from '@/components/page/MuatNaik/PratontonRekod'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { clx } from '@govtechmy/myds-react/utils'
+import {
+  getAccessLevels,
+  getDropdownUnits,
+  type AccessLevel,
+  type DropdownUnit,
+  type DropdownJenisDokumen,
+  getProfileDocumentsByUnit,
+} from '@/services/dropdown.svc'
 
 export default function MuatNaikDokumenPage() {
-  //  Display Success/Error/Loading State
   const [progress, setProgress] = useState<ProgressState>(null)
+  const [selectedProfile, setSelectedProfile] = useState<string>('')
+  const [allInfoDocs, setAllInfoDocs] = useState<DocPreviewInfo | null>(null)
+  const [peringkatKeselamatan, setPeringkatKeselamatan] = useState<AccessLevel[]>([])
+  const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
+  const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
+  const [selectedUnitsFromDropdown, setSelectedUnitsFromDropdown] = useState<string | undefined>()
 
   //later post properly
   const handleSubmitDokumen = () => {
@@ -20,47 +33,54 @@ export default function MuatNaikDokumenPage() {
     }, 2000)
   }
 
-  // Dropdown Profile Document State
-  const [selectedProfile, setSelectedProfile] = useState<string>('')
-  const [allInfoDocs, setAllInfoDocs] = useState<DocPreviewInfo | null>(null)
+  // Fetch access levels from API
+  useEffect(() => {
+    const fetchAccessLevels = async () => {
+      try {
+        const data = await getAccessLevels()
+        setPeringkatKeselamatan(data)
+      } catch (error) {
+        console.error('Error fetching access levels:', error)
+        setPeringkatKeselamatan([])
+      }
+    }
+    const fetchDropdownDataUnit = async () => {
+      try {
+        const [unitsData] = await Promise.all([getDropdownUnits()])
+        setDropdownUnits(unitsData)
+      } catch (err) {
+        console.error('Error fetching dropdown data:', err)
+      }
+    }
+    fetchAccessLevels()
+    fetchDropdownDataUnit()
+  }, [])
 
-  const profilDokumen = [
-    'Agenda Mesyuarat',
-    'Akta / Ordinan',
-    'Audio',
-    'Carta',
-    'Dokumen Tender / Sebut Harga',
-    'E-mel',
-    'E-mel Muatnaik',
-    'Faks',
-    'Foto',
-    'Garis Panduan / Panduan',
-    'Kertas Kerja / Kertas Konsep',
-    'Laporan',
-    'Lukisan Teknikal',
-    'Maklum Balas Mesyuarat',
-    'Memo',
-    'Minit Bebas',
-    'Minit Ceraian',
-    'Minit Mesyuarat',
-    'Nota Mesyuarat / Perbincangan',
-    'Pekeliling',
-    'Perjanjian / Memorandum',
-    'Piawaian / Standard',
-    'Poster',
-    'Prosiding',
-    'Siaran Akhbar',
-    'Sijil',
-    'Slaid Pembentangan',
-    'Surat-Menyurat',
-    'Teks Ucapan',
-    'Terbitan',
-    'Video',
-    'Borang',
-    'Jadual',
-  ]
-  const peringkatKeselamatan = ['Rahsia Besar', 'Rahsia', 'Sulit', 'Terhad', 'Terbuka']
+  useEffect(() => {
+    const fetchDropdownDataDocument = async () => {
+      if (!selectedUnitsFromDropdown) {
+        setDropdownJenisDokumen([])
+        setSelectedProfile('')
+        return
+      }
+
+      try {
+        const response = await getProfileDocumentsByUnit(selectedUnitsFromDropdown)
+        setDropdownJenisDokumen(response)
+      } catch (err) {
+        console.error('Error fetching profile documents:', err)
+        setDropdownJenisDokumen([])
+      }
+    }
+    fetchDropdownDataDocument()
+  }, [selectedUnitsFromDropdown])
+
   const acceptedFileTypes = '.docx,.pdf'
+
+  const handleUnitChange = (unitCode: string) => {
+    setSelectedUnitsFromDropdown(unitCode)
+    setSelectedProfile('')
+  }
 
   return (
     <>
@@ -86,7 +106,7 @@ export default function MuatNaikDokumenPage() {
             className={clx('flex flex-col gap-6 w-full ', selectedProfile && 'shadow-card pr-6')}
           >
             <MuatNaikDokumenForm
-              profileDokumen={profilDokumen}
+              dropdownJenisDokumen={dropdownJenisDokumen}
               acceptedFileTypes={acceptedFileTypes}
               peringkatKeselamatan={peringkatKeselamatan}
               selectedProfile={selectedProfile}
@@ -96,6 +116,9 @@ export default function MuatNaikDokumenPage() {
                 setAllInfoDocs(null)
                 setSelectedProfile('')
               }}
+              dropdownUnits={dropdownUnits}
+              selectedUnit={selectedUnitsFromDropdown}
+              onUnitChange={handleUnitChange}
             />
           </RightSidePageLayoutWrapper>
           {selectedProfile && (

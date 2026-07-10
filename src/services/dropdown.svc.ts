@@ -1,0 +1,128 @@
+import { authAxios } from './http'
+import { getEnv } from '@/config/runtimeEnv'
+
+/**
+ * Organizational unit option for filter dropdowns
+ */
+export interface DropdownUnit {
+  code: string
+  codeName: string
+}
+
+/**
+ * Document type/profile option for filter dropdowns
+ */
+export interface DropdownJenisDokumen {
+  id: string
+  code: string
+  codeName: string
+}
+
+/**
+ * Access/security level option for upload forms
+ */
+export interface AccessLevel {
+  id: string
+  code: string
+  codeName: string
+}
+
+/**
+ * Profile document option for upload forms (unit-specific)
+ */
+export interface ProfileDocument {
+  id: string
+  definitionGroupId: string
+  unitId: string
+  workflowCode: string
+  documentProfileCode: string
+  documentProfile: string
+  defaultAccessLevel?: string
+}
+
+/**
+ * Response wrapper for profile documents by unit
+ */
+export interface ProfileDocumentsByUnitResponse {
+  items: ProfileDocument[]
+}
+
+/**
+ * Get list of document types/profiles for filter dropdowns
+ * GET /lookup/profile
+ */
+export const getDropdownJenisDokumen = async (): Promise<DropdownJenisDokumen[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/lookup/profile`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data
+    return Array.isArray(payload) ? payload : []
+  } catch (error) {
+    console.error('Error fetching dropdown jenis dokumen : ', error)
+    throw error
+  }
+}
+
+/**
+ * Get list of organizational units for filter dropdowns for all
+ * GET /units
+ */
+export const getDropdownUnits = async (): Promise<DropdownUnit[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/units`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data
+    return Array.isArray(payload) ? payload : []
+  } catch (error) {
+    console.error('Error fetching dropdown units : ', error)
+    throw error
+  }
+}
+
+/**
+ * Get list of organizational units for filter dropdowns for permissible user
+ * GET /units
+ */
+
+/**
+ * Get list of profile documents by unit code
+ * GET /config/profile-document/{unitCode}
+ */
+export const getProfileDocumentsByUnit = async (
+  unitCode: string
+): Promise<DropdownJenisDokumen[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/profile-document/${unitCode}`
+
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data
+    const items: ProfileDocument[] = Array.isArray(payload) ? payload : []
+
+    return items.map((item) => ({
+      id: item.id,
+      code: item.documentProfileCode,
+      codeName: item.documentProfile,
+    }))
+  } catch (error) {
+    console.error(`Error fetching profile documents for unit ${unitCode}:`, error)
+    throw error
+  }
+}
+
+/**
+ * Get list of access levels for upload forms
+ * GET /lookup/access-level
+ */
+export const getAccessLevels = async (): Promise<AccessLevel[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/lookup/access-level`
+
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data
+
+    return Array.isArray(payload) ? payload : []
+  } catch (error) {
+    console.error('Error fetching access levels:', error)
+    throw error
+  }
+}

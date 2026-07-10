@@ -1,7 +1,8 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './SelectMydsFix'
+import type { AccessLevel } from '@/services/dropdown.svc'
 
 interface SelectDropdownMydsProps {
-  peringkatKeselamatan: string[]
+  peringkatKeselamatan: AccessLevel[]
   selectedPeringkatKeselamatan: string
   setSelectedPeringkatKeselamatan: (value: string) => void
 }
@@ -23,8 +24,8 @@ export default function SelectDropdownMyds({
       </SelectTrigger>
       <SelectContent className="w-full">
         {peringkatKeselamatan.map((peringkat) => (
-          <SelectItem key={peringkat} value={peringkat}>
-            {peringkat}
+          <SelectItem key={peringkat.codeName} value={peringkat.codeName}>
+            {peringkat.codeName}
           </SelectItem>
         ))}
       </SelectContent>

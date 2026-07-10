@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { CatalogListMeta, DropdownJenisDokumen, DropdownUnit } from '@/services/catalog.svc'
+import type { CatalogListMeta } from '@/services/catalog.svc'
+import type { DropdownJenisDokumen, DropdownUnit } from '@/services/dropdown.svc'
 import { getPdfGarage } from '@/services/pdf.svc'
 
 export interface DocumentRecord {

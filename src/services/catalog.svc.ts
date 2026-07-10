@@ -96,16 +96,6 @@ export interface CatalogPaginationParams {
   limit?: number
 }
 
-export interface DropdownUnit {
-  code: string
-  codeName: string
-}
-export interface DropdownJenisDokumen {
-  id: string
-  code: string
-  codeName: string
-}
-
 export const getCatalogBase = async (): Promise<CatalogBaseItem[]> => {
   const url = `${getEnv('VITE_API_BASE_URL')}/folder/main`
   try {
@@ -339,30 +329,6 @@ export const getSearchRecordCarianDokumen = async ({
     }
   } catch (error) {
     console.error('Error fetching searched catalog items : ', error)
-    throw error
-  }
-}
-
-export const getDropdownJenisDokumen = async (): Promise<DropdownJenisDokumen[]> => {
-  const url = `${getEnv('VITE_API_BASE_URL')}/lookup/profile`
-  try {
-    const response = await authAxios.get(url)
-    const payload = response.data?.data
-    return Array.isArray(payload) ? payload : []
-  } catch (error) {
-    console.error('Error fetching dropdown jenis dokumen : ', error)
-    throw error
-  }
-}
-
-export const getDropdownUnits = async (): Promise<DropdownUnit[]> => {
-  const url = `${getEnv('VITE_API_BASE_URL')}/units`
-  try {
-    const response = await authAxios.get(url)
-    const payload = response.data?.data
-    return Array.isArray(payload) ? payload : []
-  } catch (error) {
-    console.error('Error fetching dropdown units : ', error)
     throw error
   }
 }

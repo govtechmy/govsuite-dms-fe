@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
-import type { DropdownJenisDokumen, DropdownUnit } from '@/services/catalog.svc'
+import type { DropdownJenisDokumen, DropdownUnit } from '@/services/dropdown.svc'
 import { Button } from '@govtechmy/myds-react/button'
 import { DateRangePicker } from '@govtechmy/myds-react/daterange-picker'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'

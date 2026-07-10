@@ -5,11 +5,8 @@ import SearchLoadingState from '@/components/page/CarianDokumen/SearchLoadingSta
 import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCarianDokumen'
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
-import {
-  getDropdownJenisDokumen,
-  getDropdownUnits,
-  getSearchRecordCarianDokumen,
-} from '@/services/catalog.svc'
+import { getSearchRecordCarianDokumen } from '@/services/catalog.svc'
+import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'

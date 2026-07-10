@@ -7,15 +7,17 @@ import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarK
 import SelectCarianDokumen from '@/components/shared/SelectCarianDokumen'
 import {
   getCatalogBase,
-  getDropdownJenisDokumen,
-  getDropdownUnits,
   getSearchKatalogItems,
   type CatalogBaseItem,
   type CatalogDocumentItem,
   type CatalogListMeta,
+} from '@/services/catalog.svc'
+import {
+  getDropdownJenisDokumen,
+  getDropdownUnits,
   type DropdownJenisDokumen,
   type DropdownUnit,
-} from '@/services/catalog.svc'
+} from '@/services/dropdown.svc'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 

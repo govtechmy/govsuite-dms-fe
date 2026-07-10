@@ -10,6 +10,8 @@ import DropdownWithSearch from '@/components/shared/DropdownWithSearch'
 import SelectDropdownMyds from '@/components/shared/SelectDropdownMyds'
 import UploadDocument from '@/components/shared/UploadDocument'
 import { TextArea } from '@govtechmy/myds-react/textarea'
+import type { AccessLevel, DropdownUnit, DropdownJenisDokumen } from '@/services/dropdown.svc'
+import SelectDropdownUnit from './SelectDropdownUnit'
 
 export interface DocPreviewInfo {
   lokasiFolder: string
@@ -26,13 +28,16 @@ export interface DocPreviewInfo {
 }
 
 interface MuatNaikDokumenFormProps {
-  profileDokumen: string[]
-  peringkatKeselamatan: string[]
+  dropdownJenisDokumen: DropdownJenisDokumen[]
+  peringkatKeselamatan: AccessLevel[]
   acceptedFileTypes: string
   selectedProfile: string
   setSelectedProfile: (value: string) => void
   onPreview: (info: DocPreviewInfo) => void
   onReset?: () => void
+  dropdownUnits: DropdownUnit[]
+  selectedUnit: string | undefined
+  onUnitChange: (unitCode: string) => void
 }
 
 interface PreviewDocumentInfo {
@@ -40,13 +45,16 @@ interface PreviewDocumentInfo {
 }
 
 export default function MuatNaikDokumenForm({
-  profileDokumen,
+  dropdownJenisDokumen,
   peringkatKeselamatan,
   acceptedFileTypes,
   selectedProfile,
   setSelectedProfile,
   onPreview,
   onReset,
+  dropdownUnits,
+  selectedUnit,
+  onUnitChange,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const [selectedPeringkatKeselamatan, setSelectedPeringkatKeselamatan] = useState('')
@@ -63,6 +71,8 @@ export default function MuatNaikDokumenForm({
   const [previewDocumentInfoData, setPreviewDocumentInfoData] =
     useState<PreviewDocumentInfo | null>(null)
   const { setSelectedFile } = useUploadStore()
+
+  const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.codeName)
 
   const isRequiredMetadataComplete =
     tajuk.trim() !== '' &&
@@ -180,14 +190,25 @@ export default function MuatNaikDokumenForm({
           <ModalLokasiFolder selectedPath={folderSelection.path} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <div>Profil Dokumen</div>
-          <DropdownWithSearch
-            options={profileDokumen}
-            value={selectedProfile}
-            onValueChange={setSelectedProfile}
-            className="w-full font-normal"
+          <div>Muat Naik ke Folder Unit</div>
+          <SelectDropdownUnit
+            dropdownUnits={dropdownUnits}
+            selectedUnit={selectedUnit}
+            onUnitChange={onUnitChange}
           />
         </div>
+
+        {selectedUnit && (
+          <div className="flex flex-col gap-1.5">
+            <div>Profil Dokumen</div>
+            <DropdownWithSearch
+              options={profileDokumenOptions}
+              value={selectedProfile}
+              onValueChange={setSelectedProfile}
+              className="w-full font-normal"
+            />
+          </div>
+        )}
         {selectedProfile && (
           <>
             <div className="flex flex-col gap-1.5">
