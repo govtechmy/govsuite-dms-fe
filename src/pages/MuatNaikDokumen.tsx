@@ -14,10 +14,12 @@ import {
   type DropdownJenisDokumen,
   getProfileDocumentsByUnit,
 } from '@/services/dropdown.svc'
+import { getProfileDocumentConfig } from '@/services/upload.svc'
 
 export default function MuatNaikDokumenPage() {
   const [progress, setProgress] = useState<ProgressState>(null)
   const [selectedProfile, setSelectedProfile] = useState<string>('')
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('')
   const [allInfoDocs, setAllInfoDocs] = useState<DocPreviewInfo | null>(null)
   const [peringkatKeselamatan, setPeringkatKeselamatan] = useState<AccessLevel[]>([])
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
@@ -46,12 +48,13 @@ export default function MuatNaikDokumenPage() {
     }
     const fetchDropdownDataUnit = async () => {
       try {
-        const [unitsData] = await Promise.all([getDropdownUnits()])
+        const unitsData = await getDropdownUnits()
         setDropdownUnits(unitsData)
       } catch (err) {
         console.error('Error fetching dropdown data:', err)
       }
     }
+
     fetchAccessLevels()
     fetchDropdownDataUnit()
   }, [])
@@ -61,6 +64,7 @@ export default function MuatNaikDokumenPage() {
       if (!selectedUnitsFromDropdown) {
         setDropdownJenisDokumen([])
         setSelectedProfile('')
+        setSelectedProfileId('')
         return
       }
 
@@ -75,11 +79,36 @@ export default function MuatNaikDokumenPage() {
     fetchDropdownDataDocument()
   }, [selectedUnitsFromDropdown])
 
+  useEffect(() => {
+    if (!selectedProfileId) return
+
+    const fetchProfileDocumentConfig = async () => {
+      try {
+        const unitsData = await getProfileDocumentConfig(selectedProfileId)
+        console.log(unitsData)
+      } catch (err) {
+        console.error('Error fetching profile document config:', err)
+      }
+    }
+    fetchProfileDocumentConfig()
+  }, [selectedProfileId])
+
   const acceptedFileTypes = '.docx,.pdf'
 
   const handleUnitChange = (unitCode: string) => {
     setSelectedUnitsFromDropdown(unitCode)
     setSelectedProfile('')
+    setSelectedProfileId('')
+  }
+
+  const handleProfileChange = (profileCodeName: string) => {
+    setSelectedProfile(profileCodeName)
+    const matchedProfile = dropdownJenisDokumen.find((item) => item.codeName === profileCodeName)
+    if (matchedProfile) {
+      setSelectedProfileId(matchedProfile.id)
+    } else {
+      setSelectedProfileId('')
+    }
   }
 
   return (
@@ -110,11 +139,12 @@ export default function MuatNaikDokumenPage() {
               acceptedFileTypes={acceptedFileTypes}
               peringkatKeselamatan={peringkatKeselamatan}
               selectedProfile={selectedProfile}
-              setSelectedProfile={setSelectedProfile}
+              setSelectedProfile={handleProfileChange}
               onPreview={setAllInfoDocs}
               onReset={() => {
                 setAllInfoDocs(null)
                 setSelectedProfile('')
+                setSelectedProfileId('')
               }}
               dropdownUnits={dropdownUnits}
               selectedUnit={selectedUnitsFromDropdown}
