@@ -1,7 +1,8 @@
 import { Button } from '@govtechmy/myds-react/button'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
-import { useEffect, useState } from 'react'
-import { useUploadStore, type UploadState } from '@/store/UploadStore'
+import { useEffect } from 'react'
+import { useUploadStore } from '@/store/UploadStore'
+import { useUploadDraftStore } from '@/store/UploadDraftStore'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
 import { Input } from '@govtechmy/myds-react/input'
 import { DatePicker } from '@govtechmy/myds-react/date-picker'
@@ -70,10 +71,6 @@ interface MuatNaikDokumenFormProps {
   onDraftFeedbackDismiss: () => void
 }
 
-interface PreviewDocumentInfo {
-  fileName: string
-}
-
 export default function MuatNaikDokumenForm({
   dropdownJenisDokumen,
   peringkatKeselamatan,
@@ -94,16 +91,27 @@ export default function MuatNaikDokumenForm({
   onDraftFeedbackDismiss,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
-  const [selectedPeringkatKeselamatan, setSelectedPeringkatKeselamatan] = useState('')
-  const [ringkasan, setRingkasan] = useState('')
-  const [metadataValues, setMetadataValues] = useState<Record<string, string>>({})
-  const [tempatMesyuarat, setTempatMesyuarat] = useState('')
-  const [bilanganHelaian, setBilanganHelaian] = useState('')
-  const [jenisKemasukan, setJenisKemasukan] = useState('')
-  const [uploadState, setUploadState] = useState<UploadState>(1)
-  const [uploadErrorMessage, setUploadErrorMessage] = useState('')
-  const [previewDocumentInfoData, setPreviewDocumentInfoData] =
-    useState<PreviewDocumentInfo | null>(null)
+  const {
+    selectedPeringkatKeselamatan,
+    setSelectedPeringkatKeselamatan,
+    ringkasan,
+    setRingkasan,
+    metadataValues,
+    setMetadataValues,
+    setMetadataValue,
+    tempatMesyuarat,
+    setTempatMesyuarat,
+    bilanganHelaian,
+    setBilanganHelaian,
+    jenisKemasukan,
+    setJenisKemasukan,
+    uploadState,
+    setUploadState,
+    uploadErrorMessage,
+    setUploadErrorMessage,
+    previewDocumentInfoData,
+    setPreviewDocumentInfoData,
+  } = useUploadDraftStore()
   const { setSelectedFile } = useUploadStore()
 
   const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.codeName)
@@ -116,11 +124,11 @@ export default function MuatNaikDokumenForm({
     if (!selectedProfile) {
       setSelectedPeringkatKeselamatan('')
     }
-  }, [selectedProfile])
+  }, [selectedProfile, setSelectedPeringkatKeselamatan])
 
   useEffect(() => {
     setMetadataValues({})
-  }, [metadataFields])
+  }, [metadataFields, setMetadataValues])
 
   const handleFileUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -247,13 +255,9 @@ export default function MuatNaikDokumenForm({
   }
 
   const handleResetForm = () => {
+    // Reset form-local controlled state
     setSelectedProfile('')
-    setSelectedPeringkatKeselamatan('')
-    setRingkasan('')
-    setMetadataValues({})
-    setTempatMesyuarat('')
-    setBilanganHelaian('')
-    setJenisKemasukan('')
+    // Reset will be handled by parent calling resetDraft via onReset
     resetFolderSelection()
     handleResetClick()
     onReset?.()
@@ -337,23 +341,13 @@ export default function MuatNaikDokumenForm({
                     locale="ms"
                     placeholder="Pilih Tarikh"
                     value={parseDateValue(metadataValues[field.key] || '')}
-                    onValueChange={(date) =>
-                      setMetadataValues((prev) => ({
-                        ...prev,
-                        [field.key]: formatDateValue(date),
-                      }))
-                    }
+                    onValueChange={(date) => setMetadataValue(field.key, formatDateValue(date))}
                   />
                 ) : (
                   <Input
                     type="text"
                     value={metadataValues[field.key] || ''}
-                    onChange={(e) =>
-                      setMetadataValues((prev) => ({
-                        ...prev,
-                        [field.key]: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => setMetadataValue(field.key, e.target.value)}
                   />
                 )}
               </div>

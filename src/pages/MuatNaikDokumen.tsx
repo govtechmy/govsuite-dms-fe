@@ -26,6 +26,8 @@ import ProgressResultChecker, { type ProgressState } from '@/components/shared/P
 import extractBackendError from '@/utils/extractBackendError'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
 import { useUploadStore } from '@/store/UploadStore'
+import { useUploadDraftStore } from '@/store/UploadDraftStore'
+import { useNavigate } from 'react-router-dom'
 
 type DraftFeedback = {
   status: 'success' | 'error'
@@ -57,8 +59,35 @@ export default function MuatNaikDokumenPage() {
   const isSavingRef = useRef(false)
 
   // Zustand stores for folder and upload context
-  const { folderSelection } = useFolderLocationStore()
-  const { selectedFile } = useUploadStore()
+  const { folderSelection, resetFolderSelection } = useFolderLocationStore()
+  const { selectedFile, setSelectedFile } = useUploadStore()
+  const { resetDraft } = useUploadDraftStore()
+  const navigate = useNavigate()
+
+  /**
+   * Unified reset function: clears all page and store state for fresh upload flow
+   * Used by Set Semula button and after successful submission
+   */
+  const resetUploadFlowState = () => {
+    // Clear page-level states
+    setAllInfoDocs(null)
+    setSelectedProfile('')
+    setSelectedProfileId('')
+    setSelectedProfileDetail(null)
+    setSelectedUnitsFromDropdown(undefined)
+    setDropdownJenisDokumen([])
+    setMetadataFields([])
+    setPresignedResponse(null)
+    setUploadPercentage(0)
+    setDraftFeedback(null)
+    setSubmissionError(null)
+    setSubmissionProgress(null)
+
+    // Clear global store states
+    setSelectedFile(null)
+    resetFolderSelection()
+    resetDraft()
+  }
 
   /**
    * Build SaveUploadRecordRequest payload from current state and form/preview info
@@ -448,13 +477,7 @@ export default function MuatNaikDokumenPage() {
               setSelectedProfile={handleProfileChange}
               onPreview={setAllInfoDocs}
               onSaveDraft={handleSaveDraft}
-              onReset={() => {
-                setAllInfoDocs(null)
-                setSelectedProfile('')
-                setSelectedProfileId('')
-                setMetadataFields([])
-                setDraftFeedback(null)
-              }}
+              onReset={resetUploadFlowState}
               dropdownUnits={dropdownUnits}
               selectedUnit={selectedUnitsFromDropdown}
               onUnitChange={handleUnitChange}
@@ -494,6 +517,10 @@ export default function MuatNaikDokumenPage() {
             }
             errorButtonText="Kembali dan Cuba Lagi"
             navigateSuccess="/ms"
+            onSuccessClick={() => {
+              resetUploadFlowState()
+              navigate('/ms')
+            }}
             onErrorClick={() => setSubmissionProgress(null)}
           />
         </div>
