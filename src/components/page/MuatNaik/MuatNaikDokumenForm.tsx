@@ -257,11 +257,10 @@ export default function MuatNaikDokumenForm({
               <div className="flex">
                 Klasifikasi Fail<div className="text-txt-danger">*</div>
               </div>
-              <SelectDropdownMyds
-                peringkatKeselamatan={peringkatKeselamatan}
-                selectedPeringkatKeselamatan={klasifikasiFail}
-                setSelectedPeringkatKeselamatan={setKlasifikasiFail}
-              />
+              <Input
+                value={klasifikasiFail}
+                onChange={(e) => setKlasifikasiFail(e.target.value)}
+              ></Input>
             </div>
             <div className="flex flex-col gap-1.5">
               <div className="flex">
