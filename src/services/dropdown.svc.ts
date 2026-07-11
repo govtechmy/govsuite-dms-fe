@@ -16,6 +16,7 @@ export interface DropdownJenisDokumen {
   id: string
   code: string
   codeName: string
+  definitionGroupId?: string // Backend currently names this definitionGroupId; used as recordConfig
 }
 
 /**
@@ -102,6 +103,7 @@ export const getProfileDocumentsByUnit = async (
       id: item.id,
       code: item.documentProfileCode,
       codeName: item.documentProfile,
+      definitionGroupId: item.definitionGroupId,
     }))
   } catch (error) {
     console.error(`Error fetching profile documents for unit ${unitCode}:`, error)

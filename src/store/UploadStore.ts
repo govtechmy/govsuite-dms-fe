@@ -9,6 +9,7 @@ export interface UnifiedUploadFileProps {
   webkitRelativePath?: string
   size?: number
   type?: string
+  rawFile?: File // Raw File object for S3 upload
 
   // Upload parameters
   s3Url?: string

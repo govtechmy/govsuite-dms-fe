@@ -14,6 +14,7 @@ interface UploadDocumentProps {
   fileType: string
   displayFileName?: string
   uploadErrorMessage?: string
+  uploadPercentage?: number
 }
 
 export default function UploadDocument({
@@ -24,6 +25,7 @@ export default function UploadDocument({
   fileType,
   displayFileName,
   uploadErrorMessage,
+  uploadPercentage,
 }: UploadDocumentProps) {
   const { selectedFile } = useUploadStore()
 
@@ -81,7 +83,9 @@ export default function UploadDocument({
         {uploadState === 2 && (
           <div className="border border-otl-gray-200 max-w-[217px] rounded-lg flex items-center justify-start p-2 gap-2 mt-4">
             <Spinner className="p-2 pl-2.5" size="medium" />
-            <div className="text-start w-full">Memuat naik..</div>
+            <div className="text-start w-full">
+              {`Memuat naik..${uploadPercentage ? ` (${uploadPercentage}%)` : ''}`}
+            </div>
           </div>
         )}
 

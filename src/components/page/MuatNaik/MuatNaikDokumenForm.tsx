@@ -14,6 +14,7 @@ import { TextArea } from '@govtechmy/myds-react/textarea'
 import type { AccessLevel, DropdownUnit, DropdownJenisDokumen } from '@/services/dropdown.svc'
 import SelectDropdownUnit from './SelectDropdownUnit'
 import type { MetadataField } from '@/services/upload.svc'
+import extractBackendError from '@/utils/extractBackendError'
 
 const parseDateValue = (value: string): Date | undefined => {
   if (!value) return undefined
@@ -54,6 +55,8 @@ interface MuatNaikDokumenFormProps {
   selectedUnit: string | undefined
   onUnitChange: (unitCode: string) => void
   metadataFields: MetadataField[]
+  onUploadToS3: (file: File) => Promise<void>
+  uploadPercentage: number
 }
 
 interface PreviewDocumentInfo {
@@ -72,6 +75,8 @@ export default function MuatNaikDokumenForm({
   selectedUnit,
   onUnitChange,
   metadataFields,
+  onUploadToS3,
+  uploadPercentage,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const [selectedPeringkatKeselamatan, setSelectedPeringkatKeselamatan] = useState('')
@@ -102,7 +107,7 @@ export default function MuatNaikDokumenForm({
     setMetadataValues({})
   }, [metadataFields])
 
-  const handleFileUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     const allowedExtensions = acceptedFileTypes
       .split(',')
@@ -129,7 +134,6 @@ export default function MuatNaikDokumenForm({
 
       setUploadErrorMessage('')
       setUploadState(2) // uploading state
-      setUploadState(3) // uploaded state
       setPreviewDocumentInfoData({
         fileName: file.name.split('.')[0],
       })
@@ -137,6 +141,7 @@ export default function MuatNaikDokumenForm({
         name: file.name,
         size: file.size,
         type: file.type,
+        rawFile: file, // Preserve raw File object for S3 upload
         body: {
           fileName: file.name.split('.')[0],
           originalFileName: file.name,
@@ -145,6 +150,20 @@ export default function MuatNaikDokumenForm({
           fileExtension: file.name.split('.').pop() || '',
         },
       })
+
+      try {
+        // Trigger S3 upload immediately after file selection
+        await onUploadToS3(file)
+        setUploadState(3) // uploaded state - only after successful upload
+      } catch (error) {
+        console.error('Error uploading to S3:', error)
+        const backendError = extractBackendError(error)
+        setUploadState(4)
+        setUploadErrorMessage(backendError?.message || 'Upload gagal. Cuba lagi.')
+        setPreviewDocumentInfoData(null)
+        setSelectedFile(null)
+        event.target.value = ''
+      }
     }
   }
 
@@ -247,6 +266,7 @@ export default function MuatNaikDokumenForm({
             fileType={acceptedFileTypes}
             displayFileName={previewDocumentInfoData?.fileName}
             uploadErrorMessage={uploadErrorMessage}
+            uploadPercentage={uploadPercentage}
           />
           <div className="flex flex-col gap-3 text-body-md font-medium text-txt-black-700">
             <div className="text-body-md font-semibold font-body text-txt-black-900">

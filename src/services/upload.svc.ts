@@ -211,16 +211,19 @@ export const uploadFileToPresignedUrl = async ({
   presignedUrl,
   file,
   fileType,
+  onUploadProgress,
 }: {
   presignedUrl: string
   file: File | Blob
   fileType: string
+  onUploadProgress?: (progressEvent: { loaded: number; total?: number }) => void
 }): Promise<void> => {
   try {
     await axios.put(presignedUrl, file, {
       headers: {
         'Content-Type': fileType,
       },
+      onUploadProgress,
     })
   } catch (error) {
     console.error('Error uploading file to presigned URL:', error)
