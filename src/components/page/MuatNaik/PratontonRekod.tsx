@@ -16,26 +16,27 @@ export default function PratontonRekod({ docInfo, onSubmit }: PratontonRekodProp
           path: docInfo.lokasiFolder,
           documentProfile: docInfo.profilDokumen,
           recordDescription: docInfo.ringkasan,
-          accessLevel: docInfo.klasifikasiFail,
-          unit: docInfo.namaPewujud,
+          accessLevel: docInfo.tahapKeselamatan,
         },
-        requiredMetadata: [
-          {
-            key: 'title (reference key)',
-            title: 'Tajuk',
-            type: 'text',
+        requiredMetadata: docInfo.metadataFields
+          .filter((field) => field.required)
+          .map((field) => ({
+            key: field.key,
+            title: field.title,
+            type: field.type,
             required: 'true',
-            value: docInfo.tajuk,
-          },
-          {
-            key: 'meeting-date',
-            title: 'Tarikh Mesyuarat',
-            type: 'date',
-            required: 'true',
-            value: docInfo.tarikhMesyuarat,
-          },
-        ],
+            value: docInfo.metadataValues[field.key] || '',
+          })),
         metadata: [
+          ...docInfo.metadataFields
+            .filter((field) => !field.required)
+            .map((field) => ({
+              key: field.key,
+              title: field.title,
+              type: field.type,
+              required: 'false',
+              value: docInfo.metadataValues[field.key] || '',
+            })),
           {
             key: 'meeting-place',
             title: 'Tempat Mesyuarat',

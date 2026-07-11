@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useUploadStore, type UploadState } from '@/store/UploadStore'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
 import { Input } from '@govtechmy/myds-react/input'
+import { DatePicker } from '@govtechmy/myds-react/date-picker'
 import ModalLokasiFolder from './ModalLokasiFolder'
 import MainHeading from '@/components/layout/MainHeading'
 import DropdownWithSearch from '@/components/shared/DropdownWithSearch'
@@ -12,16 +13,30 @@ import UploadDocument from '@/components/shared/UploadDocument'
 import { TextArea } from '@govtechmy/myds-react/textarea'
 import type { AccessLevel, DropdownUnit, DropdownJenisDokumen } from '@/services/dropdown.svc'
 import SelectDropdownUnit from './SelectDropdownUnit'
+import type { MetadataField } from '@/services/upload.svc'
+
+const parseDateValue = (value: string): Date | undefined => {
+  if (!value) return undefined
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return undefined
+  const parsed = new Date(year, month - 1, day)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
+const formatDateValue = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 export interface DocPreviewInfo {
   lokasiFolder: string
   profilDokumen: string
   tahapKeselamatan: string
   ringkasan: string
-  tajuk: string
-  tarikhMesyuarat: string
-  klasifikasiFail: string
-  namaPewujud: string
+  metadataValues: Record<string, string>
+  metadataFields: MetadataField[]
   tempatMesyuarat: string
   bilanganHelaian: string
   jenisKemasukan: string
@@ -38,6 +53,7 @@ interface MuatNaikDokumenFormProps {
   dropdownUnits: DropdownUnit[]
   selectedUnit: string | undefined
   onUnitChange: (unitCode: string) => void
+  metadataFields: MetadataField[]
 }
 
 interface PreviewDocumentInfo {
@@ -55,14 +71,12 @@ export default function MuatNaikDokumenForm({
   dropdownUnits,
   selectedUnit,
   onUnitChange,
+  metadataFields,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const [selectedPeringkatKeselamatan, setSelectedPeringkatKeselamatan] = useState('')
   const [ringkasan, setRingkasan] = useState('')
-  const [tajuk, setTajuk] = useState('')
-  const [tarikhMesyuarat, setTarikhMesyuarat] = useState('')
-  const [klasifikasiFail, setKlasifikasiFail] = useState('')
-  const [namaPewujud, setNamaPewujud] = useState('')
+  const [metadataValues, setMetadataValues] = useState<Record<string, string>>({})
   const [tempatMesyuarat, setTempatMesyuarat] = useState('')
   const [bilanganHelaian, setBilanganHelaian] = useState('')
   const [jenisKemasukan, setJenisKemasukan] = useState('')
@@ -74,17 +88,19 @@ export default function MuatNaikDokumenForm({
 
   const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.codeName)
 
-  const isRequiredMetadataComplete =
-    tajuk.trim() !== '' &&
-    tarikhMesyuarat.trim() !== '' &&
-    klasifikasiFail.trim() !== '' &&
-    namaPewujud.trim() !== ''
+  const isRequiredMetadataComplete = metadataFields
+    .filter((field) => field.required)
+    .every((field) => metadataValues[field.key]?.trim() !== '')
 
   useEffect(() => {
     if (!selectedProfile) {
       setSelectedPeringkatKeselamatan('')
     }
   }, [selectedProfile])
+
+  useEffect(() => {
+    setMetadataValues({})
+  }, [metadataFields])
 
   const handleFileUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -149,10 +165,8 @@ export default function MuatNaikDokumenForm({
       profilDokumen: selectedProfile,
       tahapKeselamatan: selectedPeringkatKeselamatan,
       ringkasan,
-      tajuk,
-      tarikhMesyuarat,
-      klasifikasiFail,
-      namaPewujud,
+      metadataValues,
+      metadataFields,
       tempatMesyuarat,
       bilanganHelaian,
       jenisKemasukan,
@@ -163,10 +177,7 @@ export default function MuatNaikDokumenForm({
     setSelectedProfile('')
     setSelectedPeringkatKeselamatan('')
     setRingkasan('')
-    setTajuk('')
-    setTarikhMesyuarat('')
-    setKlasifikasiFail('')
-    setNamaPewujud('')
+    setMetadataValues({})
     setTempatMesyuarat('')
     setBilanganHelaian('')
     setJenisKemasukan('')
@@ -241,33 +252,38 @@ export default function MuatNaikDokumenForm({
             <div className="text-body-md font-semibold font-body text-txt-black-900">
               Dublin Core (Metadata)
             </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex">
-                Tajuk <div className="text-txt-danger">*</div>
+            {metadataFields.map((field) => (
+              <div key={field.key} className="flex flex-col gap-1.5">
+                <div className="flex">
+                  {field.title}
+                  {field.required && <div className="text-txt-danger">*</div>}
+                </div>
+                {field.type === 'date' ? (
+                  <DatePicker
+                    locale="ms"
+                    placeholder="Pilih Tarikh"
+                    value={parseDateValue(metadataValues[field.key] || '')}
+                    onValueChange={(date) =>
+                      setMetadataValues((prev) => ({
+                        ...prev,
+                        [field.key]: formatDateValue(date),
+                      }))
+                    }
+                  />
+                ) : (
+                  <Input
+                    type="text"
+                    value={metadataValues[field.key] || ''}
+                    onChange={(e) =>
+                      setMetadataValues((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
+                    }
+                  />
+                )}
               </div>
-              <Input value={tajuk} onChange={(e) => setTajuk(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex">
-                Tarikh Mesyuarat <div className="text-txt-danger">*</div>
-              </div>
-              <Input value={tarikhMesyuarat} onChange={(e) => setTarikhMesyuarat(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex">
-                Klasifikasi Fail<div className="text-txt-danger">*</div>
-              </div>
-              <Input
-                value={klasifikasiFail}
-                onChange={(e) => setKlasifikasiFail(e.target.value)}
-              ></Input>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex">
-                Nama Pewujud <div className="text-txt-danger">*</div>
-              </div>
-              <Input value={namaPewujud} onChange={(e) => setNamaPewujud(e.target.value)} />
-            </div>
+            ))}
           </div>
           <div className="flex flex-col gap-3 text-body-md font-medium text-txt-black-700">
             <div className="text-body-md font-semibold font-body text-txt-black-900">

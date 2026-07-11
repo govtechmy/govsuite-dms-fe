@@ -14,7 +14,7 @@ import {
   type DropdownJenisDokumen,
   getProfileDocumentsByUnit,
 } from '@/services/dropdown.svc'
-import { getProfileDocumentConfig } from '@/services/upload.svc'
+import { getProfileDocumentConfig, type MetadataField } from '@/services/upload.svc'
 
 export default function MuatNaikDokumenPage() {
   const [progress, setProgress] = useState<ProgressState>(null)
@@ -25,6 +25,7 @@ export default function MuatNaikDokumenPage() {
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
   const [selectedUnitsFromDropdown, setSelectedUnitsFromDropdown] = useState<string | undefined>()
+  const [metadataFields, setMetadataFields] = useState<MetadataField[]>([])
 
   //later post properly
   const handleSubmitDokumen = () => {
@@ -65,6 +66,7 @@ export default function MuatNaikDokumenPage() {
         setDropdownJenisDokumen([])
         setSelectedProfile('')
         setSelectedProfileId('')
+        setMetadataFields([])
         return
       }
 
@@ -86,8 +88,62 @@ export default function MuatNaikDokumenPage() {
       try {
         const unitsData = await getProfileDocumentConfig(selectedProfileId)
         console.log(unitsData)
+
+        const data = {
+          success: true,
+          data: {
+            definitionGroupId: 'laporan_mesyuarat_unit_up',
+            unitId: 'UNIT_UP',
+            allowedFormats: ['pdf', 'docx'],
+            maxFileSizeMb: 200,
+            metadataFields: [
+              {
+                key: 'title',
+                title: 'Tajuk',
+                type: 'text',
+                required: true,
+              },
+              {
+                key: 'creator',
+                title: 'Pewujud',
+                type: 'text',
+                required: true,
+              },
+              {
+                key: 'tarikh_mesyuarat',
+                title: 'Tarikh Mesyuarat',
+                type: 'date',
+                required: true,
+              },
+              {
+                key: 'jenis_mesyuarat',
+                title: 'Jenis Mesyuarat',
+                type: 'text',
+                required: true,
+              },
+              {
+                key: 'tarikh',
+                title: 'Tarikh',
+                type: 'date',
+                required: false,
+              },
+            ],
+            workflowCode: 'WF_DRAF_SEMAKAN_TIDAK_DILULUSKAN_DITERBITKAN',
+            documentProfileCode: 'LAPORAN',
+            documentProfileName: 'Laporan Mesyuarat',
+            isLatest: true,
+            createdAt: '2026-06-25T22:24:59.083Z',
+            updatedAt: '2026-07-07T06:58:29.141Z',
+          },
+        }
+
+        console.log(data.data)
+
+        // Store metadataFields from config (fallback to mock until backend is ready)
+        setMetadataFields(data.data.metadataFields || [])
       } catch (err) {
         console.error('Error fetching profile document config:', err)
+        setMetadataFields([])
       }
     }
     fetchProfileDocumentConfig()
@@ -145,10 +201,12 @@ export default function MuatNaikDokumenPage() {
                 setAllInfoDocs(null)
                 setSelectedProfile('')
                 setSelectedProfileId('')
+                setMetadataFields([])
               }}
               dropdownUnits={dropdownUnits}
               selectedUnit={selectedUnitsFromDropdown}
               onUnitChange={handleUnitChange}
+              metadataFields={metadataFields}
             />
           </RightSidePageLayoutWrapper>
           {selectedProfile && (
