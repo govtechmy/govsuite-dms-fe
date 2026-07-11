@@ -15,6 +15,7 @@ import type { AccessLevel, DropdownUnit, DropdownJenisDokumen } from '@/services
 import SelectDropdownUnit from './SelectDropdownUnit'
 import type { MetadataField } from '@/services/upload.svc'
 import extractBackendError from '@/utils/extractBackendError'
+import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 
 const parseDateValue = (value: string): Date | undefined => {
   if (!value) return undefined
@@ -43,6 +44,12 @@ export interface DocPreviewInfo {
   jenisKemasukan: string
 }
 
+type DraftFeedback = {
+  status: 'success' | 'error'
+  message: string
+  errorDetail?: string
+} | null
+
 interface MuatNaikDokumenFormProps {
   dropdownJenisDokumen: DropdownJenisDokumen[]
   peringkatKeselamatan: AccessLevel[]
@@ -50,6 +57,7 @@ interface MuatNaikDokumenFormProps {
   selectedProfile: string
   setSelectedProfile: (value: string) => void
   onPreview: (info: DocPreviewInfo) => void
+  onSaveDraft: (info: DocPreviewInfo) => Promise<void>
   onReset?: () => void
   dropdownUnits: DropdownUnit[]
   selectedUnit: string | undefined
@@ -57,6 +65,9 @@ interface MuatNaikDokumenFormProps {
   metadataFields: MetadataField[]
   onUploadToS3: (file: File) => Promise<void>
   uploadPercentage: number
+  isSaving: boolean
+  draftFeedback: DraftFeedback
+  onDraftFeedbackDismiss: () => void
 }
 
 interface PreviewDocumentInfo {
@@ -70,6 +81,7 @@ export default function MuatNaikDokumenForm({
   selectedProfile,
   setSelectedProfile,
   onPreview,
+  onSaveDraft,
   onReset,
   dropdownUnits,
   selectedUnit,
@@ -77,6 +89,9 @@ export default function MuatNaikDokumenForm({
   metadataFields,
   onUploadToS3,
   uploadPercentage,
+  isSaving,
+  draftFeedback,
+  onDraftFeedbackDismiss,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const [selectedPeringkatKeselamatan, setSelectedPeringkatKeselamatan] = useState('')
@@ -178,8 +193,11 @@ export default function MuatNaikDokumenForm({
     return uploadState === 2 || !selectedProfile
   }
 
-  const handlePreviewClick = () => {
-    onPreview({
+  const handleSaveDraftClick = async () => {
+    // Clear previous feedback before new attempt
+    onDraftFeedbackDismiss()
+
+    const previewInfo: DocPreviewInfo = {
       lokasiFolder: folderSelection.path,
       profilDokumen: selectedProfile,
       tahapKeselamatan: selectedPeringkatKeselamatan,
@@ -189,7 +207,43 @@ export default function MuatNaikDokumenForm({
       tempatMesyuarat,
       bilanganHelaian,
       jenisKemasukan,
-    })
+    }
+
+    try {
+      await onSaveDraft(previewInfo)
+      // Success is handled by parent component's draft feedback state
+    } catch (error) {
+      // Error is handled by parent component's draft feedback state
+      console.error('Draft save failed:', error)
+    }
+  }
+
+  const handlePreviewClick = async () => {
+    // Clear previous feedback before new attempt
+    onDraftFeedbackDismiss()
+
+    const previewInfo: DocPreviewInfo = {
+      lokasiFolder: folderSelection.path,
+      profilDokumen: selectedProfile,
+      tahapKeselamatan: selectedPeringkatKeselamatan,
+      ringkasan,
+      metadataValues,
+      metadataFields,
+      tempatMesyuarat,
+      bilanganHelaian,
+      jenisKemasukan,
+    }
+
+    // Save as draft first before showing preview
+    try {
+      await onSaveDraft(previewInfo)
+      // Only set preview on successful save
+      onPreview(previewInfo)
+    } catch (error) {
+      // Error is handled by parent component's draft feedback state
+      // Do not proceed with preview
+      console.error('Draft save failed, preview not shown:', error)
+    }
   }
 
   const handleResetForm = () => {
@@ -323,15 +377,36 @@ export default function MuatNaikDokumenForm({
             </div>
           </div>
           <div className="flex justify-between">
-            <Button variant="default-outline">Simpan Draf</Button>
+            <Button
+              variant="default-outline"
+              disabled={uploadState !== 3 || !isRequiredMetadataComplete || isSaving}
+              onClick={handleSaveDraftClick}
+            >
+              Simpan Draf
+            </Button>
             <Button
               variant="primary-outline"
-              disabled={uploadState !== 3 || !isRequiredMetadataComplete}
+              disabled={uploadState !== 3 || !isRequiredMetadataComplete || isSaving}
               onClick={handlePreviewClick}
             >
               Muat Naik Pratonton
             </Button>
           </div>
+          {draftFeedback && (
+            <Callout variant={draftFeedback.status === 'success' ? 'success' : 'danger'}>
+              <CalloutTitle>
+                {draftFeedback.status === 'success' ? 'Success' : 'Error'}
+              </CalloutTitle>
+              <CalloutContent>
+                <div className="flex flex-col gap-1">
+                  <div>{draftFeedback.message}</div>
+                  {draftFeedback.errorDetail && (
+                    <div className="text-body-sm">{draftFeedback.errorDetail}</div>
+                  )}
+                </div>
+              </CalloutContent>
+            </Callout>
+          )}
         </>
       )}
     </>

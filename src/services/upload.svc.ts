@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getEnv } from '@/config/runtimeEnv'
 import { authAxios } from './http'
+import extractBackendError from '@/utils/extractBackendError'
 
 // Profile Document Config by ID
 export interface MetadataField {
@@ -270,6 +271,55 @@ export const saveUploadedRecord = async (
     }
   } catch (error) {
     console.error('Error saving uploaded record:', error)
+    throw error
+  }
+}
+
+/**
+ * Update existing uploaded record in database
+ * PUT /record/{recordId}
+ */
+export const updateUploadedRecord = async (
+  body: SaveUploadRecordRequest
+): Promise<SaveUploadRecordResponse> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/${body.recordId}`
+
+  try {
+    const response = await authAxios.put(url, body)
+    const payload = response.data?.data ?? response.data ?? {}
+
+    return {
+      recordId: String(payload.recordId ?? ''),
+    }
+  } catch (error) {
+    console.error('Error updating uploaded record:', error)
+    throw error
+  }
+}
+
+/**
+ * Save or update uploaded record with automatic fallback
+ * Tries POST first, falls back to PUT if record already exists
+ */
+export const saveOrUpdateUploadedRecord = async (
+  body: SaveUploadRecordRequest
+): Promise<SaveUploadRecordResponse> => {
+  try {
+    return await saveUploadedRecord(body)
+  } catch (error) {
+    const backendError = extractBackendError(error)
+
+    // Check for duplicate error (prefer code match, fallback to message)
+    const isDuplicateError =
+      backendError?.code === 'RECORD_ALREADY_EXISTS' ||
+      backendError?.message?.toLowerCase().includes('already exists')
+
+    if (isDuplicateError && body.recordId) {
+      console.warn(`Record ${body.recordId} already exists, retrying with PUT update...`)
+      return await updateUploadedRecord(body)
+    }
+
+    // Re-throw non-duplicate errors
     throw error
   }
 }

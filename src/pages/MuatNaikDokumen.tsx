@@ -2,7 +2,7 @@ import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import type { DocPreviewInfo } from '@/components/page/MuatNaik/MuatNaikDokumenForm'
 import MuatNaikDokumenForm from '@/components/page/MuatNaik/MuatNaikDokumenForm'
 import PratontonRekod from '@/components/page/MuatNaik/PratontonRekod'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { clx } from '@govtechmy/myds-react/utils'
 import {
   getAccessLevels,
@@ -19,9 +19,19 @@ import {
   getUploadStatus,
   type MetadataField,
   type PresignUploadResponse,
+  saveOrUpdateUploadedRecord,
+  type SaveUploadRecordRequest,
 } from '@/services/upload.svc'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import extractBackendError from '@/utils/extractBackendError'
+import { useFolderLocationStore } from '@/store/FolderLocationStore'
+import { useUploadStore } from '@/store/UploadStore'
+
+type DraftFeedback = {
+  status: 'success' | 'error'
+  message: string
+  errorDetail?: string
+} | null
 
 export default function MuatNaikDokumenPage() {
   const [selectedProfile, setSelectedProfile] = useState<string>('')
@@ -41,6 +51,153 @@ export default function MuatNaikDokumenPage() {
   const [submissionError, setSubmissionError] = useState<{ code: string; message: string } | null>(
     null
   )
+  const [draftFeedback, setDraftFeedback] = useState<DraftFeedback>(null)
+
+  // In-flight guard to prevent duplicate save submissions
+  const isSavingRef = useRef(false)
+
+  // Zustand stores for folder and upload context
+  const { folderSelection } = useFolderLocationStore()
+  const { selectedFile } = useUploadStore()
+
+  /**
+   * Build SaveUploadRecordRequest payload from current state and form/preview info
+   */
+  const buildSaveRecordPayload = (
+    previewInfo: DocPreviewInfo,
+    workflowState: string
+  ): SaveUploadRecordRequest => {
+    // Guard required fields
+    if (!presignedResponse?.recordId) {
+      throw new Error('Missing recordId from presigned upload response')
+    }
+    if (!folderSelection.id) {
+      throw new Error('Missing folderId - please select a folder location')
+    }
+    if (!selectedUnitsFromDropdown) {
+      throw new Error('Missing unitId from selected unit')
+    }
+    if (!selectedProfileDetail?.definitionGroupId) {
+      throw new Error('Missing recordConfig from selected profile')
+    }
+    if (!selectedFile?.name) {
+      throw new Error('Missing file information - please upload a file')
+    }
+    if (!previewInfo.tahapKeselamatan) {
+      throw new Error('Missing accessLevel - please select security level')
+    }
+
+    const title = previewInfo.metadataValues['title'] || ''
+    if (!title.trim()) {
+      throw new Error('Missing title - please provide document title in metadata')
+    }
+
+    // THIS IS HARDCODED, CONFIRM WHERE THIS COMES FROM
+    const recordDate = new Date().toISOString()
+    const year = new Date(recordDate).getFullYear()
+
+    // Extract file metadata from selectedFile and presignedResponse
+    const fileName = presignedResponse.fileName || selectedFile.name
+    const fileType = presignedResponse.fileType || selectedFile.type || ''
+    const fileExtension =
+      presignedResponse.fileExtension || selectedFile.name.split('.').pop() || ''
+    const fileSize = presignedResponse.fileSize || selectedFile.size || 0
+
+    // Merge metadata: Dublin Core fields + additional repository metadata
+    const mergedMetadata: Record<string, unknown> = {
+      ...previewInfo.metadataValues,
+    }
+
+    // Include additional repository metadata fields if present
+    if (previewInfo.tempatMesyuarat) {
+      mergedMetadata['tempat_mesyuarat'] = previewInfo.tempatMesyuarat
+    }
+    if (previewInfo.bilanganHelaian) {
+      mergedMetadata['bilangan_helaian'] = previewInfo.bilanganHelaian
+    }
+    if (previewInfo.jenisKemasukan) {
+      mergedMetadata['jenis_kemasukan'] = previewInfo.jenisKemasukan
+    }
+
+    return {
+      recordId: presignedResponse.recordId,
+      fileName,
+      fileType,
+      fileExtension,
+      fileSize,
+      folderId: folderSelection.id,
+      title,
+      // FIND BACK WHAT IS THIS BACKEND WANT???
+      recordDescription: previewInfo.ringkasan || '',
+      recordDate,
+      // FIND BACK WHAT IS THIS BACKEND WANT???
+      reference: '',
+      unitId: selectedUnitsFromDropdown,
+      year,
+      // FIND BACK WHAT IS THIS BACKEND WANT???
+      classification: ' CLASSIFICATION OF WHAT',
+      accessLevel: previewInfo.tahapKeselamatan,
+      // FIND BACK WHAT IS THIS BACKEND WANT???
+      retentionPeriod: '7 DAYS MORE',
+      isLatest: true,
+      metadata: mergedMetadata,
+      recordConfig: selectedProfileDetail.definitionGroupId,
+      workflowState,
+    }
+  }
+
+  /**
+   * Shared mutation utility: calls saveUploadedRecord with standardized error handling
+   * For DRAF workflow: sets draftFeedback state (inline callout)
+   * For DALAM_SEMAKAN workflow: sets submissionProgress state (full-screen modal)
+   */
+  const executeSaveRecord = async (
+    previewInfo: DocPreviewInfo,
+    workflowState: string
+  ): Promise<void> => {
+    // Guard duplicate submissions
+    if (isSavingRef.current) {
+      console.warn('Save already in progress, ignoring duplicate request')
+      return
+    }
+
+    isSavingRef.current = true
+
+    // Only set full-screen progress for final submission, not draft
+    if (workflowState === 'DALAM_SEMAKAN') {
+      setSubmissionProgress('loading')
+      setSubmissionError(null)
+    }
+
+    try {
+      const payload = buildSaveRecordPayload(previewInfo, workflowState)
+      console.log('Saving record with payload:', payload)
+
+      const result = await saveOrUpdateUploadedRecord(payload)
+      console.log('Save successful, recordId:', result.recordId)
+
+      if (workflowState === 'DALAM_SEMAKAN') {
+        setSubmissionProgress('success')
+      }
+    } catch (error) {
+      console.error('Error saving uploaded record:', error)
+      const backendError = extractBackendError(error)
+
+      if (workflowState === 'DALAM_SEMAKAN') {
+        setSubmissionError({
+          code: backendError?.code ?? 'SAVE_FAILED',
+          message:
+            backendError?.message ??
+            (error instanceof Error ? error.message : 'Permintaan simpan dokumen gagal diproses.'),
+        })
+        setSubmissionProgress('error')
+      }
+
+      throw error // Re-throw so caller can handle flow control
+    } finally {
+      isSavingRef.current = false
+    }
+  }
 
   // Handle S3 upload from file selection in Muat Naik card
   const handleUploadToS3 = async (file: File): Promise<void> => {
@@ -96,37 +253,49 @@ export default function MuatNaikDokumenPage() {
     console.log('Upload status response:', statusResponse)
   }
 
-  // TODO: later post properly - final submission endpoint will go here
-  const handleSubmitDokumen = async () => {
-    setSubmissionProgress('loading')
-    setSubmissionError(null)
+  /**
+   * Handle Simpan Draf: save record with DRAF workflow state
+   * Shows inline feedback callout, does not navigate away
+   */
+  const handleSaveDraft = async (previewInfo: DocPreviewInfo): Promise<void> => {
+    // Clear previous feedback
+    setDraftFeedback(null)
 
     try {
-      // TODO: Replace with actual submission endpoint call
-      console.log('Submitting document with recordId:', presignedResponse?.recordId)
-      console.log('Metadata:', allInfoDocs)
-
-      // Simulate API call (remove when real endpoint is available)
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Future: call final metadata submission endpoint
-      // const result = await submitDocument({
-      //   recordId: presignedResponse?.recordId,
-      //   metadata: allInfoDocs,
-      //   ...
-      // })
-
-      setSubmissionProgress('success')
-    } catch (error) {
-      console.error('Error submitting document:', error)
-      const backendError = extractBackendError(error)
-      setSubmissionError({
-        code: backendError?.code ?? 'REQUEST_FAILED',
-        message:
-          backendError?.message ??
-          (error instanceof Error ? error.message : 'Permintaan penghantaran gagal diproses.'),
+      await executeSaveRecord(previewInfo, 'DRAF')
+      // Set success feedback for inline callout
+      setDraftFeedback({
+        status: 'success',
+        message: 'Success',
       })
-      setSubmissionProgress('error')
+    } catch (error) {
+      // Set error feedback for inline callout
+      const backendError = extractBackendError(error)
+      setDraftFeedback({
+        status: 'error',
+        message: 'Please try again',
+        errorDetail:
+          backendError?.message ??
+          (error instanceof Error ? error.message : 'Permintaan simpan dokumen gagal diproses.'),
+      })
+      // Do not proceed with any additional flow
+    }
+  }
+
+  /**
+   * Handle final submission: save record with DALAM_SEMAKAN workflow state
+   */
+  const handleSubmitDokumen = async () => {
+    if (!allInfoDocs) {
+      console.error('Cannot submit: preview info is missing')
+      return
+    }
+
+    try {
+      await executeSaveRecord(allInfoDocs, 'DALAM_SEMAKAN')
+      // Success state is already set by executeSaveRecord
+    } catch {
+      // Error state is already set by executeSaveRecord
     }
   }
 
@@ -278,11 +447,13 @@ export default function MuatNaikDokumenPage() {
               selectedProfile={selectedProfile}
               setSelectedProfile={handleProfileChange}
               onPreview={setAllInfoDocs}
+              onSaveDraft={handleSaveDraft}
               onReset={() => {
                 setAllInfoDocs(null)
                 setSelectedProfile('')
                 setSelectedProfileId('')
                 setMetadataFields([])
+                setDraftFeedback(null)
               }}
               dropdownUnits={dropdownUnits}
               selectedUnit={selectedUnitsFromDropdown}
@@ -290,6 +461,9 @@ export default function MuatNaikDokumenPage() {
               metadataFields={metadataFields}
               onUploadToS3={handleUploadToS3}
               uploadPercentage={uploadPercentage}
+              isSaving={isSavingRef.current}
+              draftFeedback={draftFeedback}
+              onDraftFeedbackDismiss={() => setDraftFeedback(null)}
             />
           </RightSidePageLayoutWrapper>
           {selectedProfile && (
