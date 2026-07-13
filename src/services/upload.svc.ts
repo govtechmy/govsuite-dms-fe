@@ -16,13 +16,15 @@ export interface ProfileDocumentConfig {
   unitId: string
   allowedFormats: string[]
   maxFileSizeMb: number
-  metadataFields: MetadataField[]
+  requiredMetadata: MetadataField[]
+  additionalMetadata: MetadataField[]
   workflowCode: string
   documentProfileCode: string
   documentProfileName: string
   isLatest: boolean
   createdAt: string
   updatedAt: string
+  retentionPeriod: string
 }
 
 // Metadata Config
@@ -35,7 +37,7 @@ export interface MetadataConfigField {
 
 export interface MetadataConfig {
   requiredMetadata: MetadataConfigField[]
-  metadata: MetadataConfigField[]
+  additionalMetadata: MetadataConfigField[]
 }
 
 // Presigned Upload
@@ -138,13 +140,15 @@ export const getProfileDocumentConfig = async (
       unitId: String(payload.unitId ?? ''),
       allowedFormats: Array.isArray(payload.allowedFormats) ? payload.allowedFormats : [],
       maxFileSizeMb: Number(payload.maxFileSizeMb ?? 0),
-      metadataFields: Array.isArray(payload.metadataFields) ? payload.metadataFields : [],
+      requiredMetadata: Array.isArray(payload.requiredMetadata) ? payload.requiredMetadata : [],
+      additionalMetadata: Array.isArray(payload.metadata) ? payload.metadata : [],
       workflowCode: String(payload.workflowCode ?? ''),
       documentProfileCode: String(payload.documentProfileCode ?? ''),
       documentProfileName: String(payload.documentProfileName ?? ''),
       isLatest: Boolean(payload.isLatest),
       createdAt: String(payload.createdAt ?? ''),
       updatedAt: String(payload.updatedAt ?? ''),
+      retentionPeriod: String(payload.retentionPeriod ?? ''),
     }
   } catch (error) {
     console.error(`Error fetching profile document config for ID ${profileId}:`, error)
@@ -161,6 +165,7 @@ export const getMetadataConfig = async (profileId: string): Promise<MetadataConf
 
   try {
     const response = await authAxios.get(url)
+    console.log(response)
     const payload = response.data?.data ?? response.data
 
     if (!payload) {
@@ -169,7 +174,7 @@ export const getMetadataConfig = async (profileId: string): Promise<MetadataConf
 
     return {
       requiredMetadata: Array.isArray(payload.requiredMetadata) ? payload.requiredMetadata : [],
-      metadata: Array.isArray(payload.metadata) ? payload.metadata : [],
+      additionalMetadata: Array.isArray(payload.metadata) ? payload.metadata : [],
     }
   } catch (error) {
     console.error(`Error fetching metadata config for profile ${profileId}:`, error)

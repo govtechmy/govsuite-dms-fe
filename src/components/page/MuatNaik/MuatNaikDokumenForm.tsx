@@ -69,6 +69,7 @@ interface MuatNaikDokumenFormProps {
   isSaving: boolean
   draftFeedback: DraftFeedback
   onDraftFeedbackDismiss: () => void
+  retentionPeriod: string
 }
 
 export default function MuatNaikDokumenForm({
@@ -85,6 +86,7 @@ export default function MuatNaikDokumenForm({
   onUnitChange,
   metadataRequired,
   metadataAdditional,
+  retentionPeriod,
   onUploadToS3,
   uploadPercentage,
   isSaving,
@@ -312,6 +314,12 @@ export default function MuatNaikDokumenForm({
               <div>Ringkasan (Pilihan)</div>
               <TextArea value={ringkasan} onChange={(e) => setRingkasan(e.target.value)} />
             </div>
+            {retentionPeriod && (
+              <div className="flex flex-col gap-1.5">
+                <div>Tempoh Simpanan</div>
+                <Input disabled value={retentionPeriod} readOnly />
+              </div>
+            )}
           </>
         )}
       </div>
@@ -357,9 +365,11 @@ export default function MuatNaikDokumenForm({
             ))}
           </div>
           <div className="flex flex-col gap-3 text-body-md font-medium text-txt-black-700">
-            <div className="text-body-md font-semibold font-body text-txt-black-900">
-              Metadata Tambahan (Repositori)
-            </div>
+            {metadataAdditional.length > 0 && (
+              <div className="text-body-md font-semibold font-body text-txt-black-900">
+                Metadata Tambahan (Repositori)
+              </div>
+            )}
             {metadataAdditional.map((field) => (
               <div key={field.key} className="flex flex-col gap-1.5">
                 <div className="flex">

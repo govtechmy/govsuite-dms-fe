@@ -13,7 +13,6 @@ import {
   getProfileDocumentsByUnit,
 } from '@/services/dropdown.svc'
 import {
-  getProfileDocumentConfig,
   requestPresignedUploadUrl,
   uploadFileToPresignedUrl,
   getUploadStatus,
@@ -21,6 +20,7 @@ import {
   type PresignUploadResponse,
   saveOrUpdateUploadedRecord,
   type SaveUploadRecordRequest,
+  getProfileDocumentConfig,
 } from '@/services/upload.svc'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import extractBackendError from '@/utils/extractBackendError'
@@ -48,6 +48,7 @@ export default function MuatNaikDokumenPage() {
   const [selectedUnitsFromDropdown, setSelectedUnitsFromDropdown] = useState<string | undefined>()
   const [metadataRequired, setMetadataRequired] = useState<MetadataField[]>([])
   const [metadataAdditional, setMetadataAdditional] = useState<MetadataField[]>([])
+  const [retentionPeriod, setRetentionPeriod] = useState<string>('')
   const [presignedResponse, setPresignedResponse] = useState<PresignUploadResponse | null>(null)
   const [uploadPercentage, setUploadPercentage] = useState<number>(0)
   const [submissionProgress, setSubmissionProgress] = useState<ProgressState>(null)
@@ -84,6 +85,7 @@ export default function MuatNaikDokumenPage() {
     setDraftFeedback(null)
     setSubmissionError(null)
     setSubmissionProgress(null)
+    setRetentionPeriod('')
 
     // Clear global store states
     setSelectedFile(null)
@@ -358,7 +360,6 @@ export default function MuatNaikDokumenPage() {
       try {
         const response = await getProfileDocumentsByUnit(selectedUnitsFromDropdown)
         setDropdownJenisDokumen(response)
-        console.log(response)
       } catch (err) {
         console.error('Error fetching profile documents:', err)
         setDropdownJenisDokumen([])
@@ -373,75 +374,9 @@ export default function MuatNaikDokumenPage() {
     const fetchProfileDocumentConfig = async () => {
       try {
         const unitsData = await getProfileDocumentConfig(selectedProfileId)
-        console.log(unitsData)
-
-        const data = {
-          success: true,
-          data: {
-            definitionGroupId: 'laporan_mesyuarat_unit_up',
-            unitId: 'UNIT_UP',
-            allowedFormats: ['pdf', 'docx'],
-            maxFileSizeMb: 200,
-            requiredMetadata: [
-              {
-                key: 'title',
-                title: 'Tajuk',
-                type: 'text',
-                required: true,
-              },
-              {
-                key: 'creator',
-                title: 'Pewujud',
-                type: 'text',
-                required: true,
-              },
-              {
-                key: 'tarikh_mesyuarat',
-                title: 'Tarikh Mesyuarat',
-                type: 'date',
-                required: true,
-              },
-              {
-                key: 'jenis_mesyuarat',
-                title: 'Jenis Mesyuarat',
-                type: 'text',
-                required: true,
-              },
-            ],
-            additionalMetadata: [
-              {
-                key: 'tempat',
-                title: 'Tempat Mesyuarat',
-                type: 'text',
-                required: false,
-              },
-              {
-                key: 'bilangan',
-                title: 'Bilangan Helaian',
-                type: 'text',
-                required: false,
-              },
-              {
-                key: 'kemasukan',
-                title: 'Jenis Kemasukan Rekod',
-                type: 'text',
-                required: false,
-              },
-            ],
-            workflowCode: 'WF_DRAF_SEMAKAN_TIDAK_DILULUSKAN_DITERBITKAN',
-            documentProfileCode: 'LAPORAN',
-            documentProfileName: 'Laporan Mesyuarat',
-            isLatest: true,
-            createdAt: '2026-06-25T22:24:59.083Z',
-            updatedAt: '2026-07-07T06:58:29.141Z',
-          },
-        }
-
-        console.log(data.data)
-
-        // Store metadataFields from config (fallback to mock until backend is ready)
-        setMetadataRequired(data.data.requiredMetadata || [])
-        setMetadataAdditional(data.data.additionalMetadata || [])
+        setRetentionPeriod(unitsData?.retentionPeriod || '')
+        setMetadataRequired(unitsData?.requiredMetadata || [])
+        setMetadataAdditional(unitsData?.additionalMetadata || [])
       } catch (err) {
         console.error('Error fetching profile document config:', err)
         setMetadataRequired([])
@@ -492,6 +427,7 @@ export default function MuatNaikDokumenPage() {
               onUnitChange={handleUnitChange}
               metadataRequired={metadataRequired}
               metadataAdditional={metadataAdditional}
+              retentionPeriod={retentionPeriod}
               onUploadToS3={handleUploadToS3}
               uploadPercentage={uploadPercentage}
               isSaving={isSavingRef.current}
