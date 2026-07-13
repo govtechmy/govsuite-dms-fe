@@ -46,7 +46,8 @@ export default function MuatNaikDokumenPage() {
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
   const [selectedUnitsFromDropdown, setSelectedUnitsFromDropdown] = useState<string | undefined>()
-  const [metadataFields, setMetadataFields] = useState<MetadataField[]>([])
+  const [metadataRequired, setMetadataRequired] = useState<MetadataField[]>([])
+  const [metadataAdditional, setMetadataAdditional] = useState<MetadataField[]>([])
   const [presignedResponse, setPresignedResponse] = useState<PresignUploadResponse | null>(null)
   const [uploadPercentage, setUploadPercentage] = useState<number>(0)
   const [submissionProgress, setSubmissionProgress] = useState<ProgressState>(null)
@@ -76,7 +77,8 @@ export default function MuatNaikDokumenPage() {
     setSelectedProfileDetail(null)
     setSelectedUnitsFromDropdown(undefined)
     setDropdownJenisDokumen([])
-    setMetadataFields([])
+    setMetadataRequired([])
+    setMetadataAdditional([])
     setPresignedResponse(null)
     setUploadPercentage(0)
     setDraftFeedback(null)
@@ -116,7 +118,7 @@ export default function MuatNaikDokumenPage() {
       throw new Error('Missing accessLevel - please select security level')
     }
 
-    const title = previewInfo.metadataValues['title'] || ''
+    const title = previewInfo.requiredMetadataValues['title'] || ''
     if (!title.trim()) {
       throw new Error('Missing title - please provide document title in metadata')
     }
@@ -132,20 +134,10 @@ export default function MuatNaikDokumenPage() {
       presignedResponse.fileExtension || selectedFile.name.split('.').pop() || ''
     const fileSize = presignedResponse.fileSize || selectedFile.size || 0
 
-    // Merge metadata: Dublin Core fields + additional repository metadata
+    // Merge metadata: required metadata + additional metadata
     const mergedMetadata: Record<string, unknown> = {
-      ...previewInfo.metadataValues,
-    }
-
-    // Include additional repository metadata fields if present
-    if (previewInfo.tempatMesyuarat) {
-      mergedMetadata['tempat_mesyuarat'] = previewInfo.tempatMesyuarat
-    }
-    if (previewInfo.bilanganHelaian) {
-      mergedMetadata['bilangan_helaian'] = previewInfo.bilanganHelaian
-    }
-    if (previewInfo.jenisKemasukan) {
-      mergedMetadata['jenis_kemasukan'] = previewInfo.jenisKemasukan
+      ...previewInfo.requiredMetadataValues,
+      ...previewInfo.additionalMetadataValues,
     }
 
     return {
@@ -358,7 +350,8 @@ export default function MuatNaikDokumenPage() {
         setDropdownJenisDokumen([])
         setSelectedProfile('')
         setSelectedProfileId('')
-        setMetadataFields([])
+        setMetadataRequired([])
+        setMetadataAdditional([])
         return
       }
 
@@ -389,7 +382,7 @@ export default function MuatNaikDokumenPage() {
             unitId: 'UNIT_UP',
             allowedFormats: ['pdf', 'docx'],
             maxFileSizeMb: 200,
-            metadataFields: [
+            requiredMetadata: [
               {
                 key: 'title',
                 title: 'Tajuk',
@@ -414,10 +407,24 @@ export default function MuatNaikDokumenPage() {
                 type: 'text',
                 required: true,
               },
+            ],
+            additionalMetadata: [
               {
-                key: 'tarikh',
-                title: 'Tarikh',
-                type: 'date',
+                key: 'tempat',
+                title: 'Tempat Mesyuarat',
+                type: 'text',
+                required: false,
+              },
+              {
+                key: 'bilangan',
+                title: 'Bilangan Helaian',
+                type: 'text',
+                required: false,
+              },
+              {
+                key: 'kemasukan',
+                title: 'Jenis Kemasukan Rekod',
+                type: 'text',
                 required: false,
               },
             ],
@@ -433,10 +440,12 @@ export default function MuatNaikDokumenPage() {
         console.log(data.data)
 
         // Store metadataFields from config (fallback to mock until backend is ready)
-        setMetadataFields(data.data.metadataFields || [])
+        setMetadataRequired(data.data.requiredMetadata || [])
+        setMetadataAdditional(data.data.additionalMetadata || [])
       } catch (err) {
         console.error('Error fetching profile document config:', err)
-        setMetadataFields([])
+        setMetadataRequired([])
+        setMetadataAdditional([])
       }
     }
     fetchProfileDocumentConfig()
@@ -481,7 +490,8 @@ export default function MuatNaikDokumenPage() {
               dropdownUnits={dropdownUnits}
               selectedUnit={selectedUnitsFromDropdown}
               onUnitChange={handleUnitChange}
-              metadataFields={metadataFields}
+              metadataRequired={metadataRequired}
+              metadataAdditional={metadataAdditional}
               onUploadToS3={handleUploadToS3}
               uploadPercentage={uploadPercentage}
               isSaving={isSavingRef.current}

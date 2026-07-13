@@ -38,11 +38,10 @@ export interface DocPreviewInfo {
   profilDokumen: string
   tahapKeselamatan: string
   ringkasan: string
-  metadataValues: Record<string, string>
-  metadataFields: MetadataField[]
-  tempatMesyuarat: string
-  bilanganHelaian: string
-  jenisKemasukan: string
+  requiredMetadataValues: Record<string, string>
+  additionalMetadataValues: Record<string, string>
+  requiredMetadataFields: MetadataField[]
+  additionalMetadataFields: MetadataField[]
 }
 
 type DraftFeedback = {
@@ -63,7 +62,8 @@ interface MuatNaikDokumenFormProps {
   dropdownUnits: DropdownUnit[]
   selectedUnit: string | undefined
   onUnitChange: (unitCode: string) => void
-  metadataFields: MetadataField[]
+  metadataRequired: MetadataField[]
+  metadataAdditional: MetadataField[]
   onUploadToS3: (file: File) => Promise<void>
   uploadPercentage: number
   isSaving: boolean
@@ -83,7 +83,8 @@ export default function MuatNaikDokumenForm({
   dropdownUnits,
   selectedUnit,
   onUnitChange,
-  metadataFields,
+  metadataRequired,
+  metadataAdditional,
   onUploadToS3,
   uploadPercentage,
   isSaving,
@@ -96,15 +97,12 @@ export default function MuatNaikDokumenForm({
     setSelectedPeringkatKeselamatan,
     ringkasan,
     setRingkasan,
-    metadataValues,
-    setMetadataValues,
-    setMetadataValue,
-    tempatMesyuarat,
-    setTempatMesyuarat,
-    bilanganHelaian,
-    setBilanganHelaian,
-    jenisKemasukan,
-    setJenisKemasukan,
+    requiredMetadataValues,
+    setRequiredMetadataField,
+    replaceRequiredMetadata,
+    additionalMetadataValues,
+    setAdditionalMetadataField,
+    replaceAdditionalMetadata,
     uploadState,
     setUploadState,
     uploadErrorMessage,
@@ -116,9 +114,13 @@ export default function MuatNaikDokumenForm({
 
   const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.codeName)
 
-  const isRequiredMetadataComplete = metadataFields
+  const isRequiredMetadataComplete = metadataRequired
     .filter((field) => field.required)
-    .every((field) => metadataValues[field.key]?.trim() !== '')
+    .every((field) => requiredMetadataValues[field.key]?.trim() !== '')
+
+  const isAdditionalMetadataComplete = metadataAdditional
+    .filter((field) => field.required)
+    .every((field) => additionalMetadataValues[field.key]?.trim() !== '')
 
   useEffect(() => {
     if (!selectedProfile) {
@@ -127,8 +129,9 @@ export default function MuatNaikDokumenForm({
   }, [selectedProfile, setSelectedPeringkatKeselamatan])
 
   useEffect(() => {
-    setMetadataValues({})
-  }, [metadataFields, setMetadataValues])
+    replaceRequiredMetadata({})
+    replaceAdditionalMetadata({})
+  }, [metadataRequired, metadataAdditional, replaceRequiredMetadata, replaceAdditionalMetadata])
 
   const handleFileUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -210,11 +213,10 @@ export default function MuatNaikDokumenForm({
       profilDokumen: selectedProfile,
       tahapKeselamatan: selectedPeringkatKeselamatan,
       ringkasan,
-      metadataValues,
-      metadataFields,
-      tempatMesyuarat,
-      bilanganHelaian,
-      jenisKemasukan,
+      requiredMetadataValues,
+      additionalMetadataValues,
+      requiredMetadataFields: metadataRequired,
+      additionalMetadataFields: metadataAdditional,
     }
 
     try {
@@ -235,11 +237,10 @@ export default function MuatNaikDokumenForm({
       profilDokumen: selectedProfile,
       tahapKeselamatan: selectedPeringkatKeselamatan,
       ringkasan,
-      metadataValues,
-      metadataFields,
-      tempatMesyuarat,
-      bilanganHelaian,
-      jenisKemasukan,
+      requiredMetadataValues,
+      additionalMetadataValues,
+      requiredMetadataFields: metadataRequired,
+      additionalMetadataFields: metadataAdditional,
     }
 
     // Save as draft first before showing preview
@@ -330,7 +331,7 @@ export default function MuatNaikDokumenForm({
             <div className="text-body-md font-semibold font-body text-txt-black-900">
               Dublin Core (Metadata)
             </div>
-            {metadataFields.map((field) => (
+            {metadataRequired.map((field) => (
               <div key={field.key} className="flex flex-col gap-1.5">
                 <div className="flex">
                   {field.title}
@@ -340,14 +341,16 @@ export default function MuatNaikDokumenForm({
                   <DatePicker
                     locale="ms"
                     placeholder="Pilih Tarikh"
-                    value={parseDateValue(metadataValues[field.key] || '')}
-                    onValueChange={(date) => setMetadataValue(field.key, formatDateValue(date))}
+                    value={parseDateValue(requiredMetadataValues[field.key] || '')}
+                    onValueChange={(date) =>
+                      setRequiredMetadataField(field.key, formatDateValue(date))
+                    }
                   />
                 ) : (
                   <Input
                     type="text"
-                    value={metadataValues[field.key] || ''}
-                    onChange={(e) => setMetadataValue(field.key, e.target.value)}
+                    value={requiredMetadataValues[field.key] || ''}
+                    onChange={(e) => setRequiredMetadataField(field.key, e.target.value)}
                   />
                 )}
               </div>
@@ -357,30 +360,52 @@ export default function MuatNaikDokumenForm({
             <div className="text-body-md font-semibold font-body text-txt-black-900">
               Metadata Tambahan (Repositori)
             </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex">Tempat Mesyuarat</div>
-              <Input value={tempatMesyuarat} onChange={(e) => setTempatMesyuarat(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex">Bilangan Helaian</div>
-              <Input value={bilanganHelaian} onChange={(e) => setBilanganHelaian(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex">Jenis Kemasukan Rekod</div>
-              <Input value={jenisKemasukan} onChange={(e) => setJenisKemasukan(e.target.value)} />
-            </div>
+            {metadataAdditional.map((field) => (
+              <div key={field.key} className="flex flex-col gap-1.5">
+                <div className="flex">
+                  {field.title}
+                  {field.required && <div className="text-txt-danger">*</div>}
+                </div>
+                {field.type === 'date' ? (
+                  <DatePicker
+                    locale="ms"
+                    placeholder="Pilih Tarikh"
+                    value={parseDateValue(additionalMetadataValues[field.key] || '')}
+                    onValueChange={(date) =>
+                      setAdditionalMetadataField(field.key, formatDateValue(date))
+                    }
+                  />
+                ) : (
+                  <Input
+                    type="text"
+                    value={additionalMetadataValues[field.key] || ''}
+                    onChange={(e) => setAdditionalMetadataField(field.key, e.target.value)}
+                  />
+                )}
+              </div>
+            ))}
           </div>
           <div className="flex justify-between">
             <Button
               variant="default-outline"
-              disabled={uploadState !== 3 || !isRequiredMetadataComplete || isSaving}
+              disabled={
+                uploadState !== 3 ||
+                !isRequiredMetadataComplete ||
+                !isAdditionalMetadataComplete ||
+                isSaving
+              }
               onClick={handleSaveDraftClick}
             >
               Simpan Draf
             </Button>
             <Button
               variant="primary-outline"
-              disabled={uploadState !== 3 || !isRequiredMetadataComplete || isSaving}
+              disabled={
+                uploadState !== 3 ||
+                !isRequiredMetadataComplete ||
+                !isAdditionalMetadataComplete ||
+                isSaving
+              }
               onClick={handlePreviewClick}
             >
               Muat Naik Pratonton

@@ -16,10 +16,9 @@ export type UploadDraftStore = {
   // Form draft fields
   selectedPeringkatKeselamatan: string
   ringkasan: string
-  metadataValues: Record<string, string>
-  tempatMesyuarat: string
-  bilanganHelaian: string
-  jenisKemasukan: string
+  // here values comes from the input, straight into Record<string, string>
+  requiredMetadataValues: Record<string, string>
+  additionalMetadataValues: Record<string, string>
 
   // Upload state fields
   uploadState: UploadState
@@ -29,11 +28,10 @@ export type UploadDraftStore = {
   // Actions
   setSelectedPeringkatKeselamatan: (value: string) => void
   setRingkasan: (value: string) => void
-  setMetadataValues: (values: Record<string, string>) => void
-  setMetadataValue: (key: string, value: string) => void
-  setTempatMesyuarat: (value: string) => void
-  setBilanganHelaian: (value: string) => void
-  setJenisKemasukan: (value: string) => void
+  replaceRequiredMetadata: (values: Record<string, string>) => void
+  setRequiredMetadataField: (key: string, value: string) => void
+  replaceAdditionalMetadata: (values: Record<string, string>) => void
+  setAdditionalMetadataField: (key: string, value: string) => void
   setUploadState: (state: UploadState) => void
   setUploadErrorMessage: (message: string) => void
   setPreviewDocumentInfoData: (data: PreviewDocumentInfo | null) => void
@@ -43,10 +41,8 @@ export type UploadDraftStore = {
 const initialState = {
   selectedPeringkatKeselamatan: '',
   ringkasan: '',
-  metadataValues: {},
-  tempatMesyuarat: '',
-  bilanganHelaian: '',
-  jenisKemasukan: '',
+  requiredMetadataValues: {},
+  additionalMetadataValues: {},
   uploadState: 1 as UploadState,
   uploadErrorMessage: '',
   previewDocumentInfoData: null,
@@ -59,18 +55,21 @@ export const useUploadDraftStore = create<UploadDraftStore>((set) => ({
 
   setRingkasan: (value: string) => set({ ringkasan: value }),
 
-  setMetadataValues: (values: Record<string, string>) => set({ metadataValues: values }),
+  replaceRequiredMetadata: (values: Record<string, string>) =>
+    set({ requiredMetadataValues: values }),
 
-  setMetadataValue: (key: string, value: string) =>
+  setRequiredMetadataField: (key: string, value: string) =>
     set((state) => ({
-      metadataValues: { ...state.metadataValues, [key]: value },
+      requiredMetadataValues: { ...state.requiredMetadataValues, [key]: value },
     })),
 
-  setTempatMesyuarat: (value: string) => set({ tempatMesyuarat: value }),
+  replaceAdditionalMetadata: (values: Record<string, string>) =>
+    set({ additionalMetadataValues: values }),
 
-  setBilanganHelaian: (value: string) => set({ bilanganHelaian: value }),
-
-  setJenisKemasukan: (value: string) => set({ jenisKemasukan: value }),
+  setAdditionalMetadataField: (key: string, value: string) =>
+    set((state) => ({
+      additionalMetadataValues: { ...state.additionalMetadataValues, [key]: value },
+    })),
 
   setUploadState: (state: UploadState) => set({ uploadState: state }),
 

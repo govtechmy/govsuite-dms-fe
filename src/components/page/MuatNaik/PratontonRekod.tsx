@@ -18,47 +18,20 @@ export default function PratontonRekod({ docInfo, onSubmit }: PratontonRekodProp
           recordDescription: docInfo.ringkasan,
           accessLevel: docInfo.tahapKeselamatan,
         },
-        requiredMetadata: docInfo.metadataFields
-          .filter((field) => field.required)
-          .map((field) => ({
-            key: field.key,
-            title: field.title,
-            type: field.type,
-            required: 'true',
-            value: docInfo.metadataValues[field.key] || '',
-          })),
-        metadata: [
-          ...docInfo.metadataFields
-            .filter((field) => !field.required)
-            .map((field) => ({
-              key: field.key,
-              title: field.title,
-              type: field.type,
-              required: 'false',
-              value: docInfo.metadataValues[field.key] || '',
-            })),
-          {
-            key: 'meeting-place',
-            title: 'Tempat Mesyuarat',
-            type: 'text',
-            required: 'false',
-            value: docInfo.tempatMesyuarat,
-          },
-          {
-            key: 'page-count',
-            title: 'Bilangan Helaian',
-            type: 'number',
-            required: 'false',
-            value: docInfo.bilanganHelaian,
-          },
-          {
-            key: 'record-entry-type',
-            title: 'Jenis Kemasukan Rekod',
-            type: 'text',
-            required: 'false',
-            value: docInfo.jenisKemasukan,
-          },
-        ],
+        requiredMetadata: docInfo.requiredMetadataFields.map((field) => ({
+          key: field.key,
+          title: field.title,
+          type: field.type,
+          required: 'true',
+          value: docInfo.requiredMetadataValues[field.key] || '',
+        })),
+        metadata: docInfo.additionalMetadataFields.map((field) => ({
+          key: field.key,
+          title: field.title,
+          type: field.type,
+          required: field.required ? 'true' : 'false',
+          value: docInfo.additionalMetadataValues[field.key] || '',
+        })),
       }
     : null
 
