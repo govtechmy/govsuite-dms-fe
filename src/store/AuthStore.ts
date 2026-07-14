@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthStore>()(
         const currentRefreshToken = get().refreshToken
 
         if (!currentRefreshToken) {
-          console.error('❌ No refresh token available - forcing logout')
+          console.error('No refresh token available; forcing logout')
           get().logout()
           return null
         }
