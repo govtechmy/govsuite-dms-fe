@@ -12,6 +12,7 @@ interface RingkasanEksekutifCardInfo {
   jumlahDokumen: number | string
   perlukanKelulusan: number | string
   dokumenTidakDiluluskan: number | string
+  dokumenDraf: number | string
 }
 
 interface RingkasanEksekutifProps {
@@ -80,6 +81,15 @@ export default function RingkasanEksekutif({ cardInfo, Tahun }: RingkasanEksekut
           variant="danger"
           onClick={() => {
             navigate(`/${lang}/tidak-lulus`)
+          }}
+        />
+        <RingkasanEksekutifCard
+          key="dokumen-draf"
+          label="Dokumen Draf"
+          value={cardInfo.dokumenDraf}
+          variant="default"
+          onClick={() => {
+            navigate(`/${lang}/draf`)
           }}
         />
       </div>

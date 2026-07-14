@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react'
 
-type CardVariant = 'primary' | 'warning' | 'danger'
+type CardVariant = 'primary' | 'warning' | 'danger' | 'default'
 
 const cardVariantStyles: Record<CardVariant, { bgClass: string; borderClass: string }> = {
   primary: {
@@ -14,6 +14,10 @@ const cardVariantStyles: Record<CardVariant, { bgClass: string; borderClass: str
   danger: {
     bgClass: 'bg-bg-danger-50',
     borderClass: 'border-l-bg-danger-200',
+  },
+  default: {
+    bgClass: 'bg-bg-washed',
+    borderClass: 'border-l-gray-600/20',
   },
 }
 

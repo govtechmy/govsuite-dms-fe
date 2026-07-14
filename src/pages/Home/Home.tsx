@@ -12,6 +12,7 @@ export default function HomePage() {
     jumlahDokumen: 821,
     perlukanKelulusan: 42,
     dokumenTidakDiluluskan: 10,
+    dokumenDraf: 15,
   }
 
   const unit = ['unit k ', 'unit l']
