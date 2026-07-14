@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getEnv } from '@/config/runtimeEnv'
 
-import { authAxios, unauthAxios } from '../services/http'
+import { authAxios } from '../services/http'
+import { refreshToken } from '@/services/auth.svc'
 
 const sessionStorageAdapter = {
   getItem: (name: string) => {
@@ -44,27 +44,42 @@ export const useAuthStore = create<AuthStore>()(
       refreshToken: null,
       user: null,
       isAuthenticated: false,
+
       login: (token: string, refreshToken: string, user: User) => {
         set({ token, refreshToken, user, isAuthenticated: true })
         authAxios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       },
+
       logout: () => {
         set({ token: null, refreshToken: null, user: null, isAuthenticated: false })
         delete authAxios.defaults.headers.common['Authorization']
       },
+
       refreshAccessToken: async (): Promise<string | null> => {
-        const refreshToken = get().refreshToken
-        if (!refreshToken) return null
+        const currentRefreshToken = get().refreshToken
+
+        if (!currentRefreshToken) {
+          console.error('❌ No refresh token available - forcing logout')
+          get().logout()
+          return null
+        }
+
         try {
-          const response = await unauthAxios.post(`${getEnv('VITE_API_BASE_URL')}/auth/refresh`, {
-            refreshToken,
-          })
-          const newToken: string = response.data.data.accessToken
-          set({ token: newToken, refreshToken: refreshToken })
+          const result = await refreshToken(currentRefreshToken)
+
+          if (!result) {
+            console.error('❌ Refresh failed - token could not be renewed')
+            get().logout()
+            return null
+          }
+
+          const { newToken, newRefreshToken } = result
+
+          set({ token: newToken, refreshToken: newRefreshToken })
           authAxios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
           return newToken
         } catch (error) {
-          console.error('Error refreshing token:', error)
+          console.error('❌ Refresh token error:', error)
           get().logout()
           return null
         }
