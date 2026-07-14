@@ -17,7 +17,7 @@ const cardVariantStyles: Record<CardVariant, { bgClass: string; borderClass: str
   },
   default: {
     bgClass: 'bg-bg-washed',
-    borderClass: 'border-l-gray-600/20',
+    borderClass: 'border-l-otl-gray-200',
   },
 }
 
