@@ -35,13 +35,13 @@ export const refreshToken = async (
     const newRefreshToken: string | undefined = response.data?.data?.refreshToken
 
     if (!newToken || typeof newToken !== 'string') {
-      console.warn('⚠️ Invalid or missing accessToken in refresh response')
+      console.warn('Invalid or missing accessToken in refresh response')
       return null
     }
 
     return { newToken, newRefreshToken }
   } catch (error) {
-    console.error('❌ Refresh token error:', error)
+    console.error('Refresh token error:', error)
     return null
   }
 }
