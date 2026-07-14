@@ -21,7 +21,7 @@
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",
     "i18next": "^25.4.2",
-    "pdfjs-dist": "3.11.174",
+    "pdfjs-dist": "^4.10.38",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-i18next": "^15.7.3",
