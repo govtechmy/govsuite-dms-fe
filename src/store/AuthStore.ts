@@ -79,7 +79,7 @@ export const useAuthStore = create<AuthStore>()(
           authAxios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
           return newToken
         } catch (error) {
-          console.error('❌ Refresh token error:', error)
+          console.error('Refresh token error:', error)
           get().logout()
           return null
         }

@@ -16,11 +16,11 @@ export const login = async (data: { username: string; password: string }) => {
     if (token && refreshToken && user) {
       useAuthStore.getState().login(token, refreshToken, user)
     } else {
-      console.warn('⚠️ Missing token, refreshToken, or user in response')
+      console.warn('Missing token, refreshToken, or user in response')
     }
     return response.data
   } catch (error) {
-    console.error('❌ Login error:', error)
+    console.error('Login error:', error)
     throw error
   }
 }
