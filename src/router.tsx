@@ -16,9 +16,11 @@ import DokumenIDPage from './pages/KatalogDokumen/DokumenID/DokumenID'
 import MuatNaikDokumenPage from './pages/MuatNaikDokumen'
 import CarianDokumenPage from './pages/CarianDokumen'
 import KegemaranPage from './pages/Kegemaran'
-import PengurusanDokumenPage from './pages/PengurusanDokumen'
 import LogAktivitiPage from './pages/LogAktiviti'
 import BantuanPage from './pages/Bantuan'
+import PengurusanPenggunaPage from './pages/Pengurusan/PengurusanPengguna'
+import PengurusanProfilPage from './pages/Pengurusan/PengurusanProfil'
+import PengurusanDokumenPage from './pages/Pengurusan/PengurusanDokumen'
 
 /**
  * Maps route paths to their required permission keys.
@@ -31,6 +33,9 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
   'carian-dokumen': 'carian-dokumen',
   kegemaran: 'kegemaran',
   pengurusan: 'pengurusan',
+  'pengurusan-dokumen': 'pengurusan',
+  'pengurusan-pengguna': 'pengurusan',
+  'pengurusan-profil': 'pengurusan',
   'log-aktiviti': 'log-aktiviti',
   bantuan: 'bantuan',
 }
@@ -152,11 +157,37 @@ export default function AppRoutes() {
               </ProtectedRoute>
             }
           />
+
+          {/* Pengurusan routes - parent redirect to default subpage */}
           <Route
             path="pengurusan"
             element={
               <ProtectedRoute routeKey="pengurusan">
+                <Navigate to="../pengurusan-dokumen" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pengurusan-dokumen"
+            element={
+              <ProtectedRoute routeKey="pengurusan">
                 <PengurusanDokumenPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pengurusan-pengguna"
+            element={
+              <ProtectedRoute routeKey="pengurusan">
+                <PengurusanPenggunaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pengurusan-profil"
+            element={
+              <ProtectedRoute routeKey="pengurusan">
+                <PengurusanProfilPage />
               </ProtectedRoute>
             }
           />

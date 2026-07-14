@@ -1,9 +1,9 @@
 import { Button } from '@govtechmy/myds-react/button'
 
-import KatalogUnit from '../components/shared/KatalogUnit'
-import type { Unit } from '../components/shared/KatalogUnit'
 import HeaderDocuments from '@/components/shared/HeaderDocuments'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
+import type { Unit } from '@/components/shared/KatalogUnit'
+import KatalogUnit from '@/components/shared/KatalogUnit'
 
 const units: Unit[] = [
   {
