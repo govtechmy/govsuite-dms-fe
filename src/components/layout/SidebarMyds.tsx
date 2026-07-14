@@ -141,6 +141,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
   }, [])
 
   // Auto-expand parent menu items when their child routes are active
+
   useEffect(() => {
     const pathName = location.pathname
     menuItems.forEach((item) => {
@@ -151,6 +152,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
         }
       }
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname])
 
   const getItemClasses = (active: boolean) => {
