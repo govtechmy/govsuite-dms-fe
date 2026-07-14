@@ -101,10 +101,8 @@ export default function MuatNaikDokumenForm({
     setRingkasan,
     requiredMetadataValues,
     setRequiredMetadataField,
-    replaceRequiredMetadata,
     additionalMetadataValues,
     setAdditionalMetadataField,
-    replaceAdditionalMetadata,
     uploadState,
     setUploadState,
     uploadErrorMessage,
@@ -129,11 +127,6 @@ export default function MuatNaikDokumenForm({
       setSelectedPeringkatKeselamatan('')
     }
   }, [selectedProfile, setSelectedPeringkatKeselamatan])
-
-  useEffect(() => {
-    replaceRequiredMetadata({})
-    replaceAdditionalMetadata({})
-  }, [metadataRequired, metadataAdditional, replaceRequiredMetadata, replaceAdditionalMetadata])
 
   const handleFileUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]

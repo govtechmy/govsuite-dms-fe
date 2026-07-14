@@ -84,7 +84,7 @@ export interface SaveUploadRecordRequest {
   isLatest: boolean
   metadata: Record<string, unknown>
   recordConfig: string
-  workflowState: string
+  status: string
 }
 
 export interface SaveUploadRecordResponse {

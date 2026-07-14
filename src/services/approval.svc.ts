@@ -10,12 +10,12 @@ interface PutDocumentNotApprovedParams {
 
 interface WorkflowStateUpdateData {
   message: string
-  workflowState: string
+  status: string
 }
 
 interface NotApprovedWorkflowStateUpdateData {
   message: string
-  workflowState: string
+  status: string
   rejectReason?: {
     LAIN_LAIN?: string
     TIDAK_LENGKAP?: boolean

@@ -3,7 +3,7 @@ import { authAxios } from './http'
 
 interface ResendRecordData {
   message: string
-  workflowState: string
+  status: string
 }
 
 export const deleteRecord = async (recordId: string): Promise<ResendRecordData> => {
@@ -20,7 +20,7 @@ export const deleteRecord = async (recordId: string): Promise<ResendRecordData> 
 export const resendRecord = async (recordId: string): Promise<ResendRecordData> => {
   const url = `${getEnv('VITE_API_BASE_URL')}/record/workflow/${recordId}`
   const body = {
-    workflowState: 'DALAM_SEMAKAN',
+    status: 'DALAM_SEMAKAN',
   }
 
   try {

@@ -98,7 +98,7 @@ export default function MuatNaikDokumenPage() {
    */
   const buildSaveRecordPayload = (
     previewInfo: DocPreviewInfo,
-    workflowState: string
+    status: string
   ): SaveUploadRecordRequest => {
     // Guard required fields
     if (!presignedResponse?.recordId) {
@@ -120,11 +120,6 @@ export default function MuatNaikDokumenPage() {
       throw new Error('Missing accessLevel - please select security level')
     }
 
-    const title = previewInfo.requiredMetadataValues['title'] || ''
-    if (!title.trim()) {
-      throw new Error('Missing title - please provide document title in metadata')
-    }
-
     // THIS IS HARDCODED, CONFIRM WHERE THIS COMES FROM
     const recordDate = new Date().toISOString()
     const year = new Date(recordDate).getFullYear()
@@ -143,13 +138,14 @@ export default function MuatNaikDokumenPage() {
     }
 
     return {
+      // RECODE THIS BACK LATER
+      title: 'hehe',
       recordId: presignedResponse.recordId,
       fileName,
       fileType,
       fileExtension,
       fileSize,
       folderId: folderSelection.id,
-      title,
       // FIND BACK WHAT IS THIS BACKEND WANT???
       recordDescription: previewInfo.ringkasan || '',
       recordDate,
@@ -165,7 +161,7 @@ export default function MuatNaikDokumenPage() {
       isLatest: true,
       metadata: mergedMetadata,
       recordConfig: selectedProfileDetail.definitionGroupId,
-      workflowState,
+      status: status,
     }
   }
 
@@ -174,10 +170,7 @@ export default function MuatNaikDokumenPage() {
    * For DRAF workflow: sets draftFeedback state (inline callout)
    * For DALAM_SEMAKAN workflow: sets submissionProgress state (full-screen modal)
    */
-  const executeSaveRecord = async (
-    previewInfo: DocPreviewInfo,
-    workflowState: string
-  ): Promise<void> => {
+  const executeSaveRecord = async (previewInfo: DocPreviewInfo, status: string): Promise<void> => {
     // Guard duplicate submissions
     if (isSavingRef.current) {
       console.warn('Save already in progress, ignoring duplicate request')
@@ -187,26 +180,25 @@ export default function MuatNaikDokumenPage() {
     isSavingRef.current = true
 
     // Only set full-screen progress for final submission, not draft
-    if (workflowState === 'DALAM_SEMAKAN') {
+    if (status === 'DALAM_SEMAKAN') {
       setSubmissionProgress('loading')
       setSubmissionError(null)
     }
 
     try {
-      const payload = buildSaveRecordPayload(previewInfo, workflowState)
-      console.log('Saving record with payload:', payload)
+      const payload = buildSaveRecordPayload(previewInfo, status)
 
       const result = await saveOrUpdateUploadedRecord(payload)
       console.log('Save successful, recordId:', result.recordId)
 
-      if (workflowState === 'DALAM_SEMAKAN') {
+      if (status === 'DALAM_SEMAKAN') {
         setSubmissionProgress('success')
       }
     } catch (error) {
       console.error('Error saving uploaded record:', error)
       const backendError = extractBackendError(error)
 
-      if (workflowState === 'DALAM_SEMAKAN') {
+      if (status === 'DALAM_SEMAKAN') {
         setSubmissionError({
           code: backendError?.code ?? 'SAVE_FAILED',
           message:
@@ -243,11 +235,8 @@ export default function MuatNaikDokumenPage() {
       recordDate,
     }
 
-    console.log('Presign payload:', presignPayload)
-
     // Step 2: Request presigned URL
     const presignedData = await requestPresignedUploadUrl(presignPayload)
-    console.log('Presigned response:', presignedData)
 
     // Step 3: Save full presigned response to state for future use
     setPresignedResponse(presignedData)
