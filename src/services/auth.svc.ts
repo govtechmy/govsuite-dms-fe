@@ -40,12 +40,12 @@ export const login = async (data: { username: string; password: string }): Promi
 
 export const refreshToken = async (
   refreshToken: string
-): Promise<{ newToken: string; newRefreshToken: string | undefined } | null> => {
+): Promise<{ newToken: string; newRefreshToken: string | null } | null> => {
   const url = `${BASE_URL}${AUTH_ENDPOINT}/refresh`
   try {
     const response = await unauthAxios.post(url, { refreshToken })
-    const newToken: string | undefined = response.data?.data?.accessToken
-    const newRefreshToken: string | undefined = response.data?.data?.refreshToken
+    const newToken: string | null = response.data?.data?.accessToken
+    const newRefreshToken: string | null = response.data?.data?.refreshToken
 
     if (!newToken || typeof newToken !== 'string') {
       console.warn('Invalid or missing accessToken in refresh response')
