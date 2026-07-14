@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthStore>()(
           const result = await refreshToken(currentRefreshToken)
 
           if (!result) {
-            console.error('❌ Refresh failed - token could not be renewed')
+            console.error('Refresh failed; token could not be renewed')
             get().logout()
             return null
           }
