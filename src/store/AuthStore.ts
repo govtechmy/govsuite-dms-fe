@@ -75,7 +75,11 @@ export const useAuthStore = create<AuthStore>()(
 
           const { newToken, newRefreshToken } = result
 
-          set({ token: newToken, refreshToken: newRefreshToken ?? currentRefreshToken })
+          set({
+            token: newToken,
+            refreshToken: newRefreshToken ?? currentRefreshToken,
+            isAuthenticated: true,
+          })
           authAxios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
           return newToken
         } catch (error) {
