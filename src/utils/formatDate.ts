@@ -25,3 +25,35 @@ export const formatISODateString = (dateString: string): string => {
     year: 'numeric',
   })
 }
+
+/**
+ * Converts a dd-mm-yy or dd-mm-yyyy date string to ISO format.
+ * Returns null when the input is invalid.
+ */
+export const convertDdMmYyToIso = (value: string): string | null => {
+  const [dayString, monthString, yearString] = value.split('-')
+  const day = Number(dayString)
+  const month = Number(monthString)
+  const parsedYear = Number(yearString)
+
+  if (!day || !month || !parsedYear) {
+    return null
+  }
+
+  const year = yearString.length === 2 ? 2000 + parsedYear : parsedYear
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null
+  }
+
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    return null
+  }
+
+  return parsed.toISOString()
+}

@@ -24,6 +24,7 @@ import {
 } from '@/services/upload.svc'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import extractBackendError from '@/utils/extractBackendError'
+import { convertDdMmYyToIso } from '@/utils/formatDate'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
 import { useUploadStore } from '@/store/UploadStore'
 import { useUploadDraftStore } from '@/store/UploadDraftStore'
@@ -34,6 +35,11 @@ type DraftFeedback = {
   message: string
   errorDetail?: string
 } | null
+
+type BuildSaveRecordPayloadResult = {
+  payload: SaveUploadRecordRequest
+  usedTitleFallback: boolean
+}
 
 export default function MuatNaikDokumenPage() {
   const [selectedProfile, setSelectedProfile] = useState<string>('')
@@ -50,12 +56,15 @@ export default function MuatNaikDokumenPage() {
   const [metadataAdditional, setMetadataAdditional] = useState<MetadataField[]>([])
   const [retentionPeriod, setRetentionPeriod] = useState<string>('')
   const [presignedResponse, setPresignedResponse] = useState<PresignUploadResponse | null>(null)
+  const [mongoDbRecordId, setMongoDbRecordId] = useState<string>('')
   const [uploadPercentage, setUploadPercentage] = useState<number>(0)
   const [submissionProgress, setSubmissionProgress] = useState<ProgressState>(null)
   const [submissionError, setSubmissionError] = useState<{ code: string; message: string } | null>(
     null
   )
   const [draftFeedback, setDraftFeedback] = useState<DraftFeedback>(null)
+  const [titleFallbackNotice, setTitleFallbackNotice] = useState<string | null>(null)
+  const [savedRecordDate, setSavedRecordDate] = useState<string>('')
 
   // In-flight guard to prevent duplicate save submissions
   const isSavingRef = useRef(false)
@@ -65,6 +74,15 @@ export default function MuatNaikDokumenPage() {
   const { selectedFile, setSelectedFile } = useUploadStore()
   const { resetDraft } = useUploadDraftStore()
   const navigate = useNavigate()
+
+  // Clear persisted upload context when leaving this page.
+  useEffect(() => {
+    return () => {
+      setSelectedFile(null)
+      resetFolderSelection()
+      resetDraft()
+    }
+  }, [setSelectedFile, resetFolderSelection, resetDraft])
 
   /**
    * Unified reset function: clears all page and store state for fresh upload flow
@@ -81,11 +99,14 @@ export default function MuatNaikDokumenPage() {
     setMetadataRequired([])
     setMetadataAdditional([])
     setPresignedResponse(null)
+    setMongoDbRecordId('')
     setUploadPercentage(0)
     setDraftFeedback(null)
     setSubmissionError(null)
     setSubmissionProgress(null)
+    setTitleFallbackNotice(null)
     setRetentionPeriod('')
+    setSavedRecordDate('')
 
     // Clear global store states
     setSelectedFile(null)
@@ -99,7 +120,7 @@ export default function MuatNaikDokumenPage() {
   const buildSaveRecordPayload = (
     previewInfo: DocPreviewInfo,
     status: string
-  ): SaveUploadRecordRequest => {
+  ): BuildSaveRecordPayloadResult => {
     // Guard required fields
     if (!presignedResponse?.recordId) {
       throw new Error('Missing recordId from presigned upload response')
@@ -120,9 +141,8 @@ export default function MuatNaikDokumenPage() {
       throw new Error('Missing accessLevel - please select security level')
     }
 
-    // THIS IS HARDCODED, CONFIRM WHERE THIS COMES FROM
-    const recordDate = new Date().toISOString()
-    const year = new Date(recordDate).getFullYear()
+    const recordDate = convertDdMmYyToIso(savedRecordDate) ?? new Date().toISOString()
+    const year = new Date(recordDate).getUTCFullYear()
 
     // Extract file metadata from selectedFile and presignedResponse
     const fileName = presignedResponse.fileName || selectedFile.name
@@ -131,37 +151,57 @@ export default function MuatNaikDokumenPage() {
       presignedResponse.fileExtension || selectedFile.name.split('.').pop() || ''
     const fileSize = presignedResponse.fileSize || selectedFile.size || 0
 
+    const tajukMetadataValue =
+      Object.entries(previewInfo.requiredMetadataValues).find(
+        ([key]) => key.trim().toUpperCase() === 'TAJUK'
+      )?.[1] ?? ''
+    const normalizedTajukMetadataValue = tajukMetadataValue.trim()
+    const fallbackFileName =
+      selectedFile.body?.fileName?.trim() ||
+      fileName.replace(/\.[^./\\]+$/, '').trim() ||
+      fileName.trim()
+    const title = normalizedTajukMetadataValue || fallbackFileName
+
+    if (!title) {
+      throw new Error('Missing title information - TAJUK metadata or file name is required')
+    }
+
+    const usedTitleFallback = !normalizedTajukMetadataValue && Boolean(fallbackFileName)
+
     // Merge metadata: required metadata + additional metadata
     const mergedMetadata: Record<string, unknown> = {
       ...previewInfo.requiredMetadataValues,
       ...previewInfo.additionalMetadataValues,
     }
 
-    return {
-      // RECODE THIS BACK LATER
-      title: 'hehe',
+    const payload: SaveUploadRecordRequest = {
+      title,
       recordId: presignedResponse.recordId,
       fileName,
       fileType,
       fileExtension,
       fileSize,
       folderId: folderSelection.id,
-      // FIND BACK WHAT IS THIS BACKEND WANT???
       recordDescription: previewInfo.ringkasan || '',
       recordDate,
-      // FIND BACK WHAT IS THIS BACKEND WANT???
-      reference: '',
+      // Removed for the moment
+      // reference: '',
       unitId: selectedUnitsFromDropdown,
       year,
-      // FIND BACK WHAT IS THIS BACKEND WANT???
-      classification: ' CLASSIFICATION OF WHAT',
+      // Removed for the moment
+      // classification: ' CLASSIFICATION OF WHAT',
       accessLevel: previewInfo.tahapKeselamatan,
-      // FIND BACK WHAT IS THIS BACKEND WANT???
-      retentionPeriod: '7 DAYS MORE',
+      // Removed for the moment
+      // retentionPeriod: '7 DAYS MORE',
       isLatest: true,
       metadata: mergedMetadata,
       recordConfig: selectedProfileDetail.definitionGroupId,
       status: status,
+    }
+
+    return {
+      payload,
+      usedTitleFallback,
     }
   }
 
@@ -185,11 +225,22 @@ export default function MuatNaikDokumenPage() {
       setSubmissionError(null)
     }
 
-    try {
-      const payload = buildSaveRecordPayload(previewInfo, status)
+    setTitleFallbackNotice(null)
 
-      const result = await saveOrUpdateUploadedRecord(payload)
+    try {
+      const { payload, usedTitleFallback } = buildSaveRecordPayload(previewInfo, status)
+
+      if (usedTitleFallback) {
+        setTitleFallbackNotice('Metadata TAJUK tidak ditemui. Nama fail digunakan sebagai tajuk.')
+      }
+
+      const result = await saveOrUpdateUploadedRecord(payload, mongoDbRecordId)
       console.log('Save successful, recordId:', result.recordId)
+
+      // Persist MongoDB ID from backend response for future PUT operations
+      if (result.id) {
+        setMongoDbRecordId(result.id)
+      }
 
       if (status === 'DALAM_SEMAKAN') {
         setSubmissionProgress('success')
@@ -223,8 +274,7 @@ export default function MuatNaikDokumenPage() {
     setUploadPercentage(0)
 
     // Step 1: Build presign payload
-    // RECORD DATE IS NEEDED IN MUAT NAIK BUT USER DOESNT FILL THIS YET, BUT NEED TO UPLOAD!
-    const recordDate = new Date().toISOString()
+    const recordDate = convertDdMmYyToIso(savedRecordDate) ?? new Date().toISOString()
     const fileExtension = file.name.split('.').pop() ?? ''
     const presignPayload = {
       fileName: file.name,
@@ -381,10 +431,12 @@ export default function MuatNaikDokumenPage() {
     setSelectedUnitsFromDropdown(unitCode)
     setSelectedProfile('')
     setSelectedProfileId('')
+    setTitleFallbackNotice(null)
   }
 
   const handleProfileChange = (profileCodeName: string) => {
     setSelectedProfile(profileCodeName)
+    setTitleFallbackNotice(null)
     const matchedProfile = dropdownJenisDokumen.find((item) => item.codeName === profileCodeName)
     if (matchedProfile) {
       setSelectedProfileId(matchedProfile.id)
@@ -398,9 +450,12 @@ export default function MuatNaikDokumenPage() {
   return (
     <>
       {submissionProgress === null && (
-        <div className={clx('grid ', selectedProfile && 'grid-cols-2')}>
+        <div className={clx('grid ', selectedProfile && savedRecordDate && 'grid-cols-2')}>
           <RightSidePageLayoutWrapper
-            className={clx('flex flex-col gap-6 w-full ', selectedProfile && 'shadow-card pr-6')}
+            className={clx(
+              'flex flex-col gap-6 w-full ',
+              selectedProfile && savedRecordDate && 'shadow-card pr-6'
+            )}
           >
             <MuatNaikDokumenForm
               dropdownJenisDokumen={dropdownJenisDokumen}
@@ -422,9 +477,12 @@ export default function MuatNaikDokumenPage() {
               isSaving={isSavingRef.current}
               draftFeedback={draftFeedback}
               onDraftFeedbackDismiss={() => setDraftFeedback(null)}
+              titleFallbackNotice={titleFallbackNotice}
+              savedRecordDate={savedRecordDate}
+              setSavedRecordDate={setSavedRecordDate}
             />
           </RightSidePageLayoutWrapper>
-          {selectedProfile && (
+          {selectedProfile && savedRecordDate && (
             <RightSidePageLayoutWrapper className="flex flex-col gap-6 w-full pr-3">
               <PratontonRekod docInfo={allInfoDocs} onSubmit={handleSubmitDokumen} />
             </RightSidePageLayoutWrapper>

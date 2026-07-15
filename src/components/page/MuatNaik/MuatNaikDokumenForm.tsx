@@ -33,6 +33,29 @@ const formatDateValue = (date: Date): string => {
   return `${year}-${month}-${day}`
 }
 
+const parseDocumentDateValue = (value: string): Date | undefined => {
+  if (!value) return undefined
+  const [day, month, year] = value.split('-').map(Number)
+  if (!day || !month || !year) return undefined
+  const parsed = new Date(year, month - 1, day)
+  if (Number.isNaN(parsed.getTime())) return undefined
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return undefined
+  }
+  return parsed
+}
+
+const formatDocumentDateValue = (date: Date): string => {
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}-${month}-${year}`
+}
+
 export interface DocPreviewInfo {
   lokasiFolder: string
   profilDokumen: string
@@ -69,7 +92,10 @@ interface MuatNaikDokumenFormProps {
   isSaving: boolean
   draftFeedback: DraftFeedback
   onDraftFeedbackDismiss: () => void
+  titleFallbackNotice: string | null
   retentionPeriod: string
+  savedRecordDate: string
+  setSavedRecordDate: (value: string) => void
 }
 
 export default function MuatNaikDokumenForm({
@@ -92,6 +118,9 @@ export default function MuatNaikDokumenForm({
   isSaving,
   draftFeedback,
   onDraftFeedbackDismiss,
+  titleFallbackNotice,
+  savedRecordDate,
+  setSavedRecordDate,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const {
@@ -283,17 +312,30 @@ export default function MuatNaikDokumenForm({
         </div>
 
         {selectedUnit && (
-          <div className="flex flex-col gap-1.5">
-            <div>Profil Dokumen</div>
-            <DropdownWithSearch
-              options={profileDokumenOptions}
-              value={selectedProfile}
-              onValueChange={setSelectedProfile}
-              className="w-full font-normal"
-            />
-          </div>
+          <>
+            <div className="flex flex-col gap-1.5">
+              <div>Profil Dokumen</div>
+              <DropdownWithSearch
+                options={profileDokumenOptions}
+                value={selectedProfile}
+                onValueChange={setSelectedProfile}
+                className="w-full font-normal"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <div>Tarikh Dokumen</div>
+              <DatePicker
+                locale="ms"
+                placeholder="Pilih Tarikh"
+                value={parseDocumentDateValue(savedRecordDate)}
+                onValueChange={(date) =>
+                  setSavedRecordDate(date ? formatDocumentDateValue(date) : '')
+                }
+              />
+            </div>
+          </>
         )}
-        {selectedProfile && (
+        {selectedProfile && savedRecordDate && (
           <>
             <div className="flex flex-col gap-1.5">
               <div>Tahap Keselamatan</div>
@@ -316,7 +358,7 @@ export default function MuatNaikDokumenForm({
           </>
         )}
       </div>
-      {selectedProfile && (
+      {selectedProfile && savedRecordDate && (
         <>
           <UploadDocument
             handleFileUploadChange={handleFileUploadChange}
@@ -414,18 +456,24 @@ export default function MuatNaikDokumenForm({
               Muat Naik Pratonton
             </Button>
           </div>
+          {titleFallbackNotice && (
+            <Callout variant="info">
+              <CalloutTitle>Makluman Tajuk Dokumen</CalloutTitle>
+              <CalloutContent>{titleFallbackNotice}</CalloutContent>
+            </Callout>
+          )}
           {draftFeedback && (
             <Callout variant={draftFeedback.status === 'success' ? 'success' : 'danger'}>
               <CalloutTitle>
                 {draftFeedback.status === 'success' ? 'Success' : 'Error'}
               </CalloutTitle>
               <CalloutContent>
-                <div className="flex flex-col gap-1">
-                  <div>{draftFeedback.message}</div>
+                <span className="flex flex-col gap-1">
+                  <span>{draftFeedback.message}</span>
                   {draftFeedback.errorDetail && (
-                    <div className="text-body-sm">{draftFeedback.errorDetail}</div>
+                    <span className="text-body-sm">{draftFeedback.errorDetail}</span>
                   )}
-                </div>
+                </span>
               </CalloutContent>
             </Callout>
           )}

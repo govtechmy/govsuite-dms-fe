@@ -89,6 +89,7 @@ export interface SaveUploadRecordRequest {
 
 export interface SaveUploadRecordResponse {
   recordId: string
+  id?: string
 }
 
 // Download URL (delegated to pdf.svc but re-exported for upload context)
@@ -141,7 +142,9 @@ export const getProfileDocumentConfig = async (
       allowedFormats: Array.isArray(payload.allowedFormats) ? payload.allowedFormats : [],
       maxFileSizeMb: Number(payload.maxFileSizeMb ?? 0),
       requiredMetadata: Array.isArray(payload.requiredMetadata) ? payload.requiredMetadata : [],
-      additionalMetadata: Array.isArray(payload.metadata) ? payload.metadata : [],
+      additionalMetadata: Array.isArray(payload.additionalMetadata)
+        ? payload.additionalMetadata
+        : [],
       workflowCode: String(payload.workflowCode ?? ''),
       documentProfileCode: String(payload.documentProfileCode ?? ''),
       documentProfileName: String(payload.documentProfileName ?? ''),
@@ -174,7 +177,9 @@ export const getMetadataConfig = async (profileId: string): Promise<MetadataConf
 
     return {
       requiredMetadata: Array.isArray(payload.requiredMetadata) ? payload.requiredMetadata : [],
-      additionalMetadata: Array.isArray(payload.metadata) ? payload.metadata : [],
+      additionalMetadata: Array.isArray(payload.additionalMetadata)
+        ? payload.additionalMetadata
+        : [],
     }
   } catch (error) {
     console.error(`Error fetching metadata config for profile ${profileId}:`, error)
@@ -273,6 +278,7 @@ export const saveUploadedRecord = async (
 
     return {
       recordId: String(payload.recordId ?? ''),
+      id: payload.id ? String(payload.id) : undefined,
     }
   } catch (error) {
     console.error('Error saving uploaded record:', error)
@@ -282,12 +288,14 @@ export const saveUploadedRecord = async (
 
 /**
  * Update existing uploaded record in database
- * PUT /record/{recordId}
+ * PUT /record/{mongoDbRecordId}
  */
+
 export const updateUploadedRecord = async (
-  body: SaveUploadRecordRequest
+  body: SaveUploadRecordRequest,
+  mongoDbRecordId: string
 ): Promise<SaveUploadRecordResponse> => {
-  const url = `${getEnv('VITE_API_BASE_URL')}/record/${body.recordId}`
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/${mongoDbRecordId}`
 
   try {
     const response = await authAxios.put(url, body)
@@ -295,6 +303,7 @@ export const updateUploadedRecord = async (
 
     return {
       recordId: String(payload.recordId ?? ''),
+      id: payload.id ? String(payload.id) : undefined,
     }
   } catch (error) {
     console.error('Error updating uploaded record:', error)
@@ -307,7 +316,8 @@ export const updateUploadedRecord = async (
  * Tries POST first, falls back to PUT if record already exists
  */
 export const saveOrUpdateUploadedRecord = async (
-  body: SaveUploadRecordRequest
+  body: SaveUploadRecordRequest,
+  mongoDbRecordId?: string
 ): Promise<SaveUploadRecordResponse> => {
   try {
     return await saveUploadedRecord(body)
@@ -319,9 +329,8 @@ export const saveOrUpdateUploadedRecord = async (
       backendError?.code === 'RECORD_ALREADY_EXISTS' ||
       backendError?.message?.toLowerCase().includes('already exists')
 
-    if (isDuplicateError && body.recordId) {
-      console.warn(`Record ${body.recordId} already exists, retrying with PUT update...`)
-      return await updateUploadedRecord(body)
+    if (isDuplicateError && mongoDbRecordId) {
+      return await updateUploadedRecord(body, mongoDbRecordId)
     }
 
     // Re-throw non-duplicate errors

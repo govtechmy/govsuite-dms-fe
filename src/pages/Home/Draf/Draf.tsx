@@ -5,13 +5,16 @@ import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarK
 import SelectCarianDokumen from '@/components/shared/SelectCarianDokumen'
 import {
   getSearchKatalogItems,
-  getDropdownJenisDokumen,
-  getDropdownUnits,
   type CatalogDocumentItem,
   type CatalogListMeta,
+} from '@/services/catalog.svc'
+import {
+  getDropdownJenisDokumen,
+  getDropdownUnits,
   type DropdownJenisDokumen,
   type DropdownUnit,
-} from '@/services/catalog.svc'
+} from '@/services/dropdown.svc'
+
 import { ArrowBackIcon } from '@govtechmy/myds-react/icon'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
