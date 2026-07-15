@@ -9,6 +9,7 @@ import LayoutMain from './components/layout/LayoutMain'
 import HomePage from './pages/Home/Home'
 import PerluKelulusanPage from './pages/Home/PerluKelulusan/PerluKelulusan'
 import TidakLulusPage from './pages/Home/TidakLulus/TidakLulus'
+import DrafPage from './pages/Home/Draf/Draf'
 import ErrorPage from './pages/Error'
 import KatalogDokumenPage from './pages/KatalogDokumen/KatalogDokumen'
 import DokumenIDPage from './pages/KatalogDokumen/DokumenID/DokumenID'
@@ -107,6 +108,8 @@ export default function AppRoutes() {
             <Route path="perlu-kelulusan" element={<PerluKelulusanPage />} />
             {/* /tidak-lulus */}
             <Route path="tidak-lulus" element={<TidakLulusPage />} />
+            {/* /draf */}
+            <Route path="draf" element={<DrafPage />} />
           </Route>
 
           {/* Katalog Dokumen routes - nested structure with detail page */}

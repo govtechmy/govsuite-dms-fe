@@ -4,6 +4,7 @@ import { Spinner } from '@govtechmy/myds-react/spinner'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../services/auth.svc'
+import { useAuthStore } from '@/store/AuthStore'
 import LockIcon from '@/assets/Icons/LockIcon'
 import { Eye, EyeOff } from '@/assets/Icons/Eye'
 import { CheckCircleIcon } from '@govtechmy/myds-react/icon'
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
+  const setAuthState = useAuthStore((state) => state.login)
 
   const HARD_CODED_USERNAME = 'admin@gmail.com'
   const HARD_CODED_PASSWORD = 'ChangeThisPassword123!'
@@ -25,7 +27,8 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      await login({ username: username, password: password })
+      const { token, refreshToken, user } = await login({ username: username, password: password })
+      setAuthState(token, refreshToken, user)
       const lang = localStorage.getItem('lang') ?? 'ms'
       navigate(`/${lang}/`)
     } catch (error) {
@@ -42,7 +45,11 @@ export default function LoginPage() {
     setPassword(HARD_CODED_PASSWORD)
 
     try {
-      await login({ username: HARD_CODED_USERNAME, password: HARD_CODED_PASSWORD })
+      const { token, refreshToken, user } = await login({
+        username: HARD_CODED_USERNAME,
+        password: HARD_CODED_PASSWORD,
+      })
+      setAuthState(token, refreshToken, user)
       const lang = localStorage.getItem('lang') ?? 'ms'
       navigate(`/${lang}/`)
     } catch (error) {
