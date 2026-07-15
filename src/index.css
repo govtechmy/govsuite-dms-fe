@@ -2,3 +2,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.pdf-search-match {
+  background-color: rgba(255, 243, 163, 0.45);
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  text-decoration: inherit;
+  padding-right: 0;
+  margin: 0;
+  border-radius: 2px;
+}
+
+.pdf-search-match-active {
+  background-color: rgba(249, 200, 70, 0.55);
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  text-decoration: inherit;
+  padding-right: 0;
+  margin: 0;
+}

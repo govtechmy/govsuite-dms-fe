@@ -1,19 +1,30 @@
-import { Viewer } from '@react-pdf-viewer/core'
-import type { SearchPlugin } from '@react-pdf-viewer/search'
-import '@react-pdf-viewer/core/lib/styles/index.css'
-import '@react-pdf-viewer/search/lib/styles/index.css'
-import '@/utils/pdfWorker'
+import PdfJsDocumentViewer, {
+  type PdfSearchNavigationRequest,
+  type PdfSearchState,
+} from '@/components/shared/PdfJsDocumentViewer'
 
 interface DokumenContentIDProps {
   pdfUrl: string
-  searchPluginInstance: SearchPlugin
+  searchKeyword: string
+  navigationRequest?: PdfSearchNavigationRequest | null
+  onSearchStateChange?: (state: PdfSearchState) => void
 }
 
-export default function DokumenContentID({ pdfUrl, searchPluginInstance }: DokumenContentIDProps) {
+export default function DokumenContentID({
+  pdfUrl,
+  searchKeyword,
+  navigationRequest,
+  onSearchStateChange,
+}: DokumenContentIDProps) {
   return (
     <div className="h-[1200px] overflow-auto">
       <div className="h-full w-full">
-        <Viewer fileUrl={pdfUrl} plugins={[searchPluginInstance]} />
+        <PdfJsDocumentViewer
+          fileUrl={pdfUrl}
+          searchKeyword={searchKeyword}
+          navigationRequest={navigationRequest}
+          onSearchStateChange={onSearchStateChange}
+        />
       </div>
     </div>
   )
