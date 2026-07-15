@@ -1,81 +1,50 @@
-import { useEffect, useState } from 'react'
 import { SearchIcon, ChevronDownIcon, ChevronUpIcon } from '@govtechmy/myds-react/icon'
 import { Input, InputIcon } from '@govtechmy/myds-react/input'
-import type { SearchPlugin } from '@react-pdf-viewer/search'
 
 interface SearchInPdfProps {
-  searchPluginInstance: SearchPlugin
-  previewSearchQuery?: string
-  documentId?: string
+  searchKeyword: string
+  onSearchKeywordChange: (keyword: string) => void
+  currentMatchIndex: number
+  totalMatches: number
+  onPreviousMatch: () => void
+  onNextMatch: () => void
   isPdfLoaded: boolean
 }
 
 export default function SearchInPdf({
-  searchPluginInstance,
-  previewSearchQuery = '',
-  documentId,
+  searchKeyword,
+  onSearchKeywordChange,
+  currentMatchIndex,
+  totalMatches,
+  onPreviousMatch,
+  onNextMatch,
   isPdfLoaded,
 }: SearchInPdfProps) {
-  const [searchKeyword, setSearchKeyword] = useState('')
-  const [currentMatch, setCurrentMatch] = useState(0)
-  const [totalMatches, setTotalMatches] = useState(0)
-  const { highlight, jumpToNextMatch, jumpToPreviousMatch, clearHighlights } = searchPluginInstance
-
-  useEffect(() => {
-    setSearchKeyword(previewSearchQuery)
-  }, [previewSearchQuery])
-
-  useEffect(() => {
-    if (!isPdfLoaded) {
-      setTotalMatches(0)
-      setCurrentMatch(-1)
-      return
-    }
-
-    if (searchKeyword.trim()) {
-      highlight(searchKeyword).then((matches) => {
-        setTotalMatches(matches.length)
-        setCurrentMatch(matches.length > 0 ? 0 : -1)
-      })
-    } else {
-      clearHighlights()
-      setTotalMatches(0)
-      setCurrentMatch(-1)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchKeyword, documentId, isPdfLoaded])
+  const trimmedKeyword = searchKeyword.trim()
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchKeyword(e.target.value)
+    onSearchKeywordChange(e.target.value)
   }
 
   const handlePrevious = () => {
-    jumpToPreviousMatch()
-    setCurrentMatch((prev) => {
-      if (prev > 0) return prev - 1
-      return totalMatches - 1
-    })
+    onPreviousMatch()
   }
 
   const handleNext = () => {
-    jumpToNextMatch()
-    setCurrentMatch((prev) => {
-      if (prev < totalMatches - 1) return prev + 1
-      return 0
-    })
+    onNextMatch()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchKeyword.trim() && totalMatches > 0) {
+    if (e.key === 'Enter' && trimmedKeyword && totalMatches > 0) {
       e.preventDefault()
       handleNext()
     }
   }
 
   const displayText =
-    isPdfLoaded && searchKeyword.trim() && totalMatches > 0
-      ? `${currentMatch + 1} daripada ${totalMatches} ditemui`
-      : isPdfLoaded && searchKeyword.trim()
+    isPdfLoaded && trimmedKeyword && totalMatches > 0
+      ? `${currentMatchIndex + 1} daripada ${totalMatches} ditemui`
+      : isPdfLoaded && trimmedKeyword
         ? 'Tiada hasil ditemui'
         : ''
 
@@ -109,7 +78,7 @@ export default function SearchInPdf({
             className="flex size-6 items-center justify-center text-txt-black-700 hover:text-txt-black-900 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Previous"
             onClick={handlePrevious}
-            disabled={!isPdfLoaded || !searchKeyword.trim() || totalMatches === 0}
+            disabled={!isPdfLoaded || !trimmedKeyword || totalMatches === 0}
           >
             <ChevronUpIcon className="size-6" />
           </button>
@@ -118,7 +87,7 @@ export default function SearchInPdf({
             className="flex size-6 items-center justify-center text-txt-black-700 hover:text-txt-black-900 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Next"
             onClick={handleNext}
-            disabled={!isPdfLoaded || !searchKeyword.trim() || totalMatches === 0}
+            disabled={!isPdfLoaded || !trimmedKeyword || totalMatches === 0}
           >
             <ChevronDownIcon className="size-6" />
           </button>

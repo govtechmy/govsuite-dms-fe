@@ -1,10 +1,9 @@
 import { Button } from '@govtechmy/myds-react/button'
 import { DownloadIcon } from '@govtechmy/myds-react/icon'
-import { Viewer } from '@react-pdf-viewer/core'
-import type { SearchPlugin } from '@react-pdf-viewer/search'
-import '@react-pdf-viewer/core/lib/styles/index.css'
-import '@react-pdf-viewer/search/lib/styles/index.css'
-import '@/utils/pdfWorker'
+import PdfJsDocumentViewer, {
+  type PdfSearchNavigationRequest,
+  type PdfSearchState,
+} from '@/components/shared/PdfJsDocumentViewer'
 import SearchInPdf from './SearchInPdf'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -12,14 +11,26 @@ import { useSearchStore } from '@/store/SearchStore'
 import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
-  previewSearchQuery?: string
-  searchPluginInstance: SearchPlugin
+  searchKeyword: string
+  onSearchKeywordChange: (keyword: string) => void
+  currentMatchIndex: number
+  totalMatches: number
+  onPreviousMatch: () => void
+  onNextMatch: () => void
+  navigationRequest?: PdfSearchNavigationRequest | null
+  onSearchStateChange: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
 }
 
 export default function PratontonSearchResult({
-  previewSearchQuery = '',
-  searchPluginInstance,
+  searchKeyword,
+  onSearchKeywordChange,
+  currentMatchIndex,
+  totalMatches,
+  onPreviousMatch,
+  onNextMatch,
+  navigationRequest,
+  onSearchStateChange,
   onDocumentLoad,
 }: PratontonSearchResultProps) {
   const navigate = useNavigate()
@@ -115,16 +126,21 @@ export default function PratontonSearchResult({
         </Button>
       </div>
       <SearchInPdf
-        searchPluginInstance={searchPluginInstance}
-        previewSearchQuery={previewSearchQuery}
-        documentId={documentInfo?.documentID}
+        searchKeyword={searchKeyword}
+        onSearchKeywordChange={onSearchKeywordChange}
+        currentMatchIndex={currentMatchIndex}
+        totalMatches={totalMatches}
+        onPreviousMatch={onPreviousMatch}
+        onNextMatch={onNextMatch}
         isPdfLoaded={isPdfLoaded}
       />
       <div className="h-full min-h-0 w-full overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
         <div className="h-full min-h-0 overflow-auto">
-          <Viewer
+          <PdfJsDocumentViewer
             fileUrl={documentInfo?.path || ''}
-            plugins={[searchPluginInstance]}
+            searchKeyword={searchKeyword}
+            navigationRequest={navigationRequest}
+            onSearchStateChange={onSearchStateChange}
             onDocumentLoad={handleDocumentLoad}
           />
         </div>

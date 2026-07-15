@@ -1,9 +1,12 @@
-import { searchPlugin } from '@react-pdf-viewer/search'
+import type {
+  PdfSearchNavigationRequest,
+  PdfSearchState,
+} from '@/components/shared/PdfJsDocumentViewer'
 import DokumenContentID from '@/components/page/KatalogDokumen/DokumenID/DokumenContentID'
 import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/HeaderDokumenID'
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
 import normalizeWord from '@/utils/NormalizeWord'
@@ -25,9 +28,27 @@ export default function DokumenIDPage() {
     code: string
     message: string
   } | null>(null)
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
+    totalMatches: 0,
+    currentMatchIndex: -1,
+  })
+  const [navigationRequest, setNavigationRequest] = useState<PdfSearchNavigationRequest | null>(
+    null
+  )
+  const navigationTokenRef = useRef(0)
 
-  // Create search plugin instance
-  const searchPluginInstance = searchPlugin()
+  const queueNavigationRequest = (
+    action: PdfSearchNavigationRequest['action'],
+    targetMatchIndex?: number
+  ) => {
+    navigationTokenRef.current += 1
+    setNavigationRequest({
+      action,
+      targetMatchIndex,
+      token: navigationTokenRef.current,
+    })
+  }
 
   const handleApproveDokumen = async () => {
     setProgressApprove('loading')
@@ -159,6 +180,16 @@ export default function DokumenIDPage() {
     fetchMetadata()
   }, [DokumenID])
 
+  useEffect(() => {
+    setSearchKeyword('')
+    setPdfSearchState({
+      totalMatches: 0,
+      currentMatchIndex: -1,
+    })
+    setNavigationRequest(null)
+    navigationTokenRef.current = 0
+  }, [DokumenID])
+
   const isApprovalProgressIdle = progressApprove === null && progressDisapprove === null
 
   return (
@@ -184,8 +215,20 @@ export default function DokumenIDPage() {
               onDownloadDokumen={handleDownloadDokumen}
             />
           )}
-          <SearchBarDokumenID searchPluginInstance={searchPluginInstance} />
-          <DokumenContentID pdfUrl={pdfData.url} searchPluginInstance={searchPluginInstance} />
+          <SearchBarDokumenID
+            searchKeyword={searchKeyword}
+            onSearchKeywordChange={setSearchKeyword}
+            currentMatchIndex={pdfSearchState.currentMatchIndex}
+            totalMatches={pdfSearchState.totalMatches}
+            onPreviousMatch={() => queueNavigationRequest('previous')}
+            onNextMatch={() => queueNavigationRequest('next')}
+          />
+          <DokumenContentID
+            pdfUrl={pdfData.url}
+            searchKeyword={searchKeyword}
+            navigationRequest={navigationRequest}
+            onSearchStateChange={setPdfSearchState}
+          />
         </div>
       )}
 

@@ -1,8 +1,11 @@
 import RecordResultSearch from './RecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
-import { searchPlugin } from '@react-pdf-viewer/search'
 import { useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
+import type {
+  PdfSearchNavigationRequest,
+  PdfSearchState,
+} from '@/components/shared/PdfJsDocumentViewer'
 
 interface DisplaySearchResultsProps {
   onLazyLoad: () => void
@@ -15,8 +18,15 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
 
-  const searchPluginInstance = searchPlugin()
-  const { highlight, jumpToMatch } = searchPluginInstance
+  const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
+  const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
+    totalMatches: 0,
+    currentMatchIndex: -1,
+  })
+  const [navigationRequest, setNavigationRequest] = useState<PdfSearchNavigationRequest | null>(
+    null
+  )
+  const navigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const hasAutoSelectedRef = useRef(false)
@@ -24,6 +34,22 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
 
   // Get the keyword text from keyword record
   const keyword = keywordRecords?.keyword || ''
+
+  const queueNavigationRequest = (
+    action: PdfSearchNavigationRequest['action'],
+    targetMatchIndex?: number
+  ) => {
+    navigationTokenRef.current += 1
+    setNavigationRequest({
+      action,
+      targetMatchIndex,
+      token: navigationTokenRef.current,
+    })
+  }
+
+  useEffect(() => {
+    setSearchKeyword(previewSearchQuery)
+  }, [previewSearchQuery])
 
   // Reset refs when document changes (new search or different document selected)
   useEffect(() => {
@@ -33,6 +59,12 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
       hasAutoSelectedRef.current = false
       lastSearchRef.current = ''
       setIsPdfLoaded(false)
+      setPdfSearchState({
+        totalMatches: 0,
+        currentMatchIndex: -1,
+      })
+      setNavigationRequest(null)
+      navigationTokenRef.current = 0
     }
   }, [documentInfo?.documentID])
 
@@ -56,30 +88,35 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     const occurrenceNumber = parseInt(selectedKeywordId)
     if (isNaN(occurrenceNumber)) return
 
-    const keywordText = keyword
-
-    const searchId = `${keywordText}-${occurrenceNumber}`
+    const keywordText = keyword.trim()
+    const searchId = `${keywordText || searchKeyword}-${occurrenceNumber}`
     if (lastSearchRef.current === searchId) return
 
     lastSearchRef.current = searchId
 
-    // Highlight all matches and jump to specific occurrence (following DokumenID pattern)
-    const frameId = window.requestAnimationFrame(() => {
-      highlight(keywordText).then(() => {
-        const matchIndex = occurrenceNumber
-        jumpToMatch(matchIndex)
-      })
-    })
+    if (keywordText) {
+      setSearchKeyword(keywordText)
+    }
 
-    return () => window.cancelAnimationFrame(frameId)
-  }, [selectedKeywordId, keyword, highlight, jumpToMatch])
+    const timer = setTimeout(() => {
+      queueNavigationRequest('jump', Math.max(0, occurrenceNumber - 1))
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [selectedKeywordId, keyword, searchKeyword])
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex min-h-0 flex-1 flex-row items-stretch">
         <PratontonSearchResult
-          previewSearchQuery={previewSearchQuery}
-          searchPluginInstance={searchPluginInstance}
+          searchKeyword={searchKeyword}
+          onSearchKeywordChange={setSearchKeyword}
+          currentMatchIndex={pdfSearchState.currentMatchIndex}
+          totalMatches={pdfSearchState.totalMatches}
+          onPreviousMatch={() => queueNavigationRequest('previous')}
+          onNextMatch={() => queueNavigationRequest('next')}
+          navigationRequest={navigationRequest}
+          onSearchStateChange={setPdfSearchState}
           onDocumentLoad={() => setIsPdfLoaded(true)}
         />
         <div className="flex min-h-0 w-full max-w-[320px] self-stretch flex-col items-center gap-6 border-y py-6 pl-6">
