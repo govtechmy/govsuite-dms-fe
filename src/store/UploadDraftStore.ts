@@ -14,7 +14,7 @@ interface PreviewDocumentInfo {
 
 export type UploadDraftStore = {
   // Form draft fields
-  selectedPeringkatKeselamatan: string
+  selectedAccessLevel: string
   ringkasan: string
   // here values comes from the input, straight into Record<string, string>
   requiredMetadataValues: Record<string, string>
@@ -26,7 +26,7 @@ export type UploadDraftStore = {
   previewDocumentInfoData: PreviewDocumentInfo | null
 
   // Actions
-  setSelectedPeringkatKeselamatan: (value: string) => void
+  setSelectedAccessLevel: (value: string) => void
   setRingkasan: (value: string) => void
   replaceRequiredMetadata: (values: Record<string, string>) => void
   setRequiredMetadataField: (key: string, value: string) => void
@@ -39,7 +39,7 @@ export type UploadDraftStore = {
 }
 
 const initialState = {
-  selectedPeringkatKeselamatan: '',
+  selectedAccessLevel: '',
   ringkasan: '',
   requiredMetadataValues: {},
   additionalMetadataValues: {},
@@ -51,7 +51,7 @@ const initialState = {
 export const useUploadDraftStore = create<UploadDraftStore>((set) => ({
   ...initialState,
 
-  setSelectedPeringkatKeselamatan: (value: string) => set({ selectedPeringkatKeselamatan: value }),
+  setSelectedAccessLevel: (value: string) => set({ selectedAccessLevel: value }),
 
   setRingkasan: (value: string) => set({ ringkasan: value }),
 

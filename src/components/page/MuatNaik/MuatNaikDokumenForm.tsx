@@ -12,49 +12,17 @@ import DropdownWithSearch from '@/components/shared/DropdownWithSearch'
 import SelectDropdownMyds from '@/components/shared/SelectDropdownMyds'
 import UploadDocument from '@/components/shared/UploadDocument'
 import { TextArea } from '@govtechmy/myds-react/textarea'
-import type { AccessLevel, DropdownUnit, DropdownJenisDokumen } from '@/services/dropdown.svc'
+import type { AccessLevel, DropdownUnit, ProfileDocument } from '@/services/dropdown.svc'
 import SelectDropdownUnit from './SelectDropdownUnit'
 import type { MetadataField } from '@/services/upload.svc'
 import extractBackendError from '@/utils/extractBackendError'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
-
-const parseDateValue = (value: string): Date | undefined => {
-  if (!value) return undefined
-  const [year, month, day] = value.split('-').map(Number)
-  if (!year || !month || !day) return undefined
-  const parsed = new Date(year, month - 1, day)
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed
-}
-
-const formatDateValue = (date: Date): string => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const parseDocumentDateValue = (value: string): Date | undefined => {
-  if (!value) return undefined
-  const [day, month, year] = value.split('-').map(Number)
-  if (!day || !month || !year) return undefined
-  const parsed = new Date(year, month - 1, day)
-  if (Number.isNaN(parsed.getTime())) return undefined
-  if (
-    parsed.getFullYear() !== year ||
-    parsed.getMonth() !== month - 1 ||
-    parsed.getDate() !== day
-  ) {
-    return undefined
-  }
-  return parsed
-}
-
-const formatDocumentDateValue = (date: Date): string => {
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  return `${day}-${month}-${year}`
-}
+import {
+  parseDateValue,
+  formatDateValue,
+  parseDocumentDateValue,
+  formatDocumentDateValue,
+} from '@/utils/formatDate'
 
 export interface DocPreviewInfo {
   lokasiFolder: string
@@ -74,8 +42,8 @@ type DraftFeedback = {
 } | null
 
 interface MuatNaikDokumenFormProps {
-  dropdownJenisDokumen: DropdownJenisDokumen[]
-  peringkatKeselamatan: AccessLevel[]
+  dropdownJenisDokumen: ProfileDocument[]
+  accessLevelArray: AccessLevel[]
   acceptedFileTypes: string
   selectedProfile: string
   setSelectedProfile: (value: string) => void
@@ -101,7 +69,7 @@ interface MuatNaikDokumenFormProps {
 
 export default function MuatNaikDokumenForm({
   dropdownJenisDokumen,
-  peringkatKeselamatan,
+  accessLevelArray,
   acceptedFileTypes,
   selectedProfile,
   setSelectedProfile,
@@ -126,8 +94,8 @@ export default function MuatNaikDokumenForm({
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const {
-    selectedPeringkatKeselamatan,
-    setSelectedPeringkatKeselamatan,
+    selectedAccessLevel,
+    setSelectedAccessLevel,
     ringkasan,
     setRingkasan,
     requiredMetadataValues,
@@ -143,7 +111,7 @@ export default function MuatNaikDokumenForm({
   } = useUploadDraftStore()
   const { setSelectedFile } = useUploadStore()
 
-  const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.codeName)
+  const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.documentProfile)
 
   const isRequiredMetadataComplete = metadataRequired
     .filter((field) => field.required)
@@ -155,9 +123,9 @@ export default function MuatNaikDokumenForm({
 
   useEffect(() => {
     if (!selectedProfile) {
-      setSelectedPeringkatKeselamatan('')
+      setSelectedAccessLevel('')
     }
-  }, [selectedProfile, setSelectedPeringkatKeselamatan])
+  }, [selectedProfile, setSelectedAccessLevel])
 
   const handleFileUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -237,7 +205,7 @@ export default function MuatNaikDokumenForm({
     const previewInfo: DocPreviewInfo = {
       lokasiFolder: folderSelection.path,
       profilDokumen: selectedProfile,
-      tahapKeselamatan: selectedPeringkatKeselamatan,
+      tahapKeselamatan: selectedAccessLevel,
       ringkasan,
       requiredMetadataValues,
       additionalMetadataValues,
@@ -261,7 +229,7 @@ export default function MuatNaikDokumenForm({
     const previewInfo: DocPreviewInfo = {
       lokasiFolder: folderSelection.path,
       profilDokumen: selectedProfile,
-      tahapKeselamatan: selectedPeringkatKeselamatan,
+      tahapKeselamatan: selectedAccessLevel,
       ringkasan,
       requiredMetadataValues,
       additionalMetadataValues,
@@ -342,9 +310,9 @@ export default function MuatNaikDokumenForm({
             <div className="flex flex-col gap-1.5">
               <div>Tahap Keselamatan</div>
               <SelectDropdownMyds
-                peringkatKeselamatan={peringkatKeselamatan}
-                selectedPeringkatKeselamatan={selectedPeringkatKeselamatan}
-                setSelectedPeringkatKeselamatan={setSelectedPeringkatKeselamatan}
+                accessLevel={accessLevelArray}
+                selectedAccessLevel={selectedAccessLevel}
+                setSelectedAccessLevel={setSelectedAccessLevel}
               />
             </div>
             <div className="flex flex-col gap-1.5">

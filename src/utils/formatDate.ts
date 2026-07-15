@@ -57,3 +57,55 @@ export const convertDdMmYyToIso = (value: string): string | null => {
 
   return parsed.toISOString()
 }
+
+/**
+ * Parses a YYYY-MM-DD date string to a Date object.
+ * Returns undefined if the input is invalid.
+ */
+export const parseDateValue = (value: string): Date | undefined => {
+  if (!value) return undefined
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return undefined
+  const parsed = new Date(year, month - 1, day)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
+/**
+ * Formats a Date object to YYYY-MM-DD format.
+ */
+export const formatDateValue = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Parses a DD-MM-YYYY date string to a Date object.
+ * Returns undefined if the input is invalid.
+ */
+export const parseDocumentDateValue = (value: string): Date | undefined => {
+  if (!value) return undefined
+  const [day, month, year] = value.split('-').map(Number)
+  if (!day || !month || !year) return undefined
+  const parsed = new Date(year, month - 1, day)
+  if (Number.isNaN(parsed.getTime())) return undefined
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return undefined
+  }
+  return parsed
+}
+
+/**
+ * Formats a Date object to DD-MM-YYYY format.
+ */
+export const formatDocumentDateValue = (date: Date): string => {
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}-${month}-${year}`
+}

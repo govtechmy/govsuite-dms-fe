@@ -9,7 +9,7 @@ import {
   getDropdownUnits,
   type AccessLevel,
   type DropdownUnit,
-  type DropdownJenisDokumen,
+  type ProfileDocument,
   getProfileDocumentsByUnit,
 } from '@/services/dropdown.svc'
 import {
@@ -24,13 +24,19 @@ import {
 } from '@/services/upload.svc'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import extractBackendError from '@/utils/extractBackendError'
-import { convertDdMmYyToIso } from '@/utils/formatDate'
+import { convertDdMmYyToIso, formatDocumentDateValue } from '@/utils/formatDate'
 import convertPathFormat from '@/utils/convertPathFormat'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
 import { useUploadStore } from '@/store/UploadStore'
 import { useUploadDraftStore } from '@/store/UploadDraftStore'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getRecordInfo } from '@/services/getRecordInfo.svc'
+import { sanitizePathID } from '@/utils/sanitizePathID'
+import {
+  buildPrefilledMetadataValues,
+  toMetadataValueMap,
+  type MetadataValueMap,
+} from '@/utils/metadataPrefill'
 
 type DraftFeedback = {
   status: 'success' | 'error'
@@ -46,13 +52,11 @@ type BuildSaveRecordPayloadResult = {
 export default function MuatNaikDokumenIDPage() {
   const [selectedProfile, setSelectedProfile] = useState<string>('')
   const [selectedProfileId, setSelectedProfileId] = useState<string>('')
-  const [selectedProfileDetail, setSelectedProfileDetail] = useState<DropdownJenisDokumen | null>(
-    null
-  )
+  const [selectedProfileDetail, setSelectedProfileDetail] = useState<ProfileDocument | null>(null)
+  const [accessLevelArray, setAccessLevelArray] = useState<AccessLevel[]>([])
   const [allInfoDocs, setAllInfoDocs] = useState<DocPreviewInfo | null>(null)
-  const [peringkatKeselamatan, setPeringkatKeselamatan] = useState<AccessLevel[]>([])
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
-  const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
+  const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<ProfileDocument[]>([])
   const [selectedUnitsFromDropdown, setSelectedUnitsFromDropdown] = useState<string | undefined>()
   const [metadataRequired, setMetadataRequired] = useState<MetadataField[]>([])
   const [metadataAdditional, setMetadataAdditional] = useState<MetadataField[]>([])
@@ -67,8 +71,8 @@ export default function MuatNaikDokumenIDPage() {
   const [draftFeedback, setDraftFeedback] = useState<DraftFeedback>(null)
   const [titleFallbackNotice, setTitleFallbackNotice] = useState<string | null>(null)
   const [savedRecordDate, setSavedRecordDate] = useState<string>('')
-  const [version, setVersion] = useState<string>('Version 1')
-  setVersion('Version 1')
+  const version = 'Version 1'
+  const [recordMetadataValues, setRecordMetadataValues] = useState<MetadataValueMap>({})
 
   // In-flight guard to prevent duplicate save submissions
   const isSavingRef = useRef(false)
@@ -76,7 +80,13 @@ export default function MuatNaikDokumenIDPage() {
   // Zustand stores for folder and upload context
   const { folderSelection, setFolderSelection, resetFolderSelection } = useFolderLocationStore()
   const { selectedFile, setSelectedFile } = useUploadStore()
-  const { resetDraft } = useUploadDraftStore()
+  const {
+    resetDraft,
+    setSelectedAccessLevel,
+    setRingkasan,
+    replaceRequiredMetadata,
+    replaceAdditionalMetadata,
+  } = useUploadDraftStore()
   const navigate = useNavigate()
   const { MuatNaikDokumenID } = useParams<{ MuatNaikDokumenID: string }>()
 
@@ -112,6 +122,7 @@ export default function MuatNaikDokumenIDPage() {
     setTitleFallbackNotice(null)
     setRetentionPeriod('')
     setSavedRecordDate('')
+    setRecordMetadataValues({})
 
     // Clear global store states
     setSelectedFile(null)
@@ -371,10 +382,10 @@ export default function MuatNaikDokumenIDPage() {
     const fetchAccessLevels = async () => {
       try {
         const data = await getAccessLevels()
-        setPeringkatKeselamatan(data)
+        setAccessLevelArray(data)
       } catch (error) {
         console.error('Error fetching access levels:', error)
-        setPeringkatKeselamatan([])
+        setAccessLevelArray([])
       }
     }
     const fetchDropdownDataUnit = async () => {
@@ -395,11 +406,46 @@ export default function MuatNaikDokumenIDPage() {
 
           // Set Lokasi Folder using record information
           if (fullRecordInformationData?.folderId && fullRecordInformationData?.file?.path) {
-            const formattedPath = convertPathFormat(fullRecordInformationData.file.path)
+            const formattedPath = convertPathFormat(
+              sanitizePathID(fullRecordInformationData.file.path, MuatNaikDokumenID)
+            )
             setFolderSelection({
               id: fullRecordInformationData.folderId,
               path: formattedPath,
             })
+          }
+
+          // Set Muat Naik Ke Folder Unit using record information
+          if (fullRecordInformationData?.unitId) {
+            setSelectedUnitsFromDropdown(fullRecordInformationData.unitId)
+          }
+
+          // Set Profile Document Code using record information
+          if (fullRecordInformationData?.documentProfileName) {
+            setSelectedProfile(fullRecordInformationData.documentProfileName)
+          }
+
+          if (fullRecordInformationData?.documentProfileName) {
+            setSelectedProfileId(fullRecordInformationData.recordConfigId)
+          }
+
+          // set recordDate using .recordDate
+          if (fullRecordInformationData?.recordDate) {
+            const date = new Date(fullRecordInformationData.recordDate)
+            setSavedRecordDate(formatDocumentDateValue(date))
+          }
+
+          if (fullRecordInformationData?.accessLevel) {
+            setSelectedAccessLevel(fullRecordInformationData.accessLevel)
+          }
+
+          if (fullRecordInformationData?.recordDescription) {
+            setRingkasan(fullRecordInformationData.recordDescription)
+          }
+
+          if (fullRecordInformationData?.metadata) {
+            const mappedMetadataValues = toMetadataValueMap(fullRecordInformationData?.metadata)
+            setRecordMetadataValues(mappedMetadataValues)
           }
         }
       } catch (err) {
@@ -419,6 +465,7 @@ export default function MuatNaikDokumenIDPage() {
         setDropdownJenisDokumen([])
         setSelectedProfile('')
         setSelectedProfileId('')
+        setSelectedProfileDetail(null)
         setMetadataRequired([])
         setMetadataAdditional([])
         return
@@ -453,6 +500,29 @@ export default function MuatNaikDokumenIDPage() {
     fetchProfileDocumentConfig()
   }, [selectedProfileId])
 
+  //useEffect to handle Prefilled data
+  useEffect(() => {
+    if (metadataRequired.length === 0 && metadataAdditional.length === 0) return
+
+    const prefilledRequiredMetadata = buildPrefilledMetadataValues(
+      metadataRequired,
+      recordMetadataValues
+    )
+    const prefilledAdditionalMetadata = buildPrefilledMetadataValues(
+      metadataAdditional,
+      recordMetadataValues
+    )
+
+    replaceRequiredMetadata(prefilledRequiredMetadata)
+    replaceAdditionalMetadata(prefilledAdditionalMetadata)
+  }, [
+    metadataRequired,
+    metadataAdditional,
+    recordMetadataValues,
+    replaceRequiredMetadata,
+    replaceAdditionalMetadata,
+  ])
+
   const acceptedFileTypes = '.docx,.pdf'
 
   const handleUnitChange = (unitCode: string) => {
@@ -462,10 +532,12 @@ export default function MuatNaikDokumenIDPage() {
     setTitleFallbackNotice(null)
   }
 
-  const handleProfileChange = (profileCodeName: string) => {
-    setSelectedProfile(profileCodeName)
+  const handleProfileChange = (documentProfileCodeName: string) => {
+    setSelectedProfile(documentProfileCodeName)
     setTitleFallbackNotice(null)
-    const matchedProfile = dropdownJenisDokumen.find((item) => item.codeName === profileCodeName)
+    const matchedProfile = dropdownJenisDokumen.find(
+      (item) => item.documentProfile === documentProfileCodeName
+    )
     if (matchedProfile) {
       setSelectedProfileId(matchedProfile.id)
       setSelectedProfileDetail(matchedProfile) // Backend currently names this definitionGroupId; used as recordConfig
@@ -488,7 +560,7 @@ export default function MuatNaikDokumenIDPage() {
             <MuatNaikDokumenForm
               dropdownJenisDokumen={dropdownJenisDokumen}
               acceptedFileTypes={acceptedFileTypes}
-              peringkatKeselamatan={peringkatKeselamatan}
+              accessLevelArray={accessLevelArray}
               selectedProfile={selectedProfile}
               setSelectedProfile={handleProfileChange}
               onPreview={setAllInfoDocs}

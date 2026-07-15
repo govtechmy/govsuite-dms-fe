@@ -89,9 +89,7 @@ export const getDropdownUnits = async (): Promise<DropdownUnit[]> => {
  * Get list of profile documents by unit code
  * GET /config/profile-document/{unitCode}
  */
-export const getProfileDocumentsByUnit = async (
-  unitCode: string
-): Promise<DropdownJenisDokumen[]> => {
+export const getProfileDocumentsByUnit = async (unitCode: string): Promise<ProfileDocument[]> => {
   const url = `${getEnv('VITE_API_BASE_URL')}/config/profile-document/${unitCode}`
 
   try {
@@ -99,12 +97,7 @@ export const getProfileDocumentsByUnit = async (
     const payload = response.data?.data ?? response.data
     const items: ProfileDocument[] = Array.isArray(payload) ? payload : []
 
-    return items.map((item) => ({
-      id: item.id,
-      code: item.documentProfileCode,
-      codeName: item.documentProfile,
-      definitionGroupId: item.definitionGroupId,
-    }))
+    return items
   } catch (error) {
     console.error(`Error fetching profile documents for unit ${unitCode}:`, error)
     throw error

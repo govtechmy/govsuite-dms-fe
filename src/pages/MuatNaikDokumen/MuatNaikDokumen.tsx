@@ -9,7 +9,7 @@ import {
   getDropdownUnits,
   type AccessLevel,
   type DropdownUnit,
-  type DropdownJenisDokumen,
+  type ProfileDocument,
   getProfileDocumentsByUnit,
 } from '@/services/dropdown.svc'
 import {
@@ -44,13 +44,11 @@ type BuildSaveRecordPayloadResult = {
 export default function MuatNaikDokumenPage() {
   const [selectedProfile, setSelectedProfile] = useState<string>('')
   const [selectedProfileId, setSelectedProfileId] = useState<string>('')
-  const [selectedProfileDetail, setSelectedProfileDetail] = useState<DropdownJenisDokumen | null>(
-    null
-  )
+  const [selectedProfileDetail, setSelectedProfileDetail] = useState<ProfileDocument | null>(null)
   const [allInfoDocs, setAllInfoDocs] = useState<DocPreviewInfo | null>(null)
-  const [peringkatKeselamatan, setPeringkatKeselamatan] = useState<AccessLevel[]>([])
+  const [accessLevelArray, setAccessLevelArray] = useState<AccessLevel[]>([])
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
-  const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
+  const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<ProfileDocument[]>([])
   const [selectedUnitsFromDropdown, setSelectedUnitsFromDropdown] = useState<string | undefined>()
   const [metadataRequired, setMetadataRequired] = useState<MetadataField[]>([])
   const [metadataAdditional, setMetadataAdditional] = useState<MetadataField[]>([])
@@ -367,10 +365,10 @@ export default function MuatNaikDokumenPage() {
     const fetchAccessLevels = async () => {
       try {
         const data = await getAccessLevels()
-        setPeringkatKeselamatan(data)
+        setAccessLevelArray(data)
       } catch (error) {
         console.error('Error fetching access levels:', error)
-        setPeringkatKeselamatan([])
+        setAccessLevelArray([])
       }
     }
     const fetchDropdownDataUnit = async () => {
@@ -435,10 +433,12 @@ export default function MuatNaikDokumenPage() {
     setTitleFallbackNotice(null)
   }
 
-  const handleProfileChange = (profileCodeName: string) => {
-    setSelectedProfile(profileCodeName)
+  const handleProfileChange = (documentProfileCodeName: string) => {
+    setSelectedProfile(documentProfileCodeName)
     setTitleFallbackNotice(null)
-    const matchedProfile = dropdownJenisDokumen.find((item) => item.codeName === profileCodeName)
+    const matchedProfile = dropdownJenisDokumen.find(
+      (item) => item.documentProfile === documentProfileCodeName
+    )
     if (matchedProfile) {
       setSelectedProfileId(matchedProfile.id)
       setSelectedProfileDetail(matchedProfile) // Backend currently names this definitionGroupId; used as recordConfig
@@ -461,7 +461,7 @@ export default function MuatNaikDokumenPage() {
             <MuatNaikDokumenForm
               dropdownJenisDokumen={dropdownJenisDokumen}
               acceptedFileTypes={acceptedFileTypes}
-              peringkatKeselamatan={peringkatKeselamatan}
+              accessLevelArray={accessLevelArray}
               selectedProfile={selectedProfile}
               setSelectedProfile={handleProfileChange}
               onPreview={setAllInfoDocs}
