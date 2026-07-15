@@ -96,6 +96,7 @@ interface MuatNaikDokumenFormProps {
   retentionPeriod: string
   savedRecordDate: string
   setSavedRecordDate: (value: string) => void
+  version: string
 }
 
 export default function MuatNaikDokumenForm({
@@ -121,8 +122,10 @@ export default function MuatNaikDokumenForm({
   titleFallbackNotice,
   savedRecordDate,
   setSavedRecordDate,
+  version,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
+  console.log(folderSelection)
   const {
     selectedPeringkatKeselamatan,
     setSelectedPeringkatKeselamatan,
@@ -429,6 +432,11 @@ export default function MuatNaikDokumenForm({
                 )}
               </div>
             ))}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <div>Versi</div>
+            <Input disabled value={version} readOnly />
           </div>
           <div className="flex justify-between">
             <Button

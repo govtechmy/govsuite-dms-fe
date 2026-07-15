@@ -143,9 +143,9 @@ export default function TidakLulusPage() {
           totalRecords={totalRecords}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          onItemClick={(id, clickedItem) => {
+          onItemClick={(recordId, clickedItem) => {
             const selectedItem =
-              clickedItem ?? catalogItems.find((doc) => doc.recordId === id) ?? null
+              clickedItem ?? catalogItems.find((doc) => doc.recordId === recordId) ?? null
             setSelectedDocument(selectedItem)
             setIsMetadataDialogOpen(true)
           }}

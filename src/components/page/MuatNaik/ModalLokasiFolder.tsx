@@ -32,6 +32,7 @@ import {
 import FolderGrid, { type Folder } from '@/components/shared/FolderGrid'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import extractBackendError from '@/utils/extractBackendError'
+import convertPathFormat from '@/utils/convertPathFormat'
 
 interface PathNode {
   id: string
@@ -296,10 +297,7 @@ export default function ModalLokasiFolder({ selectedPath = '' }: ModalLokasiFold
     const selectedFolderItem = folderContent.folders.find((item) => item.fullPath === folder.path)
     if (!selectedFolderItem) return
 
-    const displayPath =
-      currentPath.length === 0
-        ? selectedFolderItem.name
-        : [...currentPath.map((p) => p.name), selectedFolderItem.name].join(' > ')
+    const displayPath = convertPathFormat([...currentPath.map((p) => p.name), selectedFolderItem.name])
 
     setSelectedFolder({
       displayPath,
@@ -332,10 +330,7 @@ export default function ModalLokasiFolder({ selectedPath = '' }: ModalLokasiFold
     const selectedFolderItem = folderContent.folders.find((item) => item.fullPath === folder.path)
     if (!selectedFolderItem) return
 
-    const displayPath =
-      currentPath.length === 0
-        ? selectedFolderItem.name
-        : [...currentPath.map((p) => p.name), selectedFolderItem.name].join(' > ')
+    const displayPath = convertPathFormat([...currentPath.map((p) => p.name), selectedFolderItem.name])
 
     setSelectedFolder({
       displayPath,

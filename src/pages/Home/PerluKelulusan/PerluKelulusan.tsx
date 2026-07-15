@@ -130,7 +130,7 @@ export default function PerluKelulusanPage() {
           totalRecords={searchMeta?.totalItems ?? catalogItems.length}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          onItemClick={(id) => navigate(`/${activeLang}/katalog-dokumen/${id}`)}
+          onItemClick={(recordId) => navigate(`/${activeLang}/katalog-dokumen/${recordId}`)}
         />
       </div>
     </RightSidePageLayoutWrapper>

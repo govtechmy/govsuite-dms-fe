@@ -31,7 +31,7 @@ interface KatalogDisplaySearchProps {
   totalRecords: number
   onPageChange: (newPage: number) => void
   onPageSizeChange: (newSize: number) => void
-  onItemClick: (id: string, item?: KatalogSearchResultItem) => void
+  onItemClick: (recordId: string, item?: KatalogSearchResultItem) => void
 }
 
 export default function KatalogDisplaySearch({

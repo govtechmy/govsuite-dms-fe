@@ -142,7 +142,7 @@ export default function KatalogDokumenPage() {
           totalRecords={searchMeta?.totalItems ?? catalogItems.length}
           onPageChange={setPageNumber}
           onPageSizeChange={handlePageSizeChange}
-          onItemClick={(id) => navigate(`/${activeLang}/katalog-dokumen/${id}`)}
+          onItemClick={(recordId) => navigate(`/${activeLang}/katalog-dokumen/${recordId}`)}
         />
       ) : (
         <>
