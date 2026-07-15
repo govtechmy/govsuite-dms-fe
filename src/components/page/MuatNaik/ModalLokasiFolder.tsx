@@ -297,7 +297,10 @@ export default function ModalLokasiFolder({ selectedPath = '' }: ModalLokasiFold
     const selectedFolderItem = folderContent.folders.find((item) => item.fullPath === folder.path)
     if (!selectedFolderItem) return
 
-    const displayPath = convertPathFormat([...currentPath.map((p) => p.name), selectedFolderItem.name])
+    const displayPath = convertPathFormat([
+      ...currentPath.map((p) => p.name),
+      selectedFolderItem.name,
+    ])
 
     setSelectedFolder({
       displayPath,
@@ -330,7 +333,10 @@ export default function ModalLokasiFolder({ selectedPath = '' }: ModalLokasiFold
     const selectedFolderItem = folderContent.folders.find((item) => item.fullPath === folder.path)
     if (!selectedFolderItem) return
 
-    const displayPath = convertPathFormat([...currentPath.map((p) => p.name), selectedFolderItem.name])
+    const displayPath = convertPathFormat([
+      ...currentPath.map((p) => p.name),
+      selectedFolderItem.name,
+    ])
 
     setSelectedFolder({
       displayPath,

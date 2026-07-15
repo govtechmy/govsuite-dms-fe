@@ -125,7 +125,6 @@ export default function MuatNaikDokumenForm({
   version,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
-  console.log(folderSelection)
   const {
     selectedPeringkatKeselamatan,
     setSelectedPeringkatKeselamatan,

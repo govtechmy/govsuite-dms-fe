@@ -65,6 +65,7 @@ export default function MuatNaikDokumenPage() {
   const [draftFeedback, setDraftFeedback] = useState<DraftFeedback>(null)
   const [titleFallbackNotice, setTitleFallbackNotice] = useState<string | null>(null)
   const [savedRecordDate, setSavedRecordDate] = useState<string>('')
+  const [version] = useState<string>('Version 1')
 
   // In-flight guard to prevent duplicate save submissions
   const isSavingRef = useRef(false)
@@ -480,6 +481,7 @@ export default function MuatNaikDokumenPage() {
               titleFallbackNotice={titleFallbackNotice}
               savedRecordDate={savedRecordDate}
               setSavedRecordDate={setSavedRecordDate}
+              version={version}
             />
           </RightSidePageLayoutWrapper>
           {selectedProfile && savedRecordDate && (

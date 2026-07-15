@@ -13,12 +13,14 @@ import DrafPage from './pages/Home/Draf/Draf'
 import ErrorPage from './pages/Error'
 import KatalogDokumenPage from './pages/KatalogDokumen/KatalogDokumen'
 import DokumenIDPage from './pages/KatalogDokumen/DokumenID/DokumenID'
-import MuatNaikDokumenPage from './pages/MuatNaikDokumen'
+
 import CarianDokumenPage from './pages/CarianDokumen'
 import KegemaranPage from './pages/Kegemaran'
 import PengurusanDokumenPage from './pages/PengurusanDokumen'
 import LogAktivitiPage from './pages/LogAktiviti'
 import BantuanPage from './pages/Bantuan'
+import MuatNaikDokumenPage from './pages/MuatNaikDokumen/MuatNaikDokumen'
+import MuatNaikDokumenIDPage from './pages/MuatNaikDokumen/MuatNaikDokumenID/MuatNaikDokumenID'
 
 /**
  * Maps route paths to their required permission keys.
@@ -132,10 +134,15 @@ export default function AppRoutes() {
             path="muatnaik-dokumen"
             element={
               <ProtectedRoute routeKey="muatnaik-dokumen">
-                <MuatNaikDokumenPage />
+                <Outlet />
               </ProtectedRoute>
             }
-          />
+          >
+            {/* /katalog-dokumen */}
+            <Route index element={<MuatNaikDokumenPage />} />
+            {/* /katalog-dokumen/:DokumenID */}
+            <Route path=":MuatNaikDokumenID" element={<MuatNaikDokumenIDPage />} />
+          </Route>
           <Route
             path="carian-dokumen"
             element={
