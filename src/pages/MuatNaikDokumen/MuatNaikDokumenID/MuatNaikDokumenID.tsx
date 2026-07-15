@@ -68,7 +68,7 @@ export default function MuatNaikDokumenIDPage() {
   const [titleFallbackNotice, setTitleFallbackNotice] = useState<string | null>(null)
   const [savedRecordDate, setSavedRecordDate] = useState<string>('')
   const [version, setVersion] = useState<string>('Version 1')
-  setVersion("Version 1")
+  setVersion('Version 1')
 
   // In-flight guard to prevent duplicate save submissions
   const isSavingRef = useRef(false)
@@ -410,8 +410,8 @@ export default function MuatNaikDokumenIDPage() {
     fetchAccessLevels()
     fetchDropdownDataUnit()
     fetchRecordInformation()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [MuatNaikDokumenID])
-
 
   useEffect(() => {
     const fetchDropdownDataDocument = async () => {
@@ -433,7 +433,6 @@ export default function MuatNaikDokumenIDPage() {
       }
     }
     fetchDropdownDataDocument()
-      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUnitsFromDropdown])
 
   useEffect(() => {
