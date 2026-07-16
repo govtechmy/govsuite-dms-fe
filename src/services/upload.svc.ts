@@ -168,7 +168,7 @@ export const getMetadataConfig = async (profileId: string): Promise<MetadataConf
 
   try {
     const response = await authAxios.get(url)
-    console.log(response)
+
     const payload = response.data?.data ?? response.data
 
     if (!payload) {

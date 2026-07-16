@@ -15,6 +15,7 @@ import { TextArea } from '@govtechmy/myds-react/textarea'
 import type { AccessLevel, DropdownUnit, ProfileDocument } from '@/services/dropdown.svc'
 import SelectDropdownUnit from './SelectDropdownUnit'
 import type { MetadataField } from '@/services/upload.svc'
+import type { FileInfo } from '@/components/shared/UploadDocument'
 import extractBackendError from '@/utils/extractBackendError'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 import {
@@ -33,6 +34,7 @@ export interface DocPreviewInfo {
   additionalMetadataValues: Record<string, string>
   requiredMetadataFields: MetadataField[]
   additionalMetadataFields: MetadataField[]
+  newUploadedRecordId?: string
 }
 
 type DraftFeedback = {
@@ -65,6 +67,9 @@ interface MuatNaikDokumenFormProps {
   savedRecordDate: string
   setSavedRecordDate: (value: string) => void
   version: string
+  lastUploadedFile?: FileInfo | null
+  draftStatus?: Boolean
+  newRecordId?: string
 }
 
 export default function MuatNaikDokumenForm({
@@ -91,6 +96,9 @@ export default function MuatNaikDokumenForm({
   savedRecordDate,
   setSavedRecordDate,
   version,
+  lastUploadedFile,
+  draftStatus,
+  newRecordId,
 }: MuatNaikDokumenFormProps) {
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const {
@@ -120,6 +128,12 @@ export default function MuatNaikDokumenForm({
   const isAdditionalMetadataComplete = metadataAdditional
     .filter((field) => field.required)
     .every((field) => additionalMetadataValues[field.key]?.trim() !== '')
+
+  const isDraftMode = Boolean(draftStatus)
+  const isActionButtonDisabled =
+    isSaving ||
+    (!isDraftMode &&
+      (uploadState !== 3 || !isRequiredMetadataComplete || !isAdditionalMetadataComplete))
 
   useEffect(() => {
     if (!selectedProfile) {
@@ -202,15 +216,31 @@ export default function MuatNaikDokumenForm({
     // Clear previous feedback before new attempt
     onDraftFeedbackDismiss()
 
-    const previewInfo: DocPreviewInfo = {
-      lokasiFolder: folderSelection.path,
-      profilDokumen: selectedProfile,
-      tahapKeselamatan: selectedAccessLevel,
-      ringkasan,
-      requiredMetadataValues,
-      additionalMetadataValues,
-      requiredMetadataFields: metadataRequired,
-      additionalMetadataFields: metadataAdditional,
+    let previewInfo: DocPreviewInfo
+
+    if (newRecordId) {
+      previewInfo = {
+        lokasiFolder: folderSelection.path,
+        profilDokumen: selectedProfile,
+        tahapKeselamatan: selectedAccessLevel,
+        ringkasan,
+        requiredMetadataValues,
+        additionalMetadataValues,
+        requiredMetadataFields: metadataRequired,
+        additionalMetadataFields: metadataAdditional,
+        newUploadedRecordId: newRecordId,
+      }
+    } else {
+      previewInfo = {
+        lokasiFolder: folderSelection.path,
+        profilDokumen: selectedProfile,
+        tahapKeselamatan: selectedAccessLevel,
+        ringkasan,
+        requiredMetadataValues,
+        additionalMetadataValues,
+        requiredMetadataFields: metadataRequired,
+        additionalMetadataFields: metadataAdditional,
+      }
     }
 
     try {
@@ -226,15 +256,31 @@ export default function MuatNaikDokumenForm({
     // Clear previous feedback before new attempt
     onDraftFeedbackDismiss()
 
-    const previewInfo: DocPreviewInfo = {
-      lokasiFolder: folderSelection.path,
-      profilDokumen: selectedProfile,
-      tahapKeselamatan: selectedAccessLevel,
-      ringkasan,
-      requiredMetadataValues,
-      additionalMetadataValues,
-      requiredMetadataFields: metadataRequired,
-      additionalMetadataFields: metadataAdditional,
+    let previewInfo: DocPreviewInfo
+
+    if (newRecordId) {
+      previewInfo = {
+        lokasiFolder: folderSelection.path,
+        profilDokumen: selectedProfile,
+        tahapKeselamatan: selectedAccessLevel,
+        ringkasan,
+        requiredMetadataValues,
+        additionalMetadataValues,
+        requiredMetadataFields: metadataRequired,
+        additionalMetadataFields: metadataAdditional,
+        newUploadedRecordId: newRecordId,
+      }
+    } else {
+      previewInfo = {
+        lokasiFolder: folderSelection.path,
+        profilDokumen: selectedProfile,
+        tahapKeselamatan: selectedAccessLevel,
+        ringkasan,
+        requiredMetadataValues,
+        additionalMetadataValues,
+        requiredMetadataFields: metadataRequired,
+        additionalMetadataFields: metadataAdditional,
+      }
     }
 
     // Save as draft first before showing preview
@@ -339,6 +385,8 @@ export default function MuatNaikDokumenForm({
             displayFileName={previewDocumentInfoData?.fileName}
             uploadErrorMessage={uploadErrorMessage}
             uploadPercentage={uploadPercentage}
+            lastUploadedFile={lastUploadedFile}
+            draftStatus={draftStatus}
           />
           <div className="flex flex-col gap-3 text-body-md font-medium text-txt-black-700">
             <div className="text-body-md font-semibold font-body text-txt-black-900">
@@ -408,24 +456,14 @@ export default function MuatNaikDokumenForm({
           <div className="flex justify-between">
             <Button
               variant="default-outline"
-              disabled={
-                uploadState !== 3 ||
-                !isRequiredMetadataComplete ||
-                !isAdditionalMetadataComplete ||
-                isSaving
-              }
+              disabled={isActionButtonDisabled}
               onClick={handleSaveDraftClick}
             >
               Simpan Draf
             </Button>
             <Button
               variant="primary-outline"
-              disabled={
-                uploadState !== 3 ||
-                !isRequiredMetadataComplete ||
-                !isAdditionalMetadataComplete ||
-                isSaving
-              }
+              disabled={isActionButtonDisabled}
               onClick={handlePreviewClick}
             >
               Muat Naik Pratonton

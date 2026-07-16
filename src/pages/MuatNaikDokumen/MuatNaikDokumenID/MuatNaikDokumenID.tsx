@@ -15,7 +15,6 @@ import {
 import {
   requestPresignedUploadUrl,
   uploadFileToPresignedUrl,
-  getUploadStatus,
   type MetadataField,
   type PresignUploadResponse,
   saveOrUpdateUploadedRecord,
@@ -37,6 +36,7 @@ import {
   toMetadataValueMap,
   type MetadataValueMap,
 } from '@/utils/metadataPrefill'
+import type { FileInfo } from '@/components/shared/UploadDocument'
 
 type DraftFeedback = {
   status: 'success' | 'error'
@@ -71,8 +71,11 @@ export default function MuatNaikDokumenIDPage() {
   const [draftFeedback, setDraftFeedback] = useState<DraftFeedback>(null)
   const [titleFallbackNotice, setTitleFallbackNotice] = useState<string | null>(null)
   const [savedRecordDate, setSavedRecordDate] = useState<string>('')
-  const version = 'Version 1'
+  const [version, setVersion] = useState<string>('Version : ')
   const [recordMetadataValues, setRecordMetadataValues] = useState<MetadataValueMap>({})
+  const [lastUploadedFile, setLastUploadedFile] = useState<FileInfo | null>(null)
+  const [draftStatus, setDraftStatus] = useState<Boolean>(false)
+  const [newRecordId, setNewRecordId] = useState<string>('')
 
   // In-flight guard to prevent duplicate save submissions
   const isSavingRef = useRef(false)
@@ -123,6 +126,8 @@ export default function MuatNaikDokumenIDPage() {
     setRetentionPeriod('')
     setSavedRecordDate('')
     setRecordMetadataValues({})
+    setLastUploadedFile(null)
+    setNewRecordId('')
 
     // Clear global store states
     setSelectedFile(null)
@@ -138,8 +143,8 @@ export default function MuatNaikDokumenIDPage() {
     status: string
   ): BuildSaveRecordPayloadResult => {
     // Guard required fields
-    if (!presignedResponse?.recordId) {
-      throw new Error('Missing recordId from presigned upload response')
+    if (!newRecordId.trim() && !MuatNaikDokumenID?.trim()) {
+      throw new Error('Missing recordId from upload context')
     }
     if (!folderSelection.id) {
       throw new Error('Missing folderId - please select a folder location')
@@ -161,11 +166,11 @@ export default function MuatNaikDokumenIDPage() {
     const year = new Date(recordDate).getUTCFullYear()
 
     // Extract file metadata from selectedFile and presignedResponse
-    const fileName = presignedResponse.fileName || selectedFile.name
-    const fileType = presignedResponse.fileType || selectedFile.type || ''
+    const fileName = presignedResponse?.fileName || selectedFile.name
+    const fileType = presignedResponse?.fileType || selectedFile.type || ''
     const fileExtension =
-      presignedResponse.fileExtension || selectedFile.name.split('.').pop() || ''
-    const fileSize = presignedResponse.fileSize || selectedFile.size || 0
+      presignedResponse?.fileExtension || selectedFile.name.split('.').pop() || ''
+    const fileSize = presignedResponse?.fileSize || selectedFile.size || 0
 
     const tajukMetadataValue =
       Object.entries(previewInfo.requiredMetadataValues).find(
@@ -192,7 +197,7 @@ export default function MuatNaikDokumenIDPage() {
 
     const payload: SaveUploadRecordRequest = {
       title,
-      recordId: presignedResponse.recordId,
+      recordId: newRecordId ? newRecordId : (MuatNaikDokumenID ?? ''),
       fileName,
       fileType,
       fileExtension,
@@ -251,7 +256,6 @@ export default function MuatNaikDokumenIDPage() {
       }
 
       const result = await saveOrUpdateUploadedRecord(payload, mongoDbRecordId)
-      console.log('Save successful, recordId:', result.recordId)
 
       // Persist MongoDB ID from backend response for future PUT operations
       if (result.id) {
@@ -306,6 +310,8 @@ export default function MuatNaikDokumenIDPage() {
 
     // Step 3: Save full presigned response to state for future use
     setPresignedResponse(presignedData)
+    //use this later on if upload new docs
+    setNewRecordId(presignedData.recordId)
 
     if (!presignedData.presignedUrl || !presignedData.recordId) {
       throw new Error('Invalid presigned response: missing presignedUrl or recordId')
@@ -327,8 +333,7 @@ export default function MuatNaikDokumenIDPage() {
     setUploadPercentage(100)
 
     // Step 5: Check upload status by recordId
-    const statusResponse = await getUploadStatus(presignedData.recordId)
-    console.log('Upload status response:', statusResponse)
+    // const statusResponse = await getUploadStatus(presignedData.recordId)
   }
 
   /**
@@ -402,12 +407,15 @@ export default function MuatNaikDokumenIDPage() {
         if (MuatNaikDokumenID) {
           const fullRecordInformation = await getRecordInfo(MuatNaikDokumenID)
           const fullRecordInformationData = fullRecordInformation.data
-          console.log('Record information:', fullRecordInformationData)
+
+          if (fullRecordInformationData) {
+            setDraftStatus(true)
+          }
 
           // Set Lokasi Folder using record information
-          if (fullRecordInformationData?.folderId && fullRecordInformationData?.file?.path) {
+          if (fullRecordInformationData.folderId && fullRecordInformationData.filePath) {
             const formattedPath = convertPathFormat(
-              sanitizePathID(fullRecordInformationData.file.path, MuatNaikDokumenID)
+              sanitizePathID(fullRecordInformationData.filePath, MuatNaikDokumenID)
             )
             setFolderSelection({
               id: fullRecordInformationData.folderId,
@@ -416,36 +424,83 @@ export default function MuatNaikDokumenIDPage() {
           }
 
           // Set Muat Naik Ke Folder Unit using record information
-          if (fullRecordInformationData?.unitId) {
+          if (fullRecordInformationData.unitId) {
             setSelectedUnitsFromDropdown(fullRecordInformationData.unitId)
           }
 
           // Set Profile Document Code using record information
-          if (fullRecordInformationData?.documentProfileName) {
+          if (fullRecordInformationData.documentProfileName) {
             setSelectedProfile(fullRecordInformationData.documentProfileName)
           }
 
-          if (fullRecordInformationData?.documentProfileName) {
+          if (fullRecordInformationData.recordConfigId) {
             setSelectedProfileId(fullRecordInformationData.recordConfigId)
           }
 
           // set recordDate using .recordDate
-          if (fullRecordInformationData?.recordDate) {
+          if (fullRecordInformationData.recordDate) {
             const date = new Date(fullRecordInformationData.recordDate)
             setSavedRecordDate(formatDocumentDateValue(date))
           }
 
-          if (fullRecordInformationData?.accessLevel) {
+          if (fullRecordInformationData.accessLevel) {
             setSelectedAccessLevel(fullRecordInformationData.accessLevel)
           }
 
-          if (fullRecordInformationData?.recordDescription) {
+          if (fullRecordInformationData.recordDescription) {
             setRingkasan(fullRecordInformationData.recordDescription)
           }
 
-          if (fullRecordInformationData?.metadata) {
-            const mappedMetadataValues = toMetadataValueMap(fullRecordInformationData?.metadata)
+          if (fullRecordInformationData.metadata) {
+            const mappedMetadataValues = toMetadataValueMap(fullRecordInformationData.metadata)
             setRecordMetadataValues(mappedMetadataValues)
+          }
+
+          if (
+            fullRecordInformationData.filePath &&
+            fullRecordInformationData.fileType &&
+            fullRecordInformationData.fileExtension &&
+            fullRecordInformationData.fileSize &&
+            fullRecordInformationData.fileName
+          ) {
+            const formattedPath = convertPathFormat(
+              sanitizePathID(fullRecordInformationData.filePath, MuatNaikDokumenID)
+            )
+
+            setLastUploadedFile({
+              path: String(formattedPath),
+              type: String(fullRecordInformationData.fileType),
+              extension: String(fullRecordInformationData.fileExtension),
+              sizeMb: Number(fullRecordInformationData.fileSize),
+              name: String(fullRecordInformationData.fileName),
+            })
+          } else {
+            setLastUploadedFile(null)
+          }
+
+          if (
+            fullRecordInformationData.recordConfigId &&
+            fullRecordInformationData.definitionGroupId &&
+            fullRecordInformationData.unitId &&
+            fullRecordInformationData.workflowCode &&
+            fullRecordInformationData.documentProfileCode &&
+            fullRecordInformationData.documentProfileName &&
+            fullRecordInformationData.accessLevel
+          ) {
+            setSelectedProfileDetail({
+              id: fullRecordInformationData.recordConfigId,
+              definitionGroupId: fullRecordInformationData.definitionGroupId,
+              unitId: fullRecordInformationData.unitId,
+              workflowCode: fullRecordInformationData.workflowCode,
+              documentProfileCode: fullRecordInformationData.documentProfileCode,
+              documentProfile: fullRecordInformationData.documentProfileName,
+              defaultAccessLevel: fullRecordInformationData.accessLevel,
+            })
+          }
+
+          if (fullRecordInformationData.version) {
+            const versionStringify = `Versi : ${String(fullRecordInformationData.version)}`
+            setVersion(versionStringify)
           }
         }
       } catch (err) {
@@ -581,6 +636,9 @@ export default function MuatNaikDokumenIDPage() {
               savedRecordDate={savedRecordDate}
               setSavedRecordDate={setSavedRecordDate}
               version={version}
+              lastUploadedFile={lastUploadedFile}
+              draftStatus={draftStatus}
+              newRecordId={newRecordId}
             />
           </RightSidePageLayoutWrapper>
           {selectedProfile && savedRecordDate && (

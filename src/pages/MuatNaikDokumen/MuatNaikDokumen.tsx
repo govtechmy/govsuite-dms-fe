@@ -15,7 +15,6 @@ import {
 import {
   requestPresignedUploadUrl,
   uploadFileToPresignedUrl,
-  getUploadStatus,
   type MetadataField,
   type PresignUploadResponse,
   saveOrUpdateUploadedRecord,
@@ -234,7 +233,6 @@ export default function MuatNaikDokumenPage() {
       }
 
       const result = await saveOrUpdateUploadedRecord(payload, mongoDbRecordId)
-      console.log('Save successful, recordId:', result.recordId)
 
       // Persist MongoDB ID from backend response for future PUT operations
       if (result.id) {
@@ -310,8 +308,7 @@ export default function MuatNaikDokumenPage() {
     setUploadPercentage(100)
 
     // Step 5: Check upload status by recordId
-    const statusResponse = await getUploadStatus(presignedData.recordId)
-    console.log('Upload status response:', statusResponse)
+    // const statusResponse = await getUploadStatus(presignedData.recordId)
   }
 
   /**

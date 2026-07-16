@@ -131,7 +131,7 @@ export default function DrafPage() {
           totalRecords={searchMeta?.totalItems ?? catalogItems.length}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          onItemClick={() => {}}
+          onItemClick={(recordId) => navigate(`/${activeLang}/muatnaik-dokumen/${recordId}`)}
         />
       </div>
     </RightSidePageLayoutWrapper>
