@@ -155,7 +155,11 @@ export default function MuatNaikDokumenIDPage() {
     if (!selectedProfileDetail?.definitionGroupId) {
       throw new Error('Missing recordConfig from selected profile')
     }
-    if (!selectedFile?.name) {
+    const hasExistingDraftFile = draftStatus && Boolean(lastUploadedFile?.name)
+    const hasFileContext = Boolean(
+      selectedFile?.name || presignedResponse?.fileName || hasExistingDraftFile
+    )
+    if (!hasFileContext) {
       throw new Error('Missing file information - please upload a file')
     }
     if (!previewInfo.tahapKeselamatan) {
@@ -165,12 +169,18 @@ export default function MuatNaikDokumenIDPage() {
     const recordDate = convertDdMmYyToIso(savedRecordDate) ?? new Date().toISOString()
     const year = new Date(recordDate).getUTCFullYear()
 
-    // Extract file metadata from selectedFile and presignedResponse
-    const fileName = presignedResponse?.fileName || selectedFile.name
-    const fileType = presignedResponse?.fileType || selectedFile.type || ''
+    // Extract file metadata from newest upload first, then fallback to existing draft file.
+    const fileName = presignedResponse?.fileName || selectedFile?.name || lastUploadedFile?.name || ''
+    const fileType = presignedResponse?.fileType || selectedFile?.type || lastUploadedFile?.type || ''
     const fileExtension =
-      presignedResponse?.fileExtension || selectedFile.name.split('.').pop() || ''
-    const fileSize = presignedResponse?.fileSize || selectedFile.size || 0
+      presignedResponse?.fileExtension ||
+      selectedFile?.name?.split('.').pop() ||
+      lastUploadedFile?.extension ||
+      ''
+    const fileSize =
+      presignedResponse?.fileSize ||
+      selectedFile?.size ||
+      Number(lastUploadedFile?.sizeMb ?? 0)
 
     const tajukMetadataValue =
       Object.entries(previewInfo.requiredMetadataValues).find(
@@ -178,8 +188,8 @@ export default function MuatNaikDokumenIDPage() {
       )?.[1] ?? ''
     const normalizedTajukMetadataValue = tajukMetadataValue.trim()
     const fallbackFileName =
-      selectedFile.body?.fileName?.trim() ||
-      fileName.replace(/\.[^./\\]+$/, '').trim() ||
+      selectedFile?.body?.fileName?.trim() ||
+      lastUploadedFile?.name?.trim() ||
       fileName.trim()
     const title = normalizedTajukMetadataValue || fallbackFileName
 
@@ -407,6 +417,7 @@ export default function MuatNaikDokumenIDPage() {
         if (MuatNaikDokumenID) {
           const fullRecordInformation = await getRecordInfo(MuatNaikDokumenID)
           const fullRecordInformationData = fullRecordInformation.data
+          console.log(fullRecordInformationData)
 
           if (fullRecordInformationData) {
             setDraftStatus(true)
@@ -501,6 +512,9 @@ export default function MuatNaikDokumenIDPage() {
           if (fullRecordInformationData.version) {
             const versionStringify = `Versi : ${String(fullRecordInformationData.version)}`
             setVersion(versionStringify)
+          }
+          if (fullRecordInformationData.id){
+            setMongoDbRecordId(fullRecordInformationData.id)
           }
         }
       } catch (err) {

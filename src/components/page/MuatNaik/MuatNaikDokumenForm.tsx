@@ -1,6 +1,8 @@
 import { Button } from '@govtechmy/myds-react/button'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useUploadStore } from '@/store/UploadStore'
 import { useUploadDraftStore } from '@/store/UploadDraftStore'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
@@ -24,6 +26,11 @@ import {
   parseDocumentDateValue,
   formatDocumentDateValue,
 } from '@/utils/formatDate'
+import {
+  buildMetadataDefaultValues,
+  createUploadFormSchema,
+  type UploadFormValues,
+} from '@/schemas/uploadFormSchema'
 
 export interface DocPreviewInfo {
   lokasiFolder: string
@@ -117,29 +124,163 @@ export default function MuatNaikDokumenForm({
     previewDocumentInfoData,
     setPreviewDocumentInfoData,
   } = useUploadDraftStore()
-  const { setSelectedFile } = useUploadStore()
+  const { selectedFile, setSelectedFile } = useUploadStore()
 
   const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.documentProfile)
 
+  const isDraftMode = Boolean(draftStatus)
+
+  const hasTitleFallback = Boolean(
+    selectedFile?.body?.fileName?.trim() ||
+    selectedFile?.name?.trim() ||
+    lastUploadedFile?.name?.trim() ||
+    previewDocumentInfoData?.fileName?.trim()
+  )
+
+  const uploadFormSchema = useMemo(
+    () =>
+      createUploadFormSchema({
+        requiredFields: metadataRequired,
+        additionalFields: metadataAdditional,
+        enforceRequired: !isDraftMode,
+        hasTitleFallback,
+      }),
+    [metadataRequired, metadataAdditional, isDraftMode, hasTitleFallback]
+  )
+
+  const toIsoRecordDate = (value: string): string => {
+    if (!value) {
+      return ''
+    }
+
+    const parsedIsoDate = parseDateValue(value)
+    if (parsedIsoDate) {
+      return value
+    }
+
+    const parsedDocumentDate = parseDocumentDateValue(value)
+    return parsedDocumentDate ? formatDateValue(parsedDocumentDate) : ''
+  }
+
+  const areMetadataMapsEqual = (
+    firstMap: Record<string, string>,
+    secondMap: Record<string, string>
+  ): boolean => {
+    const firstKeys = Object.keys(firstMap)
+    const secondKeys = Object.keys(secondMap)
+
+    if (firstKeys.length !== secondKeys.length) {
+      return false
+    }
+
+    return firstKeys.every((key) => firstMap[key] === secondMap[key])
+  }
+
+  const {
+    control,
+    getValues,
+    setValue,
+    trigger,
+    formState: { errors, isValid },
+  } = useForm<UploadFormValues>({
+    resolver: zodResolver(uploadFormSchema),
+    mode: 'onChange',
+    defaultValues: {
+      selectedAccessLevel,
+      ringkasan,
+      savedRecordDate: toIsoRecordDate(savedRecordDate),
+      requiredMetadataValues: buildMetadataDefaultValues(metadataRequired, requiredMetadataValues),
+      additionalMetadataValues: buildMetadataDefaultValues(
+        metadataAdditional,
+        additionalMetadataValues
+      ),
+    },
+  })
+
+  const watchedRequiredMetadataValues =
+    useWatch({
+      control,
+      name: 'requiredMetadataValues',
+    }) ?? {}
+
+  const watchedAdditionalMetadataValues =
+    useWatch({
+      control,
+      name: 'additionalMetadataValues',
+    }) ?? {}
+
   const isRequiredMetadataComplete = metadataRequired
     .filter((field) => field.required)
-    .every((field) => requiredMetadataValues[field.key]?.trim() !== '')
+    .every((field) => watchedRequiredMetadataValues[field.key]?.trim() !== '')
 
   const isAdditionalMetadataComplete = metadataAdditional
     .filter((field) => field.required)
-    .every((field) => additionalMetadataValues[field.key]?.trim() !== '')
+    .every((field) => watchedAdditionalMetadataValues[field.key]?.trim() !== '')
 
-  const isDraftMode = Boolean(draftStatus)
   const isActionButtonDisabled =
     isSaving ||
     (!isDraftMode &&
-      (uploadState !== 3 || !isRequiredMetadataComplete || !isAdditionalMetadataComplete))
+      (uploadState !== 3 ||
+        !isRequiredMetadataComplete ||
+        !isAdditionalMetadataComplete ||
+        !isValid))
+
+  const requiredMetadataErrors =
+    (errors.requiredMetadataValues as Partial<Record<string, { message?: string }>> | undefined) ??
+    {}
+  const additionalMetadataErrors =
+    (errors.additionalMetadataValues as
+      Partial<Record<string, { message?: string }>> | undefined) ?? {}
+
+  const getErrorMessage = (value?: string): string | null => {
+    return value && value.trim() ? value : null
+  }
 
   useEffect(() => {
     if (!selectedProfile) {
       setSelectedAccessLevel('')
+      setValue('selectedAccessLevel', '', { shouldValidate: true })
     }
-  }, [selectedProfile, setSelectedAccessLevel])
+  }, [selectedProfile, setSelectedAccessLevel, setValue])
+
+  useEffect(() => {
+    if (selectedAccessLevel !== getValues('selectedAccessLevel')) {
+      setValue('selectedAccessLevel', selectedAccessLevel, { shouldValidate: true })
+    }
+  }, [selectedAccessLevel, getValues, setValue])
+
+  useEffect(() => {
+    if (ringkasan !== getValues('ringkasan')) {
+      setValue('ringkasan', ringkasan, { shouldValidate: false })
+    }
+  }, [ringkasan, getValues, setValue])
+
+  useEffect(() => {
+    const normalizedDateValue = toIsoRecordDate(savedRecordDate)
+    if (normalizedDateValue !== getValues('savedRecordDate')) {
+      setValue('savedRecordDate', normalizedDateValue, { shouldValidate: true })
+    }
+  }, [savedRecordDate, getValues, setValue])
+
+  useEffect(() => {
+    const updatedRequiredValues = buildMetadataDefaultValues(
+      metadataRequired,
+      requiredMetadataValues
+    )
+    if (!areMetadataMapsEqual(updatedRequiredValues, getValues('requiredMetadataValues'))) {
+      setValue('requiredMetadataValues', updatedRequiredValues, { shouldValidate: true })
+    }
+  }, [metadataRequired, requiredMetadataValues, getValues, setValue])
+
+  useEffect(() => {
+    const updatedAdditionalValues = buildMetadataDefaultValues(
+      metadataAdditional,
+      additionalMetadataValues
+    )
+    if (!areMetadataMapsEqual(updatedAdditionalValues, getValues('additionalMetadataValues'))) {
+      setValue('additionalMetadataValues', updatedAdditionalValues, { shouldValidate: true })
+    }
+  }, [metadataAdditional, additionalMetadataValues, getValues, setValue])
 
   const handleFileUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -216,16 +357,23 @@ export default function MuatNaikDokumenForm({
     // Clear previous feedback before new attempt
     onDraftFeedbackDismiss()
 
+    const isFormValid = await trigger()
+    if (!isFormValid) {
+      return
+    }
+
+    const formValues = uploadFormSchema.parse(getValues())
+
     let previewInfo: DocPreviewInfo
 
     if (newRecordId) {
       previewInfo = {
         lokasiFolder: folderSelection.path,
         profilDokumen: selectedProfile,
-        tahapKeselamatan: selectedAccessLevel,
-        ringkasan,
-        requiredMetadataValues,
-        additionalMetadataValues,
+        tahapKeselamatan: formValues.selectedAccessLevel,
+        ringkasan: formValues.ringkasan,
+        requiredMetadataValues: formValues.requiredMetadataValues,
+        additionalMetadataValues: formValues.additionalMetadataValues,
         requiredMetadataFields: metadataRequired,
         additionalMetadataFields: metadataAdditional,
         newUploadedRecordId: newRecordId,
@@ -234,10 +382,10 @@ export default function MuatNaikDokumenForm({
       previewInfo = {
         lokasiFolder: folderSelection.path,
         profilDokumen: selectedProfile,
-        tahapKeselamatan: selectedAccessLevel,
-        ringkasan,
-        requiredMetadataValues,
-        additionalMetadataValues,
+        tahapKeselamatan: formValues.selectedAccessLevel,
+        ringkasan: formValues.ringkasan,
+        requiredMetadataValues: formValues.requiredMetadataValues,
+        additionalMetadataValues: formValues.additionalMetadataValues,
         requiredMetadataFields: metadataRequired,
         additionalMetadataFields: metadataAdditional,
       }
@@ -256,16 +404,23 @@ export default function MuatNaikDokumenForm({
     // Clear previous feedback before new attempt
     onDraftFeedbackDismiss()
 
+    const isFormValid = await trigger()
+    if (!isFormValid) {
+      return
+    }
+
+    const formValues = uploadFormSchema.parse(getValues())
+
     let previewInfo: DocPreviewInfo
 
     if (newRecordId) {
       previewInfo = {
         lokasiFolder: folderSelection.path,
         profilDokumen: selectedProfile,
-        tahapKeselamatan: selectedAccessLevel,
-        ringkasan,
-        requiredMetadataValues,
-        additionalMetadataValues,
+        tahapKeselamatan: formValues.selectedAccessLevel,
+        ringkasan: formValues.ringkasan,
+        requiredMetadataValues: formValues.requiredMetadataValues,
+        additionalMetadataValues: formValues.additionalMetadataValues,
         requiredMetadataFields: metadataRequired,
         additionalMetadataFields: metadataAdditional,
         newUploadedRecordId: newRecordId,
@@ -274,10 +429,10 @@ export default function MuatNaikDokumenForm({
       previewInfo = {
         lokasiFolder: folderSelection.path,
         profilDokumen: selectedProfile,
-        tahapKeselamatan: selectedAccessLevel,
-        ringkasan,
-        requiredMetadataValues,
-        additionalMetadataValues,
+        tahapKeselamatan: formValues.selectedAccessLevel,
+        ringkasan: formValues.ringkasan,
+        requiredMetadataValues: formValues.requiredMetadataValues,
+        additionalMetadataValues: formValues.additionalMetadataValues,
         requiredMetadataFields: metadataRequired,
         additionalMetadataFields: metadataAdditional,
       }
@@ -315,11 +470,15 @@ export default function MuatNaikDokumenForm({
       </div>
       <div className="flex flex-col gap-3 text-body-md font-medium font-body text-txt-black-700 max-w-[460px]">
         <div className="flex flex-col gap-1.5">
-          <div>Lokasi Folder</div>
+          <div className="flex">
+            Lokasi Folder <div className="text-txt-danger">*</div>
+          </div>
           <ModalLokasiFolder selectedPath={folderSelection.path} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <div>Muat Naik ke Folder Unit</div>
+          <div className="flex">
+            Muat Naik ke Folder Unit <div className="text-txt-danger">*</div>
+          </div>
           <SelectDropdownUnit
             dropdownUnits={dropdownUnits}
             selectedUnit={selectedUnit}
@@ -330,7 +489,9 @@ export default function MuatNaikDokumenForm({
         {selectedUnit && (
           <>
             <div className="flex flex-col gap-1.5">
-              <div>Profil Dokumen</div>
+              <div className="flex">
+                Profil Dokumen <div className="text-txt-danger">*</div>
+              </div>
               <DropdownWithSearch
                 options={profileDokumenOptions}
                 value={selectedProfile}
@@ -339,31 +500,74 @@ export default function MuatNaikDokumenForm({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <div>Tarikh Dokumen</div>
-              <DatePicker
-                locale="ms"
-                placeholder="Pilih Tarikh"
-                value={parseDocumentDateValue(savedRecordDate)}
-                onValueChange={(date) =>
-                  setSavedRecordDate(date ? formatDocumentDateValue(date) : '')
-                }
+              <div className="flex">
+                Tarikh Dokumen <div className="text-txt-danger">*</div>
+              </div>
+              <Controller
+                name="savedRecordDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker
+                    locale="ms"
+                    placeholder="Pilih Tarikh"
+                    value={parseDateValue(field.value || '')}
+                    onValueChange={(date) => {
+                      const nextIsoValue = date ? formatDateValue(date) : ''
+                      field.onChange(nextIsoValue)
+                      setSavedRecordDate(date ? formatDocumentDateValue(date) : '')
+                    }}
+                  />
+                )}
               />
+              {getErrorMessage(errors.savedRecordDate?.message) && (
+                <div className="text-body-sm text-danger-700">
+                  {getErrorMessage(errors.savedRecordDate?.message)}
+                </div>
+              )}
             </div>
           </>
         )}
         {selectedProfile && savedRecordDate && (
           <>
             <div className="flex flex-col gap-1.5">
-              <div>Tahap Keselamatan</div>
-              <SelectDropdownMyds
-                accessLevel={accessLevelArray}
-                selectedAccessLevel={selectedAccessLevel}
-                setSelectedAccessLevel={setSelectedAccessLevel}
+              <div className="flex">
+                Tahap Keselamatan <div className="text-txt-danger">*</div>
+              </div>
+              <Controller
+                name="selectedAccessLevel"
+                control={control}
+                render={({ field }) => (
+                  <SelectDropdownMyds
+                    accessLevel={accessLevelArray}
+                    selectedAccessLevel={field.value || ''}
+                    setSelectedAccessLevel={(value) => {
+                      field.onChange(value)
+                      setSelectedAccessLevel(value)
+                    }}
+                  />
+                )}
               />
+              {getErrorMessage(errors.selectedAccessLevel?.message) && (
+                <div className="text-body-sm text-danger-700">
+                  {getErrorMessage(errors.selectedAccessLevel?.message)}
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <div>Ringkasan (Pilihan)</div>
-              <TextArea value={ringkasan} onChange={(e) => setRingkasan(e.target.value)} />
+              <Controller
+                name="ringkasan"
+                control={control}
+                render={({ field }) => (
+                  <TextArea
+                    value={field.value || ''}
+                    onChange={(event) => {
+                      field.onChange(event.target.value)
+                      setRingkasan(event.target.value)
+                    }}
+                  />
+                )}
+              />
             </div>
             {retentionPeriod && (
               <div className="flex flex-col gap-1.5">
@@ -398,21 +602,37 @@ export default function MuatNaikDokumenForm({
                   {field.title}
                   {field.required && <div className="text-txt-danger">*</div>}
                 </div>
-                {field.type === 'date' ? (
-                  <DatePicker
-                    locale="ms"
-                    placeholder="Pilih Tarikh"
-                    value={parseDateValue(requiredMetadataValues[field.key] || '')}
-                    onValueChange={(date) =>
-                      setRequiredMetadataField(field.key, date ? formatDateValue(date) : '')
-                    }
-                  />
-                ) : (
-                  <Input
-                    type="text"
-                    value={requiredMetadataValues[field.key] || ''}
-                    onChange={(e) => setRequiredMetadataField(field.key, e.target.value)}
-                  />
+                <Controller
+                  name={`requiredMetadataValues.${field.key}` as const}
+                  control={control}
+                  render={({ field: metadataField }) =>
+                    field.type === 'date' ? (
+                      <DatePicker
+                        locale="ms"
+                        placeholder="Pilih Tarikh"
+                        value={parseDateValue(metadataField.value || '')}
+                        onValueChange={(date) => {
+                          const nextValue = date ? formatDateValue(date) : ''
+                          metadataField.onChange(nextValue)
+                          setRequiredMetadataField(field.key, nextValue)
+                        }}
+                      />
+                    ) : (
+                      <Input
+                        type="text"
+                        value={metadataField.value || ''}
+                        onChange={(event) => {
+                          metadataField.onChange(event.target.value)
+                          setRequiredMetadataField(field.key, event.target.value)
+                        }}
+                      />
+                    )
+                  }
+                />
+                {getErrorMessage(requiredMetadataErrors[field.key]?.message) && (
+                  <div className="text-body-sm text-danger-700">
+                    {getErrorMessage(requiredMetadataErrors[field.key]?.message)}
+                  </div>
                 )}
               </div>
             ))}
@@ -429,21 +649,37 @@ export default function MuatNaikDokumenForm({
                   {field.title}
                   {field.required && <div className="text-txt-danger">*</div>}
                 </div>
-                {field.type === 'date' ? (
-                  <DatePicker
-                    locale="ms"
-                    placeholder="Pilih Tarikh"
-                    value={parseDateValue(additionalMetadataValues[field.key] || '')}
-                    onValueChange={(date) =>
-                      setAdditionalMetadataField(field.key, date ? formatDateValue(date) : '')
-                    }
-                  />
-                ) : (
-                  <Input
-                    type="text"
-                    value={additionalMetadataValues[field.key] || ''}
-                    onChange={(e) => setAdditionalMetadataField(field.key, e.target.value)}
-                  />
+                <Controller
+                  name={`additionalMetadataValues.${field.key}` as const}
+                  control={control}
+                  render={({ field: metadataField }) =>
+                    field.type === 'date' ? (
+                      <DatePicker
+                        locale="ms"
+                        placeholder="Pilih Tarikh"
+                        value={parseDateValue(metadataField.value || '')}
+                        onValueChange={(date) => {
+                          const nextValue = date ? formatDateValue(date) : ''
+                          metadataField.onChange(nextValue)
+                          setAdditionalMetadataField(field.key, nextValue)
+                        }}
+                      />
+                    ) : (
+                      <Input
+                        type="text"
+                        value={metadataField.value || ''}
+                        onChange={(event) => {
+                          metadataField.onChange(event.target.value)
+                          setAdditionalMetadataField(field.key, event.target.value)
+                        }}
+                      />
+                    )
+                  }
+                />
+                {getErrorMessage(additionalMetadataErrors[field.key]?.message) && (
+                  <div className="text-body-sm text-danger-700">
+                    {getErrorMessage(additionalMetadataErrors[field.key]?.message)}
+                  </div>
                 )}
               </div>
             ))}
