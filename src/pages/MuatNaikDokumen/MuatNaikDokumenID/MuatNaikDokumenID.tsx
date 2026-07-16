@@ -170,17 +170,17 @@ export default function MuatNaikDokumenIDPage() {
     const year = new Date(recordDate).getUTCFullYear()
 
     // Extract file metadata from newest upload first, then fallback to existing draft file.
-    const fileName = presignedResponse?.fileName || selectedFile?.name || lastUploadedFile?.name || ''
-    const fileType = presignedResponse?.fileType || selectedFile?.type || lastUploadedFile?.type || ''
+    const fileName =
+      presignedResponse?.fileName || selectedFile?.name || lastUploadedFile?.name || ''
+    const fileType =
+      presignedResponse?.fileType || selectedFile?.type || lastUploadedFile?.type || ''
     const fileExtension =
       presignedResponse?.fileExtension ||
       selectedFile?.name?.split('.').pop() ||
       lastUploadedFile?.extension ||
       ''
     const fileSize =
-      presignedResponse?.fileSize ||
-      selectedFile?.size ||
-      Number(lastUploadedFile?.sizeMb ?? 0)
+      presignedResponse?.fileSize || selectedFile?.size || Number(lastUploadedFile?.sizeMb ?? 0)
 
     const tajukMetadataValue =
       Object.entries(previewInfo.requiredMetadataValues).find(
@@ -188,9 +188,7 @@ export default function MuatNaikDokumenIDPage() {
       )?.[1] ?? ''
     const normalizedTajukMetadataValue = tajukMetadataValue.trim()
     const fallbackFileName =
-      selectedFile?.body?.fileName?.trim() ||
-      lastUploadedFile?.name?.trim() ||
-      fileName.trim()
+      selectedFile?.body?.fileName?.trim() || lastUploadedFile?.name?.trim() || fileName.trim()
     const title = normalizedTajukMetadataValue || fallbackFileName
 
     if (!title) {
@@ -513,7 +511,7 @@ export default function MuatNaikDokumenIDPage() {
             const versionStringify = `Versi : ${String(fullRecordInformationData.version)}`
             setVersion(versionStringify)
           }
-          if (fullRecordInformationData.id){
+          if (fullRecordInformationData.id) {
             setMongoDbRecordId(fullRecordInformationData.id)
           }
         }
