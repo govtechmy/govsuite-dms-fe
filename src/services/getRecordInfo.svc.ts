@@ -7,7 +7,7 @@ export const getRecordInfo = async (recordId: string) => {
     const response = await authAxios.get(url)
     return response.data
   } catch (error) {
-    console.error('Error deleting record:', error)
+    console.error('Error getting record Info:', error)
     throw error
   }
 }

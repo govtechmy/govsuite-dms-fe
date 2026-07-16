@@ -404,7 +404,7 @@ export default function MuatNaikDokumenForm({
                     placeholder="Pilih Tarikh"
                     value={parseDateValue(requiredMetadataValues[field.key] || '')}
                     onValueChange={(date) =>
-                      setRequiredMetadataField(field.key, formatDateValue(date))
+                      setRequiredMetadataField(field.key, date ? formatDateValue(date) : '')
                     }
                   />
                 ) : (
@@ -435,7 +435,7 @@ export default function MuatNaikDokumenForm({
                     placeholder="Pilih Tarikh"
                     value={parseDateValue(additionalMetadataValues[field.key] || '')}
                     onValueChange={(date) =>
-                      setAdditionalMetadataField(field.key, formatDateValue(date))
+                      setAdditionalMetadataField(field.key, date ? formatDateValue(date) : '')
                     }
                   />
                 ) : (

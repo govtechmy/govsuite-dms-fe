@@ -67,7 +67,15 @@ export const parseDateValue = (value: string): Date | undefined => {
   const [year, month, day] = value.split('-').map(Number)
   if (!year || !month || !day) return undefined
   const parsed = new Date(year, month - 1, day)
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+  if (Number.isNaN(parsed.getTime())) return undefined
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return undefined
+  }
+  return parsed
 }
 
 /**
