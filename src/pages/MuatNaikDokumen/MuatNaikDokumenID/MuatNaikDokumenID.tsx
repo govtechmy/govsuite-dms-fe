@@ -415,7 +415,6 @@ export default function MuatNaikDokumenIDPage() {
         if (MuatNaikDokumenID) {
           const fullRecordInformation = await getRecordInfo(MuatNaikDokumenID)
           const fullRecordInformationData = fullRecordInformation.data
-          console.log(fullRecordInformationData)
 
           if (fullRecordInformationData) {
             setDraftStatus(true)
