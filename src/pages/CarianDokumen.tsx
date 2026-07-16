@@ -37,12 +37,14 @@ export interface DocumentInfoResponse {
 }
 
 const LAZY_BATCH_SIZE = 10
+const APPEND_LOAD_COOLDOWN_MS = 300
 
 export default function CarianDokumenPage() {
   const [searchParams] = useSearchParams()
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
   const appendRequestInFlightRef = useRef(false)
+  const lastAppendTriggerAtRef = useRef(0)
   const currentPageRef = useRef(1)
 
   const query = useSearchStore((state) => state.query)
@@ -157,15 +159,19 @@ export default function CarianDokumenPage() {
   )
 
   const triggerAppendLoad = useCallback(() => {
+    const now = Date.now()
+
     if (
       !searchMeta?.hasNextPage ||
       isLoadingSearch ||
       isLoadingMore ||
-      appendRequestInFlightRef.current
+      appendRequestInFlightRef.current ||
+      now - lastAppendTriggerAtRef.current < APPEND_LOAD_COOLDOWN_MS
     ) {
       return
     }
 
+    lastAppendTriggerAtRef.current = now
     appendRequestInFlightRef.current = true
     void fetchAndSetDocumentRecords({ append: true }).finally(() => {
       appendRequestInFlightRef.current = false
@@ -214,6 +220,7 @@ export default function CarianDokumenPage() {
 
     hadSearchQueryRef.current = true
     currentPageRef.current = 1
+    lastAppendTriggerAtRef.current = 0
     void fetchAndSetDocumentRecords({ append: false })
   }, [
     fetchAndSetDocumentRecords,
@@ -266,7 +273,7 @@ export default function CarianDokumenPage() {
           </div>
         </div>
       ) : (
-        <div className="min-h-0">
+        <div className="min-h-0 min-w-0">
           <DisplaySearchResults onLazyLoad={triggerAppendLoad} />
         </div>
       )}

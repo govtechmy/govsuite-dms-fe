@@ -1,6 +1,6 @@
 import RecordResultSearch from './RecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import type {
   PdfSearchNavigationRequest,
@@ -35,20 +35,47 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   // Get the keyword text from keyword record
   const keyword = keywordRecords?.keyword || ''
 
-  const queueNavigationRequest = (
-    action: PdfSearchNavigationRequest['action'],
-    targetMatchIndex?: number
-  ) => {
-    navigationTokenRef.current += 1
-    setNavigationRequest({
-      action,
-      targetMatchIndex,
-      token: navigationTokenRef.current,
+  const queueNavigationRequest = useCallback(
+    (action: PdfSearchNavigationRequest['action'], targetMatchIndex?: number) => {
+      navigationTokenRef.current += 1
+      setNavigationRequest({
+        action,
+        targetMatchIndex,
+        token: navigationTokenRef.current,
+      })
+    },
+    []
+  )
+
+  const handleSearchStateChange = useCallback((nextSearchState: PdfSearchState) => {
+    setPdfSearchState((previousSearchState) => {
+      if (
+        previousSearchState.totalMatches === nextSearchState.totalMatches &&
+        previousSearchState.currentMatchIndex === nextSearchState.currentMatchIndex
+      ) {
+        return previousSearchState
+      }
+
+      return nextSearchState
     })
-  }
+  }, [])
+
+  const handleDocumentLoad = useCallback(() => {
+    setIsPdfLoaded((previousIsPdfLoaded) => (previousIsPdfLoaded ? previousIsPdfLoaded : true))
+  }, [])
+
+  const handlePreviousMatch = useCallback(() => {
+    queueNavigationRequest('previous')
+  }, [queueNavigationRequest])
+
+  const handleNextMatch = useCallback(() => {
+    queueNavigationRequest('next')
+  }, [queueNavigationRequest])
 
   useEffect(() => {
-    setSearchKeyword(previewSearchQuery)
+    setSearchKeyword((previousSearchKeyword) =>
+      previousSearchKeyword === previewSearchQuery ? previousSearchKeyword : previewSearchQuery
+    )
   }, [previewSearchQuery])
 
   // Reset refs when document changes (new search or different document selected)
@@ -68,25 +95,34 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     }
   }, [documentInfo?.documentID])
 
-  // Auto-select first keyword once when PDF is loaded and keywords are available
-  // Only auto-select if there's no existing selection (to avoid overriding user choices)
+  // Auto-select first keyword only after the first match has been indexed.
   useEffect(() => {
-    if (isPdfLoaded && keywordRecords && !hasAutoSelectedRef.current && !selectedKeywordId) {
+    if (
+      isPdfLoaded &&
+      keywordRecords &&
+      !hasAutoSelectedRef.current &&
+      !selectedKeywordId &&
+      pdfSearchState.totalMatches > 0
+    ) {
       hasAutoSelectedRef.current = true
-      // Calculate first occurrence ID (following the same logic as WordsResultSearch)
       if (keywordRecords.dataPage.length > 0) {
-        setSelectedKeywordId(`1`) // First occurrence is always 1
+        setSelectedKeywordId('1')
       }
     }
-  }, [isPdfLoaded, keywordRecords, selectedKeywordId, setSelectedKeywordId])
+  }, [
+    isPdfLoaded,
+    keywordRecords,
+    pdfSearchState.totalMatches,
+    selectedKeywordId,
+    setSelectedKeywordId,
+  ])
 
-  // Handle search when keyword selection changes
+  // Handle search when keyword selection changes.
   useEffect(() => {
     if (!selectedKeywordId) return
 
-    // Parse the occurrence number from the ID
-    const occurrenceNumber = parseInt(selectedKeywordId)
-    if (isNaN(occurrenceNumber)) return
+    const occurrenceNumber = Number.parseInt(selectedKeywordId, 10)
+    if (Number.isNaN(occurrenceNumber)) return
 
     const keywordText = keyword.trim()
     const searchId = `${keywordText || searchKeyword}-${occurrenceNumber}`
@@ -94,32 +130,28 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
 
     lastSearchRef.current = searchId
 
-    if (keywordText) {
+    if (keywordText && keywordText !== searchKeyword) {
       setSearchKeyword(keywordText)
     }
 
-    const timer = setTimeout(() => {
-      queueNavigationRequest('jump', Math.max(0, occurrenceNumber - 1))
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [selectedKeywordId, keyword, searchKeyword])
+    queueNavigationRequest('jump', Math.max(0, occurrenceNumber - 1))
+  }, [selectedKeywordId, keyword, searchKeyword, queueNavigationRequest])
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex min-h-0 flex-1 flex-row items-stretch">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-row items-stretch">
         <PratontonSearchResult
           searchKeyword={searchKeyword}
           onSearchKeywordChange={setSearchKeyword}
           currentMatchIndex={pdfSearchState.currentMatchIndex}
           totalMatches={pdfSearchState.totalMatches}
-          onPreviousMatch={() => queueNavigationRequest('previous')}
-          onNextMatch={() => queueNavigationRequest('next')}
+          onPreviousMatch={handlePreviousMatch}
+          onNextMatch={handleNextMatch}
           navigationRequest={navigationRequest}
-          onSearchStateChange={setPdfSearchState}
-          onDocumentLoad={() => setIsPdfLoaded(true)}
+          onSearchStateChange={handleSearchStateChange}
+          onDocumentLoad={handleDocumentLoad}
         />
-        <div className="flex min-h-0 w-full max-w-[320px] self-stretch flex-col items-center gap-6 border-y py-6 pl-6">
+        <div className="flex h-full min-h-0 w-[320px] shrink-0 self-stretch flex-col items-center gap-6 border-y py-6 pl-6">
           <RecordResultSearch onLazyLoad={onLazyLoad} />
 
           {/* <WordsResultSearch

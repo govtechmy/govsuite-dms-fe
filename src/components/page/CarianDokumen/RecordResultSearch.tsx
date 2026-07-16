@@ -7,7 +7,7 @@ import {
 } from '@/components/shared/SelectMydsFix'
 import { clx } from '@govtechmy/myds-react/utils'
 import { useSearchStore } from '@/store/SearchStore'
-import type { UIEvent } from 'react'
+import { useRef, type UIEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 const SCROLL_THRESHOLD = 40
@@ -18,6 +18,8 @@ interface RecordResultSearchProps {
 }
 
 export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchProps) {
+  const lazyLoadRequestedRef = useRef(false)
+  const lastScrollTopRef = useRef(0)
   const [searchParams, setSearchParams] = useSearchParams()
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const totalItems = useSearchStore((state) => state.searchMeta?.totalItems)
@@ -54,9 +56,16 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
 
   const handleLazyLoadScroll = (event: UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget
+    const isScrollingDown = target.scrollTop > lastScrollTopRef.current
+    lastScrollTopRef.current = target.scrollTop
     const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight
 
-    if (distanceToBottom <= SCROLL_THRESHOLD) {
+    if (distanceToBottom > SCROLL_THRESHOLD) {
+      lazyLoadRequestedRef.current = false
+    }
+
+    if (distanceToBottom <= SCROLL_THRESHOLD && isScrollingDown && !lazyLoadRequestedRef.current) {
+      lazyLoadRequestedRef.current = true
       onLazyLoad()
     }
   }
@@ -81,9 +90,9 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
       {/* Documents List */}
       <div className="flex w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2 h-[300px]">
         <div className="flex h-full flex-col gap-0 overflow-y-auto" onScroll={handleLazyLoadScroll}>
-          {documentRecords.map((record, index) => (
+          {documentRecords.map((record) => (
             <button
-              key={index}
+              key={record.documentId}
               onClick={() => handleDocumentSelect(record.documentId)}
               className={clx(
                 'flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left transition-colors',

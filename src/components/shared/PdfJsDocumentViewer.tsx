@@ -95,6 +95,9 @@ export default function PdfJsDocumentViewer({
   const [pageWidth, setPageWidth] = useState<number | undefined>()
   const handledNavigationTokenRef = useRef<number | null>(null)
   const previousKeywordRef = useRef('')
+  const lastEmittedSearchStateRef = useRef<PdfSearchState | null>(null)
+  const lastActiveMatchElementRef = useRef<HTMLElement | null>(null)
+  const lastNavigationActionRef = useRef<PdfSearchNavigationRequest['action'] | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
 
   const normalizedKeyword = searchKeyword.trim().toLocaleLowerCase()
@@ -168,6 +171,12 @@ export default function PdfJsDocumentViewer({
   useEffect(() => {
     handledNavigationTokenRef.current = null
     previousKeywordRef.current = ''
+    lastEmittedSearchStateRef.current = null
+    lastNavigationActionRef.current = null
+    if (lastActiveMatchElementRef.current) {
+      lastActiveMatchElementRef.current.classList.remove('pdf-search-match-active')
+      lastActiveMatchElementRef.current = null
+    }
     setCurrentMatchIndex(-1)
     setNumPages(0)
     setPageTextItems({})
@@ -178,8 +187,13 @@ export default function PdfJsDocumentViewer({
     previousKeywordRef.current = normalizedKeyword
 
     if (!normalizedKeyword || matchesData.totalMatches === 0) {
+      lastNavigationActionRef.current = null
       setCurrentMatchIndex(-1)
       return
+    }
+
+    if (hasKeywordChanged) {
+      lastNavigationActionRef.current = null
     }
 
     setCurrentMatchIndex((previousMatchIndex) => {
@@ -197,6 +211,7 @@ export default function PdfJsDocumentViewer({
     }
 
     handledNavigationTokenRef.current = navigationRequest.token
+    lastNavigationActionRef.current = navigationRequest.action
 
     if (matchesData.totalMatches === 0) {
       setCurrentMatchIndex(-1)
@@ -220,11 +235,23 @@ export default function PdfJsDocumentViewer({
   }, [matchesData.totalMatches, navigationRequest])
 
   useEffect(() => {
-    onSearchStateChange?.({
+    const nextSearchState: PdfSearchState = {
       totalMatches: matchesData.totalMatches,
       currentMatchIndex:
         matchesData.totalMatches > 0 && currentMatchIndex >= 0 ? currentMatchIndex : -1,
-    })
+    }
+
+    const previousSearchState = lastEmittedSearchStateRef.current
+    if (
+      previousSearchState &&
+      previousSearchState.totalMatches === nextSearchState.totalMatches &&
+      previousSearchState.currentMatchIndex === nextSearchState.currentMatchIndex
+    ) {
+      return
+    }
+
+    lastEmittedSearchStateRef.current = nextSearchState
+    onSearchStateChange?.(nextSearchState)
   }, [currentMatchIndex, matchesData.totalMatches, onSearchStateChange])
 
   useEffect(() => {
@@ -234,10 +261,10 @@ export default function PdfJsDocumentViewer({
       return
     }
 
-    const highlightedElements = container.querySelectorAll('.pdf-search-match-active')
-    highlightedElements.forEach((element) => {
-      element.classList.remove('pdf-search-match-active')
-    })
+    if (lastActiveMatchElementRef.current) {
+      lastActiveMatchElementRef.current.classList.remove('pdf-search-match-active')
+      lastActiveMatchElementRef.current = null
+    }
 
     if (currentMatchIndex < 0) {
       return
@@ -250,12 +277,16 @@ export default function PdfJsDocumentViewer({
     }
 
     activeElement.classList.add('pdf-search-match-active')
+    lastActiveMatchElementRef.current = activeElement
+    const isManualNavigation =
+      lastNavigationActionRef.current === 'next' || lastNavigationActionRef.current === 'previous'
     activeElement.scrollIntoView({
       block: 'center',
       inline: 'nearest',
-      behavior: 'smooth',
+      behavior: isManualNavigation ? 'smooth' : 'auto',
     })
-  }, [currentMatchIndex, matchesData.totalMatches, normalizedKeyword])
+    lastNavigationActionRef.current = null
+  }, [currentMatchIndex, normalizedKeyword])
 
   useEffect(() => {
     const container = viewportRef.current
@@ -267,7 +298,7 @@ export default function PdfJsDocumentViewer({
     const updatePageWidth = () => {
       const nextWidth = Math.floor(container.clientWidth - 24)
       if (nextWidth > 0) {
-        setPageWidth(nextWidth)
+        setPageWidth((previousWidth) => (previousWidth === nextWidth ? previousWidth : nextWidth))
       }
     }
 
