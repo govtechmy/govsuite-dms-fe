@@ -74,7 +74,7 @@ export default function MuatNaikDokumenIDPage() {
   const [version, setVersion] = useState<string>('Version : ')
   const [recordMetadataValues, setRecordMetadataValues] = useState<MetadataValueMap>({})
   const [lastUploadedFile, setLastUploadedFile] = useState<FileInfo | null>(null)
-  const [draftStatus, setDraftStatus] = useState<Boolean>(false)
+  const [draftStatus, setDraftStatus] = useState<boolean>(false)
   const [newRecordId, setNewRecordId] = useState<string>('')
 
   // In-flight guard to prevent duplicate save submissions

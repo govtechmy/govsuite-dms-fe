@@ -68,7 +68,7 @@ interface MuatNaikDokumenFormProps {
   setSavedRecordDate: (value: string) => void
   version: string
   lastUploadedFile?: FileInfo | null
-  draftStatus?: Boolean
+  draftStatus?: boolean
   newRecordId?: string
 }
 

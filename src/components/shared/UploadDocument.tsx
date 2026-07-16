@@ -17,7 +17,7 @@ interface UploadDocumentProps {
   uploadErrorMessage?: string
   uploadPercentage?: number
   lastUploadedFile?: FileInfo | null
-  draftStatus?: Boolean
+  draftStatus?: boolean
 }
 
 export interface FileInfo {
