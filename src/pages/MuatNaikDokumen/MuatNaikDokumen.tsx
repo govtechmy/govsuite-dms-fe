@@ -402,6 +402,7 @@ export default function MuatNaikDokumenPage() {
         path: globalFolderInfoLocal.folderPath,
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setFolderSelection is a stable Zustand action.
   }, [globalFolderInfoLocal])
 
   useEffect(() => {
