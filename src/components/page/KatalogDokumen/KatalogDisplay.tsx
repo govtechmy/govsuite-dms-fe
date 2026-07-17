@@ -20,6 +20,7 @@ import { Spinner } from '@govtechmy/myds-react/spinner'
 import folderOpen from '@/assets/png/Folder_open.png'
 import folderClose from '@/assets/png/Folder_close.png'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
+import { useGlobalFolderInfoStore } from '@/store/globalFolderInfoStore'
 import {
   getCatalogFoldersAndDocuments,
   postCreateFolder,
@@ -79,6 +80,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
   const navigate = useNavigate()
   const { lang } = useParams<{ lang: string }>()
   const { setFolderSelection } = useFolderLocationStore()
+  const { setGlobalFolderInfo } = useGlobalFolderInfoStore()
 
   const [openUnits, setOpenUnits] = useState<string[]>([])
   const [dialogOpenUnit, setDialogOpenUnit] = useState<string | null>(null)
@@ -343,6 +345,10 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
       selectedId = currentPath[currentPath.length - 1].id
     }
 
+    setGlobalFolderInfo({
+      folderId: selectedId,
+      folderPath: pathString,
+    })
     setFolderSelection({ path: pathString, id: selectedId })
     navigate(`/${lang}/muatnaik-dokumen`)
   }

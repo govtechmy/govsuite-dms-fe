@@ -25,6 +25,7 @@ import ProgressResultChecker, { type ProgressState } from '@/components/shared/P
 import extractBackendError from '@/utils/extractBackendError'
 import { convertDdMmYyToIso } from '@/utils/formatDate'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
+import { useGlobalFolderInfoStore, type GlobalFolderInfo } from '@/store/globalFolderInfoStore'
 import { useUploadStore } from '@/store/UploadStore'
 import { useUploadDraftStore } from '@/store/UploadDraftStore'
 import { useNavigate } from 'react-router-dom'
@@ -68,10 +69,13 @@ export default function MuatNaikDokumenPage() {
   const isSavingRef = useRef(false)
 
   // Zustand stores for folder and upload context
-  const { folderSelection, resetFolderSelection } = useFolderLocationStore()
+  const { folderSelection, resetFolderSelection, setFolderSelection } = useFolderLocationStore()
+  const { globalFolderInfo, resetGlobalFolderInfo } = useGlobalFolderInfoStore()
   const { selectedFile, setSelectedFile } = useUploadStore()
   const { resetDraft } = useUploadDraftStore()
   const navigate = useNavigate()
+  const hasLoggedGlobalFolderInfoRef = useRef(false)
+  const [globalFolderInfoLocal, setGlobalFolderInfoLocal] = useState<GlobalFolderInfo | null>(null)
 
   // Clear persisted upload context when leaving this page.
   useEffect(() => {
@@ -81,6 +85,16 @@ export default function MuatNaikDokumenPage() {
       resetDraft()
     }
   }, [setSelectedFile, resetFolderSelection, resetDraft])
+
+  useEffect(() => {
+    if (hasLoggedGlobalFolderInfoRef.current) {
+      return
+    }
+
+    hasLoggedGlobalFolderInfoRef.current = true
+    setGlobalFolderInfoLocal(globalFolderInfo)
+    resetGlobalFolderInfo()
+  }, [globalFolderInfo, resetGlobalFolderInfo])
 
   /**
    * Unified reset function: clears all page and store state for fresh upload flow
@@ -380,6 +394,15 @@ export default function MuatNaikDokumenPage() {
     fetchAccessLevels()
     fetchDropdownDataUnit()
   }, [])
+
+  useEffect(() => {
+    if (globalFolderInfoLocal) {
+      setFolderSelection({
+        id: globalFolderInfoLocal.folderId,
+        path: globalFolderInfoLocal.folderPath,
+      })
+    }
+  }, [globalFolderInfoLocal])
 
   useEffect(() => {
     const fetchDropdownDataDocument = async () => {
