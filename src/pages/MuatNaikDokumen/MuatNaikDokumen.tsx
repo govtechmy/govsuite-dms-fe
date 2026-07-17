@@ -87,7 +87,7 @@ export default function MuatNaikDokumenPage() {
   }, [setSelectedFile, resetFolderSelection, resetDraft])
 
   useEffect(() => {
-    if (hasLoggedGlobalFolderInfoRef.current) {
+    if (hasLoggedGlobalFolderInfoRef.current || !globalFolderInfo) {
       return
     }
 
