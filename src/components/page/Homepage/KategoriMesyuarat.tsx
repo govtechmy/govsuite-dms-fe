@@ -34,9 +34,9 @@ export default function KategoriMesyuarat({ data }: KategoriMesyuaratProps) {
         </div>
       </div>
       <div className="flex flex-col gap-3">
-        {data.map((item) => (
+        {data.map((item, index) => (
           <div
-            key={item.title}
+            key={index}
             className="border border-otl-gray-200 rounded-lg p-3 gap-3 flex flex-col shadow-button cursor-pointer"
             onClick={() => navigate(`/${lang}/katalog-dokumen`)}
             role="button"
