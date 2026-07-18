@@ -1,18 +1,10 @@
 import Excerpts from '@/components/shared/Excerpts'
+import { type LatestActivity } from '@/services/infoHomepage.svc'
+import normalizeWord from '@/utils/NormalizeWord'
 import { useNavigate, useParams } from 'react-router-dom'
 
-export interface AktivitiTerkiniItem {
-  date: string
-  classification: string
-  status: string
-  type: string
-  unit: string
-  title: string
-  id: string
-}
-
 interface AktivitiTerkiniProps {
-  data: AktivitiTerkiniItem[]
+  data: LatestActivity[]
 }
 
 export default function AktivitiTerkini({ data }: AktivitiTerkiniProps) {
@@ -30,13 +22,13 @@ export default function AktivitiTerkini({ data }: AktivitiTerkiniProps) {
         {data.map((item, idx) => (
           <Excerpts
             key={idx}
-            date={item.date}
-            secretTag={item.classification}
-            statusTag={item.status}
-            type={item.type}
-            unit={item.unit}
+            date={item.recordDate}
+            secretTag={item.accessLevel}
+            statusTag={item.workflowState}
+            type={item.documentProfileName}
+            unit={normalizeWord(item.unitId)}
             title={item.title}
-            onClick={() => navigate(`/${activeLang}/katalog-dokumen/${item.id}`)}
+            onClick={() => navigate(`/${activeLang}/katalog-dokumen/${item.recordId}`)}
           />
         ))}
       </div>
