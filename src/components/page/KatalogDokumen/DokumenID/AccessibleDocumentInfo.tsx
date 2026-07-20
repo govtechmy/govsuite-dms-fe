@@ -47,6 +47,7 @@ export default function AccessibleDocumentInfo({
             variant="danger-outline"
             className="p-2 shrink-0 border-0 shadow-none"
             onClick={() => onOpenDeleteAccessDialog(selectedUser.username, selectedUser.email)}
+            style={{ boxShadow: 'none' }}
           >
             <TrashIcon className="size-6 shrink-0" />
           </Button>

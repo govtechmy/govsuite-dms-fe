@@ -2,6 +2,7 @@ import { Button } from '@govtechmy/myds-react/button'
 import { Checkbox } from '@govtechmy/myds-react/checkbox'
 import { EmailIcon } from '@govtechmy/myds-react/icon'
 import { Input } from '@govtechmy/myds-react/input'
+import { Tag } from '@govtechmy/myds-react/tag'
 import type { AccessibleDocumentUser } from './AccessibleDocumentInfo'
 
 type SelectionOfUserProps = {
@@ -38,7 +39,7 @@ export default function SelectionOfUser({
             <Button
               type="button"
               variant="default-outline"
-              className="h-10 w-full justify-start gap-2 text-left font-normal"
+              className="h-10 w-full max-w-[774px] justify-start gap-2 text-left font-normal"
               onClick={onShareDropdownToggle}
             >
               <EmailIcon className="size-5 shrink-0 text-txt-black-700" />
@@ -101,8 +102,27 @@ export default function SelectionOfUser({
         </div>
       </div>
       {selectedShareUsers.length > 0 && (
-        <div className="text-body-xs font-normal text-txt-black-500">
-          {selectedShareUsers.length} pengguna dipilih
+        <div className="flex flex-col gap-2">
+          <div className="text-body-xs font-normal text-txt-black-500">
+            {selectedShareUsers.length} pengguna dipilih
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {selectedShareUsers.map((email) => (
+              <Tag key={email} mode="pill" size="small" variant="default">
+                <div className="flex items-center gap-1.5">
+                  <span>{email}</span>
+                  <button
+                    type="button"
+                    className="rounded-full px-1 text-body-xs leading-none text-txt-black-700 hover:bg-bg-primary-100"
+                    aria-label={`Buang pengguna ${email}`}
+                    onClick={() => onToggleSelectedShareUser(email)}
+                  >
+                    x
+                  </button>
+                </div>
+              </Tag>
+            ))}
+          </div>
         </div>
       )}
     </div>
