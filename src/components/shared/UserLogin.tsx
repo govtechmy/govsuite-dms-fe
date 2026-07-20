@@ -1,3 +1,5 @@
+import getUserInitials from '@/utils/getUserInitials'
+
 // ✅ Define types
 interface User {
   id: string
@@ -36,16 +38,7 @@ export default function UserLogin() {
     try {
       parsedSession = JSON.parse(sessionInfo) as AuthStorage
       const fullName = parsedSession.state?.user?.fullName ?? ''
-      const parts = fullName.trim().split(' ').filter(Boolean)
-
-      if (parts.length >= 2) {
-        initials = parts[0][0] + parts[1][0]
-      } else if (parts.length === 1) {
-        const word = parts[0]
-        initials = word[0] + word[word.length - 1]
-      }
-
-      initials = initials.toUpperCase()
+      initials = getUserInitials(fullName)
     } catch (error) {
       console.error('Failed to parse session info:', error)
     }
