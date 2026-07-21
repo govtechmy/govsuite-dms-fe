@@ -3,10 +3,11 @@ import { Checkbox } from '@govtechmy/myds-react/checkbox'
 import { EmailIcon } from '@govtechmy/myds-react/icon'
 import { Input } from '@govtechmy/myds-react/input'
 import { Tag } from '@govtechmy/myds-react/tag'
+import type { RefObject } from 'react'
 import type { AccessibleDocumentUser } from './AccessibleDocumentInfo'
 
 type SelectionOfUserProps = {
-  shareDropdownContainerRef: React.RefObject<HTMLDivElement | null>
+  shareDropdownContainerRef: RefObject<HTMLDivElement | null>
   selectedShareUsers: string[]
   selectedShareUsersLabel: string
   isShareDropdownOpen: boolean
