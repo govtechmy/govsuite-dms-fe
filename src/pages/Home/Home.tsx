@@ -98,8 +98,8 @@ export default function HomePage() {
         const data = await getRingkasanEksekutif(RINGKASAN_ALL_VALUE)
         setRingkasanCardInfo(mapSummaryToRingkasanCardInfo(data.summary))
         setRingkasanYearRange({
-          oldest: data.oldest ?? 0,
-          newest: data.newest ?? 0,
+          oldest: data.oldest ?? INITIAL_RINGKASAN_YEAR_RANGE.oldest,
+          newest: data.newest ?? INITIAL_RINGKASAN_YEAR_RANGE.newest,
         })
       } catch (err) {
         console.error('Error fetching ringkasan eksekutif data:', err)

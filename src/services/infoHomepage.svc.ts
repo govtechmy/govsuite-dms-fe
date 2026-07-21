@@ -181,9 +181,9 @@ export const getRingkasanEksekutif = async (year: string): Promise<RingkasanEkse
     }
 
     return {
-      year: typeof parsedPayload.year === 'string' ? parsedPayload.year : '',
-      oldest: typeof parsedPayload.oldest === 'number' ? parsedPayload.oldest : 0,
-      newest: typeof parsedPayload.newest === 'number' ? parsedPayload.newest : 0,
+      year: typeof parsedPayload.year === 'string' ? parsedPayload.year : year,
+      oldest: typeof parsedPayload.oldest === 'number' ? parsedPayload.oldest : undefined,
+      newest: typeof parsedPayload.newest === 'number' ? parsedPayload.newest : undefined,
       summary: {
         totalRecords: typeof summaryRaw?.totalRecords === 'number' ? summaryRaw.totalRecords : 0,
         totalInReview: typeof summaryRaw?.totalInReview === 'number' ? summaryRaw.totalInReview : 0,
