@@ -41,17 +41,22 @@ export default function SelectionOfUser({
               variant="default-outline"
               className="h-10 w-full max-w-[774px] justify-start gap-2 text-left font-normal"
               onClick={onShareDropdownToggle}
+              aria-label={selectedShareUsersLabel || 'Pilih ID Untuk Dikongsi'}
             >
               <EmailIcon className="size-5 shrink-0 text-txt-black-700" />
-              <span className="truncate ">
-                {selectedShareUsersLabel || (
-                  <div className="text-txt-black-500">Pilih ID Untuk Dikongsi</div>
-                )}
-              </span>
+              <span className="truncate text-txt-black-500">Pilih ID Untuk Dikongsi</span>
             </Button>
 
             {isShareDropdownOpen && (
               <div className="absolute z-20 mt-1.5 flex max-h-[400px] w-full flex-col overflow-hidden rounded-md border border-otl-gray-200 bg-bg-white p-1 shadow-sm">
+                <div className="border-b border-otl-gray-200 pb-1">
+                  <Input
+                    className="w-full"
+                    placeholder="Cari pengguna"
+                    value={shareDropdownSearchValue}
+                    onChange={(e) => onShareDropdownSearchChange(e.target.value)}
+                  />
+                </div>
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   {filteredUsers.length > 0 ? (
                     filteredUsers.map((foundUser, index) => {
@@ -84,14 +89,6 @@ export default function SelectionOfUser({
                       Tiada pengguna dijumpai.
                     </div>
                   )}
-                </div>
-                <div className="border-t border-otl-gray-200 pt-1">
-                  <Input
-                    className="w-full"
-                    placeholder="Cari pengguna"
-                    value={shareDropdownSearchValue}
-                    onChange={(e) => onShareDropdownSearchChange(e.target.value)}
-                  />
                 </div>
               </div>
             )}
