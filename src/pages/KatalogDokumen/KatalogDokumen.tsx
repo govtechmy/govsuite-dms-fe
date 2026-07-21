@@ -18,6 +18,8 @@ import {
   type DropdownJenisDokumen,
   type DropdownUnit,
 } from '@/services/dropdown.svc'
+import { getRingkasanEksekutif } from '@/services/infoHomepage.svc'
+import { buildYearRange } from '@/utils/buildYearRange'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 
@@ -35,9 +37,11 @@ export default function KatalogDokumenPage() {
   const [searchMeta, setSearchMeta] = useState<CatalogListMeta | null>(null)
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
+  const [dropdownYears, setDropdownYears] = useState<string[]>([])
   const query = searchParams.get('search')?.trim() || ''
   const unit = searchParams.get('unit') || ''
   const jenisDokumen = searchParams.get('jenisDokumen') || ''
+  const year = searchParams.get('year') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
 
@@ -71,9 +75,21 @@ export default function KatalogDokumenPage() {
         console.error('Error fetching dropdown unit dokumen:', err)
       }
     }
+    const fetchDropdownYears = async () => {
+      try {
+        const ringkasanData = await getRingkasanEksekutif('all')
+        const oldestYear = ringkasanData.oldest ?? new Date().getFullYear()
+        const newestYear = ringkasanData.newest ?? oldestYear
+        const years = buildYearRange(oldestYear, newestYear).map((yearValue) => String(yearValue))
+        setDropdownYears(years)
+      } catch (err) {
+        console.error('Error fetching dropdown years:', err)
+      }
+    }
     fetchCatalogBase()
     fetchDropdownUnits()
     fetchDropdownJenisDokumen()
+    fetchDropdownYears()
   }, [])
 
   useEffect(() => {
@@ -91,6 +107,7 @@ export default function KatalogDokumenPage() {
           query,
           unit,
           jenisDokumen,
+          year,
           dateFrom,
           dateTo,
           page: pageNumber,
@@ -106,11 +123,11 @@ export default function KatalogDokumenPage() {
       }
     }
     fetchSearch()
-  }, [query, unit, jenisDokumen, dateFrom, dateTo, pageNumber, pageSize])
+  }, [query, unit, jenisDokumen, year, dateFrom, dateTo, pageNumber, pageSize])
 
   useEffect(() => {
     setPageNumber(1)
-  }, [query, unit, jenisDokumen, dateFrom, dateTo])
+  }, [query, unit, jenisDokumen, year, dateFrom, dateTo])
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize)
@@ -127,6 +144,7 @@ export default function KatalogDokumenPage() {
         <SelectCarianDokumen
           dropdownUnits={dropdownUnits}
           dropdownJenisDokumen={dropdownJenisDokumen}
+          dropdownYears={dropdownYears}
           showOnlyWhenSearchQuery
           resetPageOnFilterChange={false}
         />

@@ -32,6 +32,22 @@ export default function RingkasanEksekutif({
   const navigate = useNavigate()
   const { lang } = useParams<{ lang: string }>()
 
+  const navigateWithSelectedYear = (path: string) => {
+    const normalizedYear = selectedYear.trim().toLowerCase()
+
+    if (normalizedYear === 'all' || normalizedYear === 'semua') {
+      navigate(`/${lang}/${path}`)
+      return
+    }
+
+    const params = new URLSearchParams({
+      year: selectedYear,
+      page: '1',
+    })
+
+    navigate(`/${lang}/${path}?${params.toString()}`)
+  }
+
   return (
     <div>
       <h1 className="text-heading-3xs font-heading font-semibold">Selamat Datang,</h1>
@@ -73,7 +89,7 @@ export default function RingkasanEksekutif({
           value={cardInfo.jumlahDokumen}
           variant="primary"
           onClick={() => {
-            navigate(`/${lang}/katalog-dokumen`)
+            navigateWithSelectedYear('katalog-dokumen')
           }}
         />
         <RingkasanEksekutifCard
@@ -82,7 +98,7 @@ export default function RingkasanEksekutif({
           value={cardInfo.perlukanKelulusan}
           variant="warning"
           onClick={() => {
-            navigate(`/${lang}/perlu-kelulusan`)
+            navigateWithSelectedYear('perlu-kelulusan')
           }}
         />
         <RingkasanEksekutifCard
@@ -91,7 +107,7 @@ export default function RingkasanEksekutif({
           value={cardInfo.dokumenTidakDiluluskan}
           variant="danger"
           onClick={() => {
-            navigate(`/${lang}/tidak-lulus`)
+            navigateWithSelectedYear('tidak-lulus')
           }}
         />
         <RingkasanEksekutifCard
@@ -100,7 +116,7 @@ export default function RingkasanEksekutif({
           value={cardInfo.dokumenDraf}
           variant="default"
           onClick={() => {
-            navigate(`/${lang}/draf`)
+            navigateWithSelectedYear('draf')
           }}
         />
         <RingkasanEksekutifCard
@@ -109,7 +125,7 @@ export default function RingkasanEksekutif({
           value={cardInfo.dokumenDiluluskan}
           variant="success"
           onClick={() => {
-            navigate(`/${lang}/diluluskan`)
+            navigateWithSelectedYear('diluluskan')
           }}
         />
       </div>

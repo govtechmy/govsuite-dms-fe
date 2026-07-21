@@ -14,6 +14,8 @@ import {
   type DropdownJenisDokumen,
   type DropdownUnit,
 } from '@/services/dropdown.svc'
+import { getRingkasanEksekutif } from '@/services/infoHomepage.svc'
+import { buildYearRange } from '@/utils/buildYearRange'
 import { ArrowBackIcon } from '@govtechmy/myds-react/icon'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -26,6 +28,7 @@ export default function PerluKelulusanPage() {
   const query = searchParams.get('search')?.trim() || ''
   const unit = searchParams.get('unit') || ''
   const jenisDokumen = searchParams.get('jenisDokumen') || ''
+  const year = searchParams.get('year') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
   const pageNumber = Math.max(1, Number(searchParams.get('page')) || 1)
@@ -36,16 +39,24 @@ export default function PerluKelulusanPage() {
   const [searchMeta, setSearchMeta] = useState<CatalogListMeta | null>(null)
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
+  const [dropdownYears, setDropdownYears] = useState<string[]>([])
 
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [unitsData, jenisDokumenData] = await Promise.all([
+        const [unitsData, jenisDokumenData, ringkasanData] = await Promise.all([
           getDropdownUnits(),
           getDropdownJenisDokumen(),
+          getRingkasanEksekutif('all'),
         ])
+
+        const oldestYear = ringkasanData.oldest ?? new Date().getFullYear()
+        const newestYear = ringkasanData.newest ?? oldestYear
+        const years = buildYearRange(oldestYear, newestYear).map((yearValue) => String(yearValue))
+
         setDropdownUnits(unitsData)
         setDropdownJenisDokumen(jenisDokumenData)
+        setDropdownYears(years)
       } catch (err) {
         console.error('Error fetching dropdown data:', err)
       }
@@ -63,6 +74,7 @@ export default function PerluKelulusanPage() {
           query,
           unit,
           jenisDokumen,
+          year,
           dateFrom,
           dateTo,
           page: pageNumber,
@@ -79,7 +91,7 @@ export default function PerluKelulusanPage() {
       }
     }
     fetchSearch()
-  }, [query, unit, jenisDokumen, dateFrom, dateTo, pageNumber, pageSize])
+  }, [query, unit, jenisDokumen, year, dateFrom, dateTo, pageNumber, pageSize])
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams)
@@ -116,6 +128,7 @@ export default function PerluKelulusanPage() {
           <SelectCarianDokumen
             dropdownUnits={dropdownUnits}
             dropdownJenisDokumen={dropdownJenisDokumen}
+            dropdownYears={dropdownYears}
           />
         </div>
 

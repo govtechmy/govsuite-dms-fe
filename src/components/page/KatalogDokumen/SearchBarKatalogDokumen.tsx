@@ -22,6 +22,7 @@ export default function SearchBarKatalogDokumen() {
     params.delete('search')
     params.delete('unit')
     params.delete('jenisDokumen')
+    params.delete('year')
     params.delete('dateFrom')
     params.delete('dateTo')
     params.set('page', '1')

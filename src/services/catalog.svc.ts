@@ -166,6 +166,7 @@ export const getSearchKatalogItems = async ({
   status,
   page = 1,
   limit = 15,
+  year,
 }: {
   query: string
   unit?: string
@@ -175,6 +176,7 @@ export const getSearchKatalogItems = async ({
   status?: string
   page?: number
   limit?: number
+  year: string
 }): Promise<CatalogSearchResponse> => {
   const params = new URLSearchParams({
     search: query,
@@ -200,6 +202,10 @@ export const getSearchKatalogItems = async ({
 
   if (status) {
     params.set('status', status)
+  }
+
+  if (year) {
+    params.set('year', year)
   }
 
   const url = `${getEnv('VITE_API_BASE_URL')}/record?${params.toString()}`

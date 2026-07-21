@@ -14,6 +14,7 @@ import { useSearchParams } from 'react-router-dom'
 interface SelectCarianDokumenProps {
   dropdownUnits: DropdownUnit[]
   dropdownJenisDokumen: DropdownJenisDokumen[]
+  dropdownYears?: string[]
   showOnlyWhenSearchQuery?: boolean
   resetPageOnFilterChange?: boolean
 }
@@ -21,6 +22,7 @@ interface SelectCarianDokumenProps {
 export default function SelectCarianDokumen({
   dropdownUnits,
   dropdownJenisDokumen,
+  dropdownYears = [],
   showOnlyWhenSearchQuery = false,
   resetPageOnFilterChange = true,
 }: SelectCarianDokumenProps) {
@@ -29,6 +31,7 @@ export default function SelectCarianDokumen({
 
   const selectedJenisDokumen = searchParams.get('jenisDokumen') || ''
   const selectedUnit = searchParams.get('unit') || ''
+  const selectedYear = searchParams.get('year') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
 
@@ -76,10 +79,24 @@ export default function SelectCarianDokumen({
     setSearchParams(params)
   }
 
+  const handleYearChange = (value: string) => {
+    const params = new URLSearchParams(searchParams)
+    if (value && value !== 'semua') {
+      params.set('year', value)
+    } else {
+      params.delete('year')
+    }
+    if (resetPageOnFilterChange) {
+      params.set('page', '1')
+    }
+    setSearchParams(params)
+  }
+
   const handleReset = () => {
     const params = new URLSearchParams(searchParams)
     params.delete('jenisDokumen')
     params.delete('unit')
+    params.delete('year')
     params.delete('dateFrom')
     params.delete('dateTo')
     if (resetPageOnFilterChange) {
@@ -95,6 +112,27 @@ export default function SelectCarianDokumen({
   return (
     <div className="flex justify-between items-start">
       <div className="flex flex-row flex-wrap gap-2">
+        {dropdownYears.length > 0 && (
+          <Select
+            size={'small'}
+            variant="outline"
+            value={selectedYear}
+            onValueChange={handleYearChange}
+          >
+            <SelectTrigger>
+              <SelectValue label="Tahun" placeholder="Semua" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="semua">Semua</SelectItem>
+              {dropdownYears.map((yearValue) => (
+                <SelectItem key={yearValue} value={yearValue}>
+                  {yearValue}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         <Select
           size={'small'}
           variant="outline"
