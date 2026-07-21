@@ -29,7 +29,7 @@ export default function AccessibleDocumentInfo({
       {documentAccessUsers.map((selectedUser) => (
         <div
           key={`${selectedUser.username}-${selectedUser.email}`}
-          className="flex items-center gap-1.5 border-b px-1 py-1"
+          className="flex items-center gap-1.5 border-b border-otl-gray-200 px-1 py-1"
         >
           <div className="size-9 shrink-0 rounded-full bg-primary-100 flex items-center justify-center">
             <div className="text-txt-primary font-body text-body-sm">
