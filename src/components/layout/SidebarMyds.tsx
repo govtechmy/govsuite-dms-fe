@@ -126,9 +126,16 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
     // Highlight 'paparan-utama' for the base homepage path and specific special paths.
     if (
       item.id === 'paparan-utama' &&
-      ['/ms', '/en', '/ms/perlu-kelulusan', '/ms/tidak-lulus', '/ms/draf', '/en/draf'].includes(
-        normalizedPath
-      )
+      [
+        '/ms',
+        '/en',
+        '/ms/perlu-kelulusan',
+        '/ms/tidak-lulus',
+        '/ms/draf',
+        '/en/draf',
+        '/ms/diluluskan',
+        '/en/diluluskan',
+      ].includes(normalizedPath)
     ) {
       return true
     }
