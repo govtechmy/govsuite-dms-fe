@@ -6,7 +6,7 @@ import getUserInitials from '@/utils/getUserInitials'
 type AccessibleDocumentInfoProps = {
   documentAccessUsers: ShareUser[]
   isShareDropdownOpen: boolean
-  onOpenDeleteAccessDialog: (username: string, email: string) => void
+  onOpenDeleteAccessDialog: (fullName: string, email: string) => void
 }
 
 export default function AccessibleDocumentInfo({

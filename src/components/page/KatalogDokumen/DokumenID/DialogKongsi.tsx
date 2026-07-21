@@ -41,7 +41,7 @@ export default function DialogKongsi({ onShareDataRefresh }: DialogKongsiProps) 
   const [isShareDialogHiddenForDelete, setIsShareDialogHiddenForDelete] = useState(false)
   const [isDeleteAccessDialogOpen, setIsDeleteAccessDialogOpen] = useState(false)
   const [accessUserToDelete, setAccessUserToDelete] = useState<{
-    username: string
+    fullName: string
     email: string
   } | null>(null)
   const [isDeleteAccessSubmitting, setIsDeleteAccessSubmitting] = useState(false)
@@ -220,9 +220,9 @@ export default function DialogKongsi({ onShareDataRefresh }: DialogKongsiProps) 
     }
   }
 
-  const handleOpenDeleteAccessDialog = (username: string, email: string) => {
+  const handleOpenDeleteAccessDialog = (fullName: string, email: string) => {
     setDeleteAccessErrorMessage(null)
-    setAccessUserToDelete({ username, email })
+    setAccessUserToDelete({ fullName, email })
     setIsShareDialogHiddenForDelete(true)
     clearDeleteDialogTransitionTimer()
     deleteDialogTransitionTimerRef.current = setTimeout(() => {
@@ -377,7 +377,7 @@ export default function DialogKongsi({ onShareDataRefresh }: DialogKongsiProps) 
       </Dialog>
       <DialogUserDeletion
         open={isDeleteAccessDialogOpen}
-        username={accessUserToDelete?.username}
+        fullName={accessUserToDelete?.fullName}
         isSubmitting={isDeleteAccessSubmitting}
         errorMessage={deleteAccessErrorMessage}
         onOpenChange={handleDeleteAccessDialogOpenChange}

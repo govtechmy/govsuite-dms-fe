@@ -10,7 +10,7 @@ import {
 
 interface DialogUserDeletionProps {
   open: boolean
-  username?: string
+  fullName?: string
   isSubmitting?: boolean
   errorMessage?: string | null
   onOpenChange: (open: boolean) => void
@@ -19,7 +19,7 @@ interface DialogUserDeletionProps {
 
 export default function DialogUserDeletion({
   open,
-  username,
+  fullName,
   isSubmitting = false,
   errorMessage = null,
   onOpenChange,
@@ -31,7 +31,7 @@ export default function DialogUserDeletion({
         <DialogContent className="py-6">
           <DialogTitle className="pt-[16px]">Padam Pengguna</DialogTitle>
           <DialogDescription>
-            Anda pasti mahu padam akses untuk {username ?? 'pengguna'}?
+            Anda pasti mahu padam akses untuk {fullName ?? 'pengguna'}?
           </DialogDescription>
           {errorMessage ? (
             <div className="pt-4 text-body-sm font-normal text-txt-danger">{errorMessage}</div>
