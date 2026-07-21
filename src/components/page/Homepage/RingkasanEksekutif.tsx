@@ -13,14 +13,22 @@ interface RingkasanEksekutifCardInfo {
   perlukanKelulusan: number | string
   dokumenTidakDiluluskan: number | string
   dokumenDraf: number | string
+  dokumenDiluluskan: number | string
 }
 
 interface RingkasanEksekutifProps {
-  Tahun: string[]
+  yearOptions: Array<string | number>
+  selectedYear: string
+  onYearChange: (value: string) => void
   cardInfo: RingkasanEksekutifCardInfo
 }
 
-export default function RingkasanEksekutif({ cardInfo, Tahun }: RingkasanEksekutifProps) {
+export default function RingkasanEksekutif({
+  cardInfo,
+  yearOptions,
+  selectedYear,
+  onYearChange,
+}: RingkasanEksekutifProps) {
   const navigate = useNavigate()
   const { lang } = useParams<{ lang: string }>()
 
@@ -37,17 +45,20 @@ export default function RingkasanEksekutif({ cardInfo, Tahun }: RingkasanEksekut
           Berikut adalah status dokumen terkini.
         </div>
 
-        {/* HIDDEN DUE TO CHANGE LATER IMPLEMENT YET */}
-        <div className="hidden">
-          <Select size={'small'} variant="outline">
+        <div className="">
+          <Select
+            size={'small'}
+            variant="outline"
+            value={selectedYear}
+            onValueChange={onYearChange}
+          >
             <SelectTrigger>
-              <SelectValue label="Tahun" placeholder="2026" />
+              <SelectValue label="Tahun" placeholder="Semua" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Tahun">2026</SelectItem>
-              {Tahun.map((TahunValue) => (
-                <SelectItem key={TahunValue} value={TahunValue}>
-                  {TahunValue}
+              {yearOptions.map((yearValue) => (
+                <SelectItem key={String(yearValue)} value={String(yearValue)}>
+                  {String(yearValue) === 'all' ? 'Semua' : String(yearValue)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -90,6 +101,15 @@ export default function RingkasanEksekutif({ cardInfo, Tahun }: RingkasanEksekut
           variant="default"
           onClick={() => {
             navigate(`/${lang}/draf`)
+          }}
+        />
+        <RingkasanEksekutifCard
+          key="dokumen-diluluskan"
+          label="Dokumen Diluluskan"
+          value={cardInfo.dokumenDiluluskan}
+          variant="success"
+          onClick={() => {
+            navigate(`/${lang}/diluluskan`)
           }}
         />
       </div>

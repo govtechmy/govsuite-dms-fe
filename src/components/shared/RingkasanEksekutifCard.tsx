@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react'
 
-type CardVariant = 'primary' | 'warning' | 'danger' | 'default'
+type CardVariant = 'primary' | 'warning' | 'danger' | 'success' | 'default'
 
 const cardVariantStyles: Record<CardVariant, { bgClass: string; borderClass: string }> = {
   primary: {
@@ -14,6 +14,10 @@ const cardVariantStyles: Record<CardVariant, { bgClass: string; borderClass: str
   danger: {
     bgClass: 'bg-bg-danger-50',
     borderClass: 'border-l-bg-danger-200',
+  },
+  success: {
+    bgClass: 'bg-bg-success-50',
+    borderClass: 'border-l-bg-success-200',
   },
   default: {
     bgClass: 'bg-bg-washed',
@@ -52,7 +56,7 @@ export function RingkasanEksekutifCard({
 
   return (
     <div
-      className={`relative overflow-hidden border-l-[10px] rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3 ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''} ${bgClass} ${borderClass}`}
+      className={`relative  overflow-hidden border-l-[10px] rounded-lg h-[108px] w-full flex flex-col justify-center items-center gap-3 ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''} ${bgClass} ${borderClass}`}
       onClick={onClick}
       role="button"
       tabIndex={onClick ? 0 : undefined}

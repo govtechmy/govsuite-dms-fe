@@ -27,6 +27,21 @@ export interface LatestActivity {
   documentProfileName: string
 }
 
+export interface ExecutiveSummary {
+  totalRecords: number
+  totalInReview: number
+  totalDisapproved: number
+  totalPublished: number
+  totalDrafts: number
+}
+
+export interface RingkasanEksekutif {
+  year: string
+  oldest?: number
+  newest?: number
+  summary: ExecutiveSummary
+}
+
 export const getProfileTrendInfo = async (): Promise<ProfileTrendByUnit[]> => {
   const url = `${getEnv('VITE_API_BASE_URL')}/dashboard/document-profile-trend`
   try {
@@ -145,12 +160,40 @@ export const getLatestActivity = async (): Promise<LatestActivity[]> => {
   }
 }
 
-//check this one later for url
-export const getRingkasanEksekutif = async () => {
-  const url = `${getEnv('VITE_API_BASE_URL')}/dashboard/meeting-category`
+export const getRingkasanEksekutif = async (year: string): Promise<RingkasanEksekutif> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/dashboard/executive-summary/${year}`
   try {
     const response = await authAxios.get(url)
-    return response.data
+    const payload = response.data?.data ?? response.data ?? {}
+    const parsedPayload = payload as {
+      year?: unknown
+      oldest?: unknown
+      newest?: unknown
+      summary?: unknown
+    }
+
+    const summaryRaw = parsedPayload.summary as {
+      totalRecords?: unknown
+      totalInReview?: unknown
+      totalDisapproved?: unknown
+      totalPublished?: unknown
+      totalDrafts?: unknown
+    }
+
+    return {
+      year: typeof parsedPayload.year === 'string' ? parsedPayload.year : '',
+      oldest: typeof parsedPayload.oldest === 'number' ? parsedPayload.oldest : 0,
+      newest: typeof parsedPayload.newest === 'number' ? parsedPayload.newest : 0,
+      summary: {
+        totalRecords: typeof summaryRaw?.totalRecords === 'number' ? summaryRaw.totalRecords : 0,
+        totalInReview: typeof summaryRaw?.totalInReview === 'number' ? summaryRaw.totalInReview : 0,
+        totalDisapproved:
+          typeof summaryRaw?.totalDisapproved === 'number' ? summaryRaw.totalDisapproved : 0,
+        totalPublished:
+          typeof summaryRaw?.totalPublished === 'number' ? summaryRaw.totalPublished : 0,
+        totalDrafts: typeof summaryRaw?.totalDrafts === 'number' ? summaryRaw.totalDrafts : 0,
+      },
+    }
   } catch (error) {
     console.error('Error getting record Info:', error)
     throw error
