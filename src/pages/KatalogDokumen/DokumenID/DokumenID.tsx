@@ -266,6 +266,7 @@ export default function DokumenIDPage() {
     fetchCurrentApprovedUsers()
     fetchPDFData()
     fetchMetadata()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [DokumenID])
 
   useEffect(() => {
