@@ -4,14 +4,14 @@ import { EmailIcon } from '@govtechmy/myds-react/icon'
 import { Input } from '@govtechmy/myds-react/input'
 import { Tag } from '@govtechmy/myds-react/tag'
 import type { RefObject } from 'react'
-import type { AccessibleDocumentUser } from './AccessibleDocumentInfo'
+import type { ShareUser } from '@/services/shareDocument.svc'
 
 type SelectionOfUserProps = {
   shareDropdownContainerRef: RefObject<HTMLDivElement | null>
   selectedShareUsers: string[]
   selectedShareUsersLabel: string
   isShareDropdownOpen: boolean
-  filteredUsers: AccessibleDocumentUser[]
+  filteredUsers: ShareUser[]
   shareDropdownSearchValue: string
   onShareDropdownToggle: () => void
   onToggleSelectedShareUser: (email: string) => void
@@ -49,7 +49,7 @@ export default function SelectionOfUser({
             </Button>
 
             {isShareDropdownOpen && (
-              <div className="absolute z-20 mt-1.5 flex max-h-[400px] w-full flex-col overflow-hidden rounded-md border border-otl-gray-200 bg-bg-white p-1 shadow-sm">
+              <div className="absolute z-20 mt-1.5 flex max-h-[300px] w-full flex-col overflow-hidden rounded-md border border-otl-gray-200 bg-bg-white p-1 shadow-sm">
                 <div className="border-b border-otl-gray-200 pb-1">
                   <Input
                     className="w-full"
@@ -64,15 +64,14 @@ export default function SelectionOfUser({
                       const isChecked = selectedShareUsers.includes(foundUser.email)
 
                       return (
-                        <button
-                          key={`${foundUser.email}-${foundUser.username}-${index}`}
-                          type="button"
+                        <div
+                          key={`${foundUser.email}-${foundUser.fullName}-${index}`}
                           className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-bg-primary-100"
                           onClick={() => onToggleSelectedShareUser(foundUser.email)}
                         >
                           <div className="flex flex-1 flex-col">
                             <div className="text-body-sm font-medium text-txt-black-700">
-                              {foundUser.username}
+                              {foundUser.fullName}
                             </div>
                             <div className="text-body-xs font-normal text-txt-black-500">
                               {foundUser.email}
@@ -80,9 +79,9 @@ export default function SelectionOfUser({
                           </div>
                           <Checkbox
                             checked={isChecked}
-                            aria-label={`Pilih pengguna ${foundUser.username}`}
+                            aria-label={`Pilih pengguna ${foundUser.fullName}`}
                           />
-                        </button>
+                        </div>
                       )
                     })
                   ) : (

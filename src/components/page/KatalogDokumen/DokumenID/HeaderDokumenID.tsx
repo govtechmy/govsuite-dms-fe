@@ -29,6 +29,7 @@ interface HeaderDokumenIDProps {
   onApproveDokumen: () => void
   onNotApproveDokumen: (reason: string) => void
   onDownloadDokumen: (recordTitle: string) => void
+  onShareDataRefresh?: () => Promise<void>
 }
 
 export function HeaderDokumenID({
@@ -43,6 +44,7 @@ export function HeaderDokumenID({
   onApproveDokumen,
   onNotApproveDokumen,
   onDownloadDokumen,
+  onShareDataRefresh,
 }: HeaderDokumenIDProps) {
   const [isTakDiluluskanOpen, setIsTakDiluluskanOpen] = useState(false)
 
@@ -107,7 +109,7 @@ export function HeaderDokumenID({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
-            <DialogKongsi />
+            <DialogKongsi onShareDataRefresh={onShareDataRefresh} />
             <Button
               variant="default-outline"
               size="small"

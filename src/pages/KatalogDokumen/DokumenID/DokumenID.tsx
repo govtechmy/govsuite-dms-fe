@@ -11,9 +11,15 @@ import { useParams } from 'react-router-dom'
 import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
 import normalizeWord from '@/utils/NormalizeWord'
 import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
+import {
+  getAvailableUserGroups,
+  getAvailableUsers,
+  getCurrentApprovedUsers,
+} from '@/services/shareDocument.svc'
 import { downloadFile } from '@/utils/downloadFile'
 import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval.svc'
 import extractBackendError from '@/utils/extractBackendError'
+import { useShareDocumentStore } from '@/store/ShareDocumentStore'
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
@@ -36,7 +42,12 @@ export default function DokumenIDPage() {
   const [navigationRequest, setNavigationRequest] = useState<PdfSearchNavigationRequest | null>(
     null
   )
+
+  const setAvailableUsers = useShareDocumentStore((state) => state.setAvailableUsers)
+  const setAvailableUserGroups = useShareDocumentStore((state) => state.setAvailableUserGroups)
+  const setCurrentApprovedUsers = useShareDocumentStore((state) => state.setCurrentApprovedUsers)
   const navigationTokenRef = useRef(0)
+  const shareRequestTokenRef = useRef(0)
 
   const queueNavigationRequest = (
     action: PdfSearchNavigationRequest['action'],
@@ -126,6 +137,26 @@ export default function DokumenIDPage() {
     })
   }
 
+  const handleRefetchShareData = async () => {
+    try {
+      if (!DokumenID) return
+
+      const currentToken = ++shareRequestTokenRef.current
+
+      const [users, approved] = await Promise.all([
+        getAvailableUsers(DokumenID),
+        getCurrentApprovedUsers(DokumenID),
+      ])
+
+      if (shareRequestTokenRef.current === currentToken) {
+        setAvailableUsers(users)
+        setCurrentApprovedUsers(approved)
+      }
+    } catch (error) {
+      console.error('Error refetching share data:', error)
+    }
+  }
+
   useEffect(() => {
     const fetchPDFData = async () => {
       try {
@@ -176,6 +207,63 @@ export default function DokumenIDPage() {
       }
     }
 
+    const fetchAvailableUsers = async () => {
+      try {
+        if (!DokumenID) {
+          setAvailableUsers(null)
+          return
+        }
+
+        const currentToken = ++shareRequestTokenRef.current
+        const data = await getAvailableUsers(DokumenID)
+        if (shareRequestTokenRef.current === currentToken) {
+          setAvailableUsers(data)
+        }
+      } catch (error) {
+        setAvailableUsers(null)
+        console.error('Error fetching available users:', error)
+      }
+    }
+
+    const fetchAvailableUserGroups = async () => {
+      try {
+        if (!DokumenID) {
+          setAvailableUserGroups(null)
+          return
+        }
+
+        const currentToken = shareRequestTokenRef.current
+        const data = await getAvailableUserGroups(DokumenID)
+        if (shareRequestTokenRef.current === currentToken) {
+          setAvailableUserGroups(data)
+        }
+      } catch (error) {
+        setAvailableUserGroups(null)
+        console.error('Error fetching available user groups:', error)
+      }
+    }
+
+    const fetchCurrentApprovedUsers = async () => {
+      try {
+        if (!DokumenID) {
+          setCurrentApprovedUsers(null)
+          return
+        }
+
+        const currentToken = shareRequestTokenRef.current
+        const data = await getCurrentApprovedUsers(DokumenID)
+        if (shareRequestTokenRef.current === currentToken) {
+          setCurrentApprovedUsers(data)
+        }
+      } catch (error) {
+        setCurrentApprovedUsers(null)
+        console.error('Error fetching current approved users:', error)
+      }
+    }
+
+    fetchAvailableUsers()
+    fetchAvailableUserGroups()
+    fetchCurrentApprovedUsers()
     fetchPDFData()
     fetchMetadata()
   }, [DokumenID])
@@ -213,6 +301,7 @@ export default function DokumenIDPage() {
               onApproveDokumen={handleApproveDokumen}
               onNotApproveDokumen={handleNotApproveDokumen}
               onDownloadDokumen={handleDownloadDokumen}
+              onShareDataRefresh={handleRefetchShareData}
             />
           )}
           <SearchBarDokumenID

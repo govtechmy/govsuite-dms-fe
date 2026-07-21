@@ -10,45 +10,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@govtechmy/myds-react/dialog'
+import { useParams } from 'react-router-dom'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
+import extractBackendError from '@/utils/extractBackendError'
+import {
+  removeRecordSharing,
+  shareSpecificRecord,
+  type ShareUser,
+} from '@/services/shareDocument.svc'
+import { useShareDocumentStore } from '@/store/ShareDocumentStore'
 import DialogUserDeletion from './DialogUserDeletion'
-import AccessibleDocumentInfo, { type AccessibleDocumentUser } from './AccessibleDocumentInfo'
+import AccessibleDocumentInfo from './AccessibleDocumentInfo'
 import SelectionOfUser from './SelectionOfUser'
 
-const user: AccessibleDocumentUser[] = [
-  { username: 'Nur Aisyah Hamdan', email: 'nur.aisyah.hamdan@digital.gov.my' },
-  { username: 'Muhammad Faris Rahman', email: 'muhammad.faris.rahman@digital.gov.my' },
-  { username: 'Siti Hajar Zulkifli', email: 'siti.hajar.zulkifli@digital.gov.my' },
-  { username: 'Amirul Hakim Salleh', email: 'amirul.hakim.salleh@digital.gov.my' },
-  { username: 'Aina Sofea Ismail', email: 'aina.sofea.ismail@digital.gov.my' },
-  { username: 'Khairul Anuar Othman', email: 'khairul.anuar.othman@digital.gov.my' },
-  { username: 'Nabila Syafiqah Rosli', email: 'nabila.syafiqah.rosli@digital.gov.my' },
-  { username: 'Daniel Irfan Abdullah', email: 'daniel.irfan.abdullah@digital.gov.my' },
-  { username: 'Hana Izzati Yusof', email: 'hana.izzati.yusof@digital.gov.my' },
-  { username: 'Syed Aiman Faiz', email: 'syed.aiman.faiz@digital.gov.my' },
-  { username: 'Balqis Nadia Jalil', email: 'balqis.nadia.jalil@digital.gov.my' },
-  { username: 'Rafiq Zaim Ibrahim', email: 'rafiq.zaim.ibrahim@digital.gov.my' },
-  { username: 'Intan Suraya Kamaruddin', email: 'intan.suraya.kamaruddin@digital.gov.my' },
-  { username: 'Haziq Firdaus Mahmood', email: 'haziq.firdaus.mahmood@digital.gov.my' },
-  { username: 'Nurul Iman Adnan', email: 'nurul.iman.adnan@digital.gov.my' },
-  { username: 'Azlan Fikri Yaakob', email: 'azlan.fikri.yaakob@digital.gov.my' },
-  { username: 'Sofia Humaira Aziz', email: 'sofia.humaira.aziz@digital.gov.my' },
-  { username: 'Hakim Danish Razak', email: 'hakim.danish.razak@digital.gov.my' },
-  { username: 'Qistina Aleeya Musa', email: 'qistina.aleeya.musa@digital.gov.my' },
-  { username: 'Faizal Harith Noor', email: 'faizal.harith.noor@digital.gov.my' },
-  { username: 'Mira Adlina Hashim', email: 'mira.adlina.hashim@digital.gov.my' },
-  { username: 'Arif Iqbal Karim', email: 'arif.iqbal.karim@digital.gov.my' },
-  { username: 'Alya Batrisyia Ghani', email: 'alya.batrisyia.ghani@digital.gov.my' },
-  { username: 'Zulhelmi Aqil Omar', email: 'zulhelmi.aqil.omar@digital.gov.my' },
-  { username: 'Nurin Athirah Sidek', email: 'nurin.athirah.sidek@digital.gov.my' },
-  { username: 'Irfan Luqman Shah', email: 'irfan.luqman.shah@digital.gov.my' },
-  { username: 'Aqilah Najwa Bakar', email: 'aqilah.najwa.bakar@digital.gov.my' },
-  { username: 'Rizwan Hilmi Mokhtar', email: 'rizwan.hilmi.mokhtar@digital.gov.my' },
-  { username: 'Yasmin Dahlia Latif', email: 'yasmin.dahlia.latif@digital.gov.my' },
-  { username: 'Fikri Haziem Nordin', email: 'fikri.haziem.nordin@digital.gov.my' },
-]
+interface DialogKongsiProps {
+  onShareDataRefresh?: () => Promise<void>
+}
 
-export default function DialogKongsi() {
+export default function DialogKongsi({ onShareDataRefresh }: DialogKongsiProps) {
+  const { DokumenID } = useParams<{ DokumenID: string }>()
+  const availableUsers = useShareDocumentStore((state) => state.availableUsers)
+  const currentApprovedUsers = useShareDocumentStore((state) => state.currentApprovedUsers)
+  const setCurrentApprovedUsers = useShareDocumentStore((state) => state.setCurrentApprovedUsers)
   const [selectedShareUsers, setSelectedShareUsers] = useState<string[]>([])
   const [isShareDropdownOpen, setIsShareDropdownOpen] = useState(false)
   const [shareDropdownSearchValue, setShareDropdownSearchValue] = useState('')
@@ -61,7 +44,9 @@ export default function DialogKongsi() {
     username: string
     email: string
   } | null>(null)
-  const [documentAccessUsers, setDocumentAccessUsers] = useState(user)
+  const [isDeleteAccessSubmitting, setIsDeleteAccessSubmitting] = useState(false)
+  const [deleteAccessErrorMessage, setDeleteAccessErrorMessage] = useState<string | null>(null)
+  const [documentAccessUsers, setDocumentAccessUsers] = useState<ShareUser[]>([])
 
   const deleteDialogTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const shareDropdownContainerRef = useRef<HTMLDivElement | null>(null)
@@ -80,6 +65,10 @@ export default function DialogKongsi() {
       clearDeleteDialogTransitionTimer()
     }
   }, [])
+
+  useEffect(() => {
+    setDocumentAccessUsers(currentApprovedUsers ?? [])
+  }, [currentApprovedUsers])
 
   useEffect(() => {
     if (!isShareDropdownOpen) {
@@ -104,17 +93,16 @@ export default function DialogKongsi() {
   }, [isShareDropdownOpen])
 
   const dropdownSearchKeyword = shareDropdownSearchValue.trim().toLowerCase()
-
-  const filteredUsers = user.filter(({ username }) => {
+  const filteredUsers = (availableUsers ?? []).filter(({ fullName }) => {
     if (!dropdownSearchKeyword) {
       return true
     }
 
     const searchWords = dropdownSearchKeyword.split(/\s+/).filter(Boolean)
-    const usernameWords = username.toLowerCase().split(/\s+/)
+    const fullNameWords = fullName.toLowerCase().split(/\s+/)
 
     return searchWords.every((searchWord) =>
-      usernameWords.some((usernameWord) => usernameWord.includes(searchWord))
+      fullNameWords.some((fullNameWord) => fullNameWord.includes(searchWord))
     )
   })
 
@@ -157,24 +145,14 @@ export default function DialogKongsi() {
     }
   }
 
-  const handleCloseShareProgress = () => {
-    setIsShareDialogOpen(false)
-    resetShareState()
+  const handleBackToFormAfterShare = () => {
+    setShareProgress(null)
+    setShareErrorMessage(null)
   }
 
   const handleRetryShare = () => {
     setShareProgress(null)
     setShareErrorMessage(null)
-  }
-
-  const mockSharePostRequest = async (recipients: string[]) => {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 1200)
-    })
-
-    if (recipients.length === 0) {
-      throw new Error('Sila pilih sekurang-kurangnya seorang pengguna.')
-    }
   }
 
   const handleShareDokumen = async () => {
@@ -183,29 +161,67 @@ export default function DialogKongsi() {
     setIsShareDropdownOpen(false)
 
     try {
-      await mockSharePostRequest(selectedShareUsers)
+      if (!DokumenID) {
+        throw new Error('Dokumen ID tidak ditemui.')
+      }
+
+      if (selectedShareUsers.length === 0) {
+        throw new Error('Sila pilih sekurang-kurangnya seorang pengguna.')
+      }
+
+      const updatedApprovedUsers = await shareSpecificRecord(DokumenID, selectedShareUsers)
+
+      if (updatedApprovedUsers.length > 0) {
+        setDocumentAccessUsers(updatedApprovedUsers)
+        setCurrentApprovedUsers(updatedApprovedUsers)
+      } else {
+        const selectedUsersSet = new Set(selectedShareUsers)
+        const selectedUsers = (availableUsers ?? []).filter((user) =>
+          selectedUsersSet.has(user.email)
+        )
+
+        setDocumentAccessUsers((currentUsers) => {
+          const dedupedUsers = [...currentUsers]
+
+          selectedUsers.forEach((selectedUser) => {
+            if (!dedupedUsers.some((currentUser) => currentUser.email === selectedUser.email)) {
+              dedupedUsers.push(selectedUser)
+            }
+          })
+
+          setCurrentApprovedUsers(dedupedUsers)
+          return dedupedUsers
+        })
+      }
+
+      setSelectedShareUsers([])
+
+      // Refresh share data after successful share
+      if (onShareDataRefresh) {
+        await onShareDataRefresh()
+      }
+
       setShareProgress('success')
     } catch (error) {
+      const backendError = extractBackendError(error)
       const errorMessage =
-        error instanceof Error
+        backendError?.message ??
+        (error instanceof Error
           ? error.message
-          : 'Kongsi dokumen gagal. Sila cuba lagi atau hubungi pentadbir.'
+          : 'Kongsi dokumen gagal. Sila cuba lagi atau hubungi pentadbir.')
 
       setShareErrorMessage(errorMessage)
       setShareProgress('error')
+
+      // Refresh share data even on error to ensure data consistency
+      if (onShareDataRefresh) {
+        await onShareDataRefresh()
+      }
     }
   }
 
-  const handleRemoveAccessUser = (email: string) => {
-    setDocumentAccessUsers((currentUsers) =>
-      currentUsers.filter((accessUser) => accessUser.email !== email)
-    )
-    setSelectedShareUsers((currentSelectedUsers) =>
-      currentSelectedUsers.filter((selectedEmail) => selectedEmail !== email)
-    )
-  }
-
   const handleOpenDeleteAccessDialog = (username: string, email: string) => {
+    setDeleteAccessErrorMessage(null)
     setAccessUserToDelete({ username, email })
     setIsShareDialogHiddenForDelete(true)
     clearDeleteDialogTransitionTimer()
@@ -216,9 +232,14 @@ export default function DialogKongsi() {
   }
 
   const handleDeleteAccessDialogOpenChange = (open: boolean) => {
+    if (isDeleteAccessSubmitting && !open) {
+      return
+    }
+
     setIsDeleteAccessDialogOpen(open)
 
     if (!open) {
+      setDeleteAccessErrorMessage(null)
       setAccessUserToDelete(null)
       clearDeleteDialogTransitionTimer()
       deleteDialogTransitionTimerRef.current = setTimeout(() => {
@@ -228,18 +249,68 @@ export default function DialogKongsi() {
     }
   }
 
-  const handleConfirmRemoveAccessUser = () => {
-    if (accessUserToDelete) {
-      handleRemoveAccessUser(accessUserToDelete.email)
+  const handleConfirmRemoveAccessUser = async () => {
+    if (!accessUserToDelete || isDeleteAccessSubmitting) {
+      return
     }
 
-    setIsDeleteAccessDialogOpen(false)
-    setAccessUserToDelete(null)
-    clearDeleteDialogTransitionTimer()
-    deleteDialogTransitionTimerRef.current = setTimeout(() => {
-      setIsShareDialogHiddenForDelete(false)
-      deleteDialogTransitionTimerRef.current = null
-    }, deleteCloseDelayMs)
+    setIsDeleteAccessSubmitting(true)
+    setDeleteAccessErrorMessage(null)
+
+    try {
+      if (!DokumenID) {
+        throw new Error('Dokumen ID tidak ditemui.')
+      }
+
+      const updatedApprovedUsers = await removeRecordSharing(DokumenID, [accessUserToDelete.email])
+
+      if (updatedApprovedUsers.length > 0) {
+        setDocumentAccessUsers(updatedApprovedUsers)
+        setCurrentApprovedUsers(updatedApprovedUsers)
+      } else {
+        setDocumentAccessUsers((currentUsers) => {
+          const nextUsers = currentUsers.filter(
+            (accessUser) => accessUser.email !== accessUserToDelete.email
+          )
+
+          setCurrentApprovedUsers(nextUsers)
+          return nextUsers
+        })
+      }
+
+      setSelectedShareUsers((currentSelectedUsers) =>
+        currentSelectedUsers.filter((selectedEmail) => selectedEmail !== accessUserToDelete.email)
+      )
+
+      setIsDeleteAccessDialogOpen(false)
+      setAccessUserToDelete(null)
+      clearDeleteDialogTransitionTimer()
+      deleteDialogTransitionTimerRef.current = setTimeout(() => {
+        setIsShareDialogHiddenForDelete(false)
+        deleteDialogTransitionTimerRef.current = null
+      }, deleteCloseDelayMs)
+
+      // Refresh share data after successful delete
+      if (onShareDataRefresh) {
+        await onShareDataRefresh()
+      }
+    } catch (error) {
+      const backendError = extractBackendError(error)
+      const errorMessage =
+        backendError?.message ??
+        (error instanceof Error
+          ? error.message
+          : 'Padam akses pengguna gagal. Sila cuba lagi atau hubungi pentadbir.')
+
+      setDeleteAccessErrorMessage(errorMessage)
+
+      // Refresh share data even on error to ensure data consistency
+      if (onShareDataRefresh) {
+        await onShareDataRefresh()
+      }
+    } finally {
+      setIsDeleteAccessSubmitting(false)
+    }
   }
 
   return (
@@ -266,7 +337,7 @@ export default function DialogKongsi() {
                   loadingDescription="Dokumen sedang dikongsi. Sila tunggu sebentar."
                   successTitle="Dokumen Berjaya Dikongsi"
                   successDescription="Dokumen telah berjaya dikongsi kepada pengguna yang dipilih."
-                  successButtonText="Tutup"
+                  successButtonText="Tambah Lagi Pengguna"
                   errorTitle="Dokumen Gagal Dikongsi"
                   errorDescription={
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
@@ -275,7 +346,7 @@ export default function DialogKongsi() {
                     </div>
                   }
                   errorButtonText="Cuba Lagi"
-                  onSuccessClick={handleCloseShareProgress}
+                  onSuccessClick={handleBackToFormAfterShare}
                   onErrorClick={handleRetryShare}
                 />
               </div>
@@ -307,6 +378,8 @@ export default function DialogKongsi() {
       <DialogUserDeletion
         open={isDeleteAccessDialogOpen}
         username={accessUserToDelete?.username}
+        isSubmitting={isDeleteAccessSubmitting}
+        errorMessage={deleteAccessErrorMessage}
         onOpenChange={handleDeleteAccessDialogOpenChange}
         onConfirm={handleConfirmRemoveAccessUser}
       />

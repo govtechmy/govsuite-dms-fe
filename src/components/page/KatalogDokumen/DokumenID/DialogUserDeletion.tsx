@@ -11,6 +11,8 @@ import {
 interface DialogUserDeletionProps {
   open: boolean
   username?: string
+  isSubmitting?: boolean
+  errorMessage?: string | null
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
 }
@@ -18,6 +20,8 @@ interface DialogUserDeletionProps {
 export default function DialogUserDeletion({
   open,
   username,
+  isSubmitting = false,
+  errorMessage = null,
   onOpenChange,
   onConfirm,
 }: DialogUserDeletionProps) {
@@ -29,12 +33,16 @@ export default function DialogUserDeletion({
           <DialogDescription>
             Anda pasti mahu padam akses untuk {username ?? 'pengguna'}?
           </DialogDescription>
+          {errorMessage ? (
+            <div className="pt-4 text-body-sm font-normal text-txt-danger">{errorMessage}</div>
+          ) : null}
           <div className="flex gap-2 pt-6">
-            <DialogClose className="flex-1">
+            <DialogClose className="flex-1" disabled={isSubmitting}>
               <Button
                 size="large"
                 variant="default-outline"
                 className="w-full items-center justify-center"
+                disabled={isSubmitting}
               >
                 Batalkan
               </Button>
@@ -43,9 +51,10 @@ export default function DialogUserDeletion({
               size="large"
               variant="danger-fill"
               className="w-full flex-1 items-center justify-center"
+              disabled={isSubmitting}
               onClick={onConfirm}
             >
-              Padam
+              {isSubmitting ? 'Memadam...' : 'Padam'}
             </Button>
           </div>
         </DialogContent>
