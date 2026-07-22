@@ -112,6 +112,8 @@ export default function MuatNaikDokumenForm({
   newRecordId,
 }: MuatNaikDokumenFormProps) {
   const fullName = useAuthStore((state) => state.user?.fullName ?? '')
+  const normalizedFullName = fullName.trim()
+  const shouldLockCreatorMetadataField = normalizedFullName.length > 0
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const {
     selectedAccessLevel,
@@ -297,8 +299,6 @@ export default function MuatNaikDokumenForm({
       return
     }
 
-    const normalizedFullName = fullName.trim()
-
     if (!normalizedFullName) {
       return
     }
@@ -316,8 +316,8 @@ export default function MuatNaikDokumenForm({
     }
   }, [
     creatorMetadataField,
-    fullName,
     getValues,
+    normalizedFullName,
     requiredMetadataValues,
     setRequiredMetadataField,
     setValue,
@@ -649,9 +649,26 @@ export default function MuatNaikDokumenForm({
                   render={({ field: metadataField }) => {
                     const isCreatorField = normalizeMetadataKey(field.key) === CREATOR_METADATA_KEY
 
-                    return isCreatorField ? (
-                      <Input type="text" disabled readOnly value={metadataField.value || ''} />
-                    ) : field.type === 'date' ? (
+                    if (isCreatorField && shouldLockCreatorMetadataField) {
+                      return (
+                        <Input type="text" disabled readOnly value={metadataField.value || ''} />
+                      )
+                    }
+
+                    if (isCreatorField) {
+                      return (
+                        <Input
+                          type="text"
+                          value={metadataField.value || ''}
+                          onChange={(event) => {
+                            metadataField.onChange(event.target.value)
+                            setRequiredMetadataField(field.key, event.target.value)
+                          }}
+                        />
+                      )
+                    }
+
+                    return field.type === 'date' ? (
                       <DatePicker
                         locale="ms"
                         placeholder="Pilih Tarikh"
