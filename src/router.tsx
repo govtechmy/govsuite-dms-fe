@@ -1,7 +1,7 @@
 import React from 'react'
 import { Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom'
 import { useAuthStore } from './store/AuthStore'
-import { ROLE_PERMISSIONS, USER_ROLES, type UserRole } from './models/userRoles'
+import { getDefaultRouteSegmentForRoles, getPermissionsForRoles } from './models/userRoles'
 import LangWrapper from './LangWrapper'
 import LayoutLogin from './components/layout/LayoutLogin'
 import LoginPage from './pages/Login'
@@ -52,15 +52,11 @@ function ProtectedRoute({
 }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const authData = JSON.parse(sessionStorage.getItem('auth-storage') || '{}')
-  const role = (authData?.state?.user?.roles?.[0] as UserRole) || 'PUBLIC'
+  const rawRoles = (authData?.state?.user?.roles || []) as string[]
+  const userPermissions = getPermissionsForRoles(rawRoles)
 
   if (!isAuthenticated) {
     return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}/login`} replace />
-  }
-
-  // Check if user has a valid role from existing roles
-  if (!USER_ROLES.includes(role)) {
-    return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}/404`} replace />
   }
 
   // Check route-specific permissions if routeKey is provided
@@ -68,11 +64,9 @@ function ProtectedRoute({
     const requiredPermission = ROUTE_PERMISSIONS[String(routeKey)]
 
     if (requiredPermission) {
-      const roleString = role
-      const userPermissions = ROLE_PERMISSIONS[roleString as UserRole]
-
       if (!userPermissions.includes(requiredPermission)) {
-        const redirectPath = role === 'PUBLIC' ? '/data-koleksi' : '/'
+        const defaultSegment = getDefaultRouteSegmentForRoles(rawRoles)
+        const redirectPath = defaultSegment ? `/${defaultSegment}` : '/'
         return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}${redirectPath}`} replace />
       }
     }

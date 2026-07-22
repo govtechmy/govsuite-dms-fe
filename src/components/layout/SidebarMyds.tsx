@@ -13,7 +13,7 @@ import {
 import React from 'react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ROLE_PERMISSIONS, USER_ROLES, type UserRole } from '../../models/userRoles'
+import { ROLE_PERMISSIONS, resolveUserRoles, type UserRole } from '../../models/userRoles'
 
 interface SidebarProps {
   onclick?: () => void
@@ -99,11 +99,9 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
   useEffect(() => {
     const authData = JSON.parse(sessionStorage.getItem('auth-storage') || '{}')
     const roles = (authData?.state?.user?.roles || []) as string[]
-    const validRoles = roles.filter((role): role is UserRole =>
-      USER_ROLES.includes(role as UserRole)
-    )
-    // Use PUBLIC as fallback if no valid roles found
-    setUserRoles(validRoles.length > 0 ? validRoles : ['PUBLIC'])
+
+    // Any unknown role falls back to PUBLIC permissions.
+    setUserRoles(resolveUserRoles(roles))
   }, [])
 
   const getItemClasses = (active: boolean) => {
