@@ -17,7 +17,7 @@ export default function InDevelopmentPlaceholder({ className }: InDevelopmentPla
       <section className="flex flex-1 items-center justify-center pb-6 pr-6">
         <div className="mx-auto flex max-w-[560px] flex-col items-center gap-6 text-center">
           {/* Clock Icon - Removed colored background to match reference */}
-          <div className="flex items-center justify-center text-black">
+          <div className="flex items-center justify-center text-txt-black-900">
             <ClockIcon className="size-10" />
           </div>
 
