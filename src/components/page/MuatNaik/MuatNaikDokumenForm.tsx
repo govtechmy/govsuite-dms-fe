@@ -297,8 +297,13 @@ export default function MuatNaikDokumenForm({
       return
     }
 
-    const creatorFieldName = `requiredMetadataValues.${creatorMetadataField.key}` as const
     const normalizedFullName = fullName.trim()
+
+    if (!normalizedFullName) {
+      return
+    }
+
+    const creatorFieldName = `requiredMetadataValues.${creatorMetadataField.key}` as const
     const currentFormValue = (getValues(creatorFieldName) ?? '').trim()
     const currentStoreValue = (requiredMetadataValues[creatorMetadataField.key] ?? '').trim()
 
