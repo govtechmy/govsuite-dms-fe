@@ -108,7 +108,7 @@ export default function SearchBarCarianDokumen({ className }: SearchBarCarianDok
             <div className="text-txt-black-700 font-semibold">Tips membuat carian</div>
             <div className="text-txt-black-500">
               <p> Carian kata kunci, contohnya minyak</p>
-              <p>Carian kata kunci pelbagai, contohnya minyak, banjir</p>
+              {/* <p>Carian kata kunci pelbagai, contohnya minyak, banjir</p> */}
             </div>
           </div>
         )}
