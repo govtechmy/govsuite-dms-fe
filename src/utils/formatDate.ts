@@ -78,6 +78,19 @@ export const parseDateValue = (value: string): Date | undefined => {
   return parsed
 }
 
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * Validates whether a string is a strict ISO date in YYYY-MM-DD format.
+ */
+export const isValidIsoDate = (value: string): boolean => {
+  if (!ISO_DATE_PATTERN.test(value)) {
+    return false
+  }
+
+  return parseDateValue(value) !== undefined
+}
+
 /**
  * Formats a Date object to YYYY-MM-DD format.
  */

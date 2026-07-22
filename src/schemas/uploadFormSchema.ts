@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import type { MetadataField } from '@/services/upload.svc'
+import { isValidIsoDate } from '@/utils/formatDate'
+import { normalizeMetadataKey } from '@/utils/normalizeMetadataKey'
 
 type MetadataValues = Record<string, string>
 
@@ -17,36 +19,6 @@ export interface UploadFormValues {
   requiredMetadataValues: MetadataValues
   additionalMetadataValues: MetadataValues
 }
-
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
-
-const isValidIsoDate = (value: string): boolean => {
-  if (!ISO_DATE_PATTERN.test(value)) {
-    return false
-  }
-
-  const [yearString, monthString, dayString] = value.split('-')
-  const year = Number(yearString)
-  const month = Number(monthString)
-  const day = Number(dayString)
-
-  if (!year || !month || !day) {
-    return false
-  }
-
-  const parsed = new Date(year, month - 1, day)
-
-  if (Number.isNaN(parsed.getTime())) {
-    return false
-  }
-
-  return (
-    parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day
-  )
-}
-
-const normalizeMetadataKey = (value: string): string =>
-  value.trim().replace(/\s+/g, '').toUpperCase()
 
 export const buildMetadataDefaultValues = (
   fields: MetadataField[],

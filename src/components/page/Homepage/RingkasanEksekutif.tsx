@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
+import { useAuthStore } from '@/store/AuthStore'
 import { useNavigate, useParams } from 'react-router-dom'
 
 interface RingkasanEksekutifCardInfo {
@@ -31,6 +32,7 @@ export default function RingkasanEksekutif({
 }: RingkasanEksekutifProps) {
   const navigate = useNavigate()
   const { lang } = useParams<{ lang: string }>()
+  const fullName = useAuthStore((state) => state.user?.fullName ?? '')
 
   const navigateWithSelectedYear = (path: string) => {
     const normalizedYear = selectedYear.trim().toLowerCase()
@@ -51,9 +53,7 @@ export default function RingkasanEksekutif({
   return (
     <div>
       <h1 className="text-heading-3xs font-heading font-semibold">Selamat Datang,</h1>
-      <p className="text-body-md font-normal text-XL-400 mb-4">
-        Mohd Muzakkir Zamani Bin Fairuzzaki
-      </p>
+      <p className="text-body-md font-normal text-XL-400 mb-4">{fullName}</p>
       <div className="text-body-md font-semibold text-txt-black-900">Ringkasan Eksekutif</div>
 
       <div className="flex justify-between items-center mb-3">

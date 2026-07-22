@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useUploadStore } from '@/store/UploadStore'
 import { useUploadDraftStore } from '@/store/UploadDraftStore'
 import { useFolderLocationStore } from '@/store/FolderLocationStore'
+import { useAuthStore } from '@/store/AuthStore'
 import { Input } from '@govtechmy/myds-react/input'
 import { DatePicker } from '@govtechmy/myds-react/date-picker'
 import ModalLokasiFolder from './ModalLokasiFolder'
@@ -31,6 +32,9 @@ import {
   createUploadFormSchema,
   type UploadFormValues,
 } from '@/schemas/uploadFormSchema'
+import { normalizeMetadataKey } from '@/utils/normalizeMetadataKey'
+
+const CREATOR_METADATA_KEY = normalizeMetadataKey('NAMA_PEWUJUD')
 
 export interface DocPreviewInfo {
   lokasiFolder: string
@@ -107,6 +111,7 @@ export default function MuatNaikDokumenForm({
   draftStatus,
   newRecordId,
 }: MuatNaikDokumenFormProps) {
+  const fullName = useAuthStore((state) => state.user?.fullName ?? '')
   const { folderSelection, resetFolderSelection } = useFolderLocationStore()
   const {
     selectedAccessLevel,
@@ -127,6 +132,11 @@ export default function MuatNaikDokumenForm({
   const { selectedFile, setSelectedFile } = useUploadStore()
 
   const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.documentProfile)
+  const creatorMetadataField = useMemo(
+    () =>
+      metadataRequired.find((field) => normalizeMetadataKey(field.key) === CREATOR_METADATA_KEY),
+    [metadataRequired]
+  )
 
   const isDraftMode = Boolean(draftStatus)
 
@@ -281,6 +291,32 @@ export default function MuatNaikDokumenForm({
       setValue('additionalMetadataValues', updatedAdditionalValues, { shouldValidate: true })
     }
   }, [metadataAdditional, additionalMetadataValues, getValues, setValue])
+
+  useEffect(() => {
+    if (!creatorMetadataField) {
+      return
+    }
+
+    const creatorFieldName = `requiredMetadataValues.${creatorMetadataField.key}` as const
+    const normalizedFullName = fullName.trim()
+    const currentFormValue = (getValues(creatorFieldName) ?? '').trim()
+    const currentStoreValue = (requiredMetadataValues[creatorMetadataField.key] ?? '').trim()
+
+    if (currentFormValue !== normalizedFullName) {
+      setValue(creatorFieldName, normalizedFullName, { shouldValidate: true })
+    }
+
+    if (currentStoreValue !== normalizedFullName) {
+      setRequiredMetadataField(creatorMetadataField.key, normalizedFullName)
+    }
+  }, [
+    creatorMetadataField,
+    fullName,
+    getValues,
+    requiredMetadataValues,
+    setRequiredMetadataField,
+    setValue,
+  ])
 
   const handleFileUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -605,8 +641,12 @@ export default function MuatNaikDokumenForm({
                 <Controller
                   name={`requiredMetadataValues.${field.key}` as const}
                   control={control}
-                  render={({ field: metadataField }) =>
-                    field.type === 'date' ? (
+                  render={({ field: metadataField }) => {
+                    const isCreatorField = normalizeMetadataKey(field.key) === CREATOR_METADATA_KEY
+
+                    return isCreatorField ? (
+                      <Input type="text" disabled readOnly value={metadataField.value || ''} />
+                    ) : field.type === 'date' ? (
                       <DatePicker
                         locale="ms"
                         placeholder="Pilih Tarikh"
@@ -627,7 +667,7 @@ export default function MuatNaikDokumenForm({
                         }}
                       />
                     )
-                  }
+                  }}
                 />
                 {getErrorMessage(requiredMetadataErrors[field.key]?.message) && (
                   <div className="text-body-sm text-danger-700">

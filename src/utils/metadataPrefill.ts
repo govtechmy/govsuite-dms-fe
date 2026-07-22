@@ -1,8 +1,7 @@
 import type { MetadataField } from '@/services/upload.svc'
+import { normalizeMetadataKey } from '@/utils/normalizeMetadataKey'
 
 export type MetadataValueMap = Record<string, string>
-
-const normalizeMetadataKey = (key: string): string => key.trim().replace(/\s+/g, '').toUpperCase()
 
 export const toMetadataValueMap = (source: unknown): MetadataValueMap => {
   if (!source) {
