@@ -1,3 +1,5 @@
-export default function LogAiktivitiPage() {
-  return <div>This is Log Aktiviti Page</div>
+import InDevelopmentPlaceholder from '@/components/shared/InDevelopmentPlaceholder'
+
+export default function LogAktivitiPage() {
+  return <InDevelopmentPlaceholder />
 }

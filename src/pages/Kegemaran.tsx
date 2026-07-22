@@ -1,3 +1,5 @@
+import InDevelopmentPlaceholder from '@/components/shared/InDevelopmentPlaceholder'
+
 export default function KegemaranPage() {
-  return <div>This is Kegemaran Page</div>
+  return <InDevelopmentPlaceholder />
 }

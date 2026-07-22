@@ -1,3 +1,5 @@
+import InDevelopmentPlaceholder from '@/components/shared/InDevelopmentPlaceholder'
+
 export default function BantuanPage() {
-  return <div>This is Bantuan Page</div>
+  return <InDevelopmentPlaceholder />
 }
