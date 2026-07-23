@@ -18,9 +18,6 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const setAuthState = useAuthStore((state) => state.login)
 
-  const HARD_CODED_USERNAME = 'admin@gmail.com'
-  const HARD_CODED_PASSWORD = 'ChangeThisPassword123!'
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(' ')
@@ -35,27 +32,6 @@ export default function LoginPage() {
       setIsLoading(false)
       setError('Gagal log masuk. Sila semak Nombor IC dan kata laluan.')
       console.error('Login error:', error)
-    }
-  }
-
-  const handleHardcodedLogin = async () => {
-    setError(' ')
-    setIsLoading(true)
-    setUsername(HARD_CODED_USERNAME)
-    setPassword(HARD_CODED_PASSWORD)
-
-    try {
-      const { token, refreshToken, user } = await login({
-        username: HARD_CODED_USERNAME,
-        password: HARD_CODED_PASSWORD,
-      })
-      setAuthState(token, refreshToken, user)
-      const lang = localStorage.getItem('lang') ?? 'ms'
-      navigate(`/${lang}/`)
-    } catch (error) {
-      setIsLoading(false)
-      setError('Gagal log masuk. Sila semak Nombor IC dan kata laluan.')
-      console.error('Hardcoded login error:', error)
     }
   }
 
@@ -124,7 +100,6 @@ export default function LoginPage() {
             isLoading={isLoading}
             error={error}
             handleLogin={handleLogin}
-            handleHardcodedLogin={handleHardcodedLogin}
           />
         </div>
         <div className="relative z-10 mt-6 w-full px-6 text-center text-body-xs text-txt-black-500 font-body">
@@ -143,7 +118,6 @@ interface LoginUiProps {
   isLoading: boolean
   error: string
   handleLogin: (e: React.FormEvent) => void
-  handleHardcodedLogin: () => void
 }
 
 function LoginUi({
@@ -154,7 +128,6 @@ function LoginUi({
   isLoading,
   error,
   handleLogin,
-  handleHardcodedLogin,
 }: LoginUiProps) {
   const [showPassword, setShowPassword] = useState(false)
   return (
@@ -162,14 +135,6 @@ function LoginUi({
       <div className="flex gap-3 items-center pb-6 justify-center">
         <LockIcon />
         <div className="font-body font-semibold text-body-lg">Log Masuk</div>
-        <button
-          type="button"
-          onClick={handleHardcodedLogin}
-          disabled={isLoading}
-          className="rounded-md border border-otl-gray-200 px-3 py-1 text-body-sm font-medium text-primary-700 hover:bg-bg-primary-50 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Developer Login
-        </button>
       </div>
 
       <form onSubmit={handleLogin} className="flex flex-col gap-6 w-full">
