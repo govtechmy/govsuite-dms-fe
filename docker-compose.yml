@@ -1,0 +1,15 @@
+services:
+  frontend:
+    profiles: ['production']
+    image: govsuite-dms-fe:latest
+    container_name: govsuite-dms-fe-prod
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - '80:80'
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost/']
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
