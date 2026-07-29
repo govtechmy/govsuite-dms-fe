@@ -1,5 +1,5 @@
 // Runtime environment configuration
-// Required keys are derived from .env.example by Vite at startup.
+// Required keys are derived from frontend.env.example by Vite at startup.
 type RuntimeEnvKey = string
 
 type RuntimeEnv = Partial<Record<RuntimeEnvKey, string>>
@@ -40,7 +40,7 @@ const getRuntimeEnv = (): RuntimeEnv => {
   }
 
   if (isDevMode) {
-    // In local dev, allow Vite .env values when /env.js is not present.
+    // In local dev, allow Vite frontend.env values when /env.js is not present.
     return { ...readViteEnv(), ...(window.__APP_ENV__ ?? {}) }
   }
 

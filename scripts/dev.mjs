@@ -14,7 +14,7 @@ const parseRequiredViteEnvKeys = (fileContent) => {
   return Array.from(new Set(keys))
 }
 
-const envExamplePath = resolve(process.cwd(), '.env.example')
+const envExamplePath = resolve(process.cwd(), 'frontend.env.example')
 const envExampleContent = readFileSync(envExamplePath, 'utf-8')
 const requiredKeys = parseRequiredViteEnvKeys(envExampleContent)
 const requiredKeysValue = requiredKeys.join(',')

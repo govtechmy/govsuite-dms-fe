@@ -28,9 +28,9 @@ echo ""
 
 ARCHES=("amd64" "arm64")
 
-if [ ! -f "$SCRIPT_DIR/.env" ]; then
-  echo "❌ Error: .env not found at $SCRIPT_DIR/.env"
-  echo "   Copy .env.example to .env and fill in your values"
+if [ ! -f "$SCRIPT_DIR/frontend.env" ]; then
+  echo "❌ Error: frontend.env not found at $SCRIPT_DIR/frontend.env"
+  echo "   Copy frontend.env.example to frontend.env and fill in your values"
   exit 1
 fi
 
@@ -68,7 +68,7 @@ done
 echo "📋 Copying deployment files..."
 cp "$SCRIPT_DIR/deploy.sh" "$DEST_DIR/"
 cp "$SCRIPT_DIR/docker-compose.yml" "$DEST_DIR/"
-cp "$SCRIPT_DIR/.env" "$DEST_DIR/"
+cp "$SCRIPT_DIR/frontend.env" "$DEST_DIR/"
 chmod +x "$DEST_DIR/deploy.sh"
 echo "✓ Files copied"
 echo ""

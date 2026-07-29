@@ -4,7 +4,7 @@ services:
     image: govsuite-dms-fe:latest
     container_name: govsuite-dms-fe-prod
     restart: unless-stopped
-    env_file: ./.env
+    env_file: ./frontend.env
     ports:
       - '80:80'
     healthcheck:

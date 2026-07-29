@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="$SCRIPT_DIR/.env"
+ENV_FILE="$SCRIPT_DIR/frontend.env"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 IMAGE_NAME="govsuite-dms-fe"
 IMAGE_TAG="latest"
@@ -45,8 +45,8 @@ if [ ! -f "$TAR_FILE" ]; then
 fi
 
 if [ ! -f "$ENV_FILE" ]; then
-  echo "❌ Error: .env not found at $ENV_FILE"
-  echo "   Copy .env.example to .env and fill in your values"
+  echo "❌ Error: frontend.env not found at $ENV_FILE"
+  echo "   Copy frontend.env.example to frontend.env and fill in your values"
   exit 1
 fi
 

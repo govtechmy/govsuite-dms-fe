@@ -23,9 +23,7 @@ AGENTS.md
 *.md
 
 # Environment files
-.env
-.env.local
-.env.*.local
+*.env
 
 # Testing
 coverage
