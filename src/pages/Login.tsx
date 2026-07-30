@@ -147,7 +147,7 @@ function LoginUi({
             <Input
               id="username"
               type="string"
-              placeholder="admin@admin.com"
+              placeholder="example@kabinet.gov.my"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
