@@ -8,6 +8,7 @@ interface DokumenContentIDProps {
   searchKeyword: string
   navigationRequest?: PdfSearchNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
+  onDocumentLoad?: () => void
 }
 
 export default function DokumenContentID({
@@ -15,6 +16,7 @@ export default function DokumenContentID({
   searchKeyword,
   navigationRequest,
   onSearchStateChange,
+  onDocumentLoad,
 }: DokumenContentIDProps) {
   return (
     <div className="h-[1200px] overflow-auto">
@@ -24,6 +26,7 @@ export default function DokumenContentID({
           searchKeyword={searchKeyword}
           navigationRequest={navigationRequest}
           onSearchStateChange={onSearchStateChange}
+          onDocumentLoad={onDocumentLoad}
         />
       </div>
     </div>

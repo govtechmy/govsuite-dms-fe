@@ -96,9 +96,10 @@ export default function PdfJsDocumentViewer({
   const handledNavigationTokenRef = useRef<number | null>(null)
   const previousKeywordRef = useRef('')
   const lastEmittedSearchStateRef = useRef<PdfSearchState | null>(null)
-  const lastActiveMatchElementRef = useRef<HTMLElement | null>(null)
+  const lastActiveMatchElementsRef = useRef<HTMLElement[]>([])
   const lastNavigationActionRef = useRef<PdfSearchNavigationRequest['action'] | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
+  const documentReadyNotifiedRef = useRef(false)
 
   const normalizedKeyword = searchKeyword.trim().toLocaleLowerCase()
 
@@ -116,35 +117,86 @@ export default function PdfJsDocumentViewer({
     for (let pageNumber = 1; pageNumber <= numPages; pageNumber += 1) {
       const pageItems = pageTextItems[pageNumber] ?? []
 
-      pageItems.forEach((pageText, itemIndex) => {
-        const normalizedPageText = pageText.toLocaleLowerCase()
-        const itemMatches: ItemMatch[] = []
-        let startPosition = 0
+      if (pageItems.length === 0) {
+        continue
+      }
 
-        while (startPosition < normalizedPageText.length) {
-          const foundIndex = normalizedPageText.indexOf(normalizedKeyword, startPosition)
+      // Text can be split across items (e.g. "Hello" and "World" as separate
+      // runs), so join the whole page into one string and map matches back
+      // to their originating items instead of searching item-by-item.
+      let fullText = ''
+      const itemRanges: { start: number; end: number }[] = []
 
-          if (foundIndex < 0) {
+      pageItems.forEach((rawText, itemIndex) => {
+        const text = rawText ?? ''
+
+        if (fullText.length > 0 && text.length > 0) {
+          const previousChar = fullText[fullText.length - 1]
+          const nextChar = text[0]
+          if (!/\s/.test(previousChar) && !/\s/.test(nextChar)) {
+            fullText += ' '
+          }
+        }
+
+        const start = fullText.length
+        fullText += text
+        itemRanges[itemIndex] = { start, end: fullText.length }
+      })
+
+      const normalizedFullText = fullText.toLocaleLowerCase()
+      let searchPosition = 0
+      let itemPointer = 0
+
+      while (searchPosition < normalizedFullText.length) {
+        const foundIndex = normalizedFullText.indexOf(normalizedKeyword, searchPosition)
+
+        if (foundIndex < 0) {
+          break
+        }
+
+        const matchStart = foundIndex
+        const matchEnd = foundIndex + normalizedKeyword.length
+        const globalMatchIndex = runningMatchIndex
+
+        for (
+          let currentItemIndex = itemPointer;
+          currentItemIndex < itemRanges.length;
+          currentItemIndex += 1
+        ) {
+          const itemRange = itemRanges[currentItemIndex]
+
+          if (!itemRange || itemRange.start >= matchEnd) {
             break
           }
 
-          itemMatches.push({
-            start: foundIndex,
-            end: foundIndex + normalizedKeyword.length,
-            globalMatchIndex: runningMatchIndex,
-          })
+          if (itemRange.end <= matchStart) {
+            itemPointer = currentItemIndex + 1
+            continue
+          }
 
-          runningMatchIndex += 1
-          startPosition = foundIndex + normalizedKeyword.length
-        }
+          const localStart = Math.max(matchStart, itemRange.start) - itemRange.start
+          const localEnd = Math.min(matchEnd, itemRange.end) - itemRange.start
 
-        if (itemMatches.length > 0) {
+          if (localEnd <= localStart) {
+            continue
+          }
+
           if (!matchesByPage[pageNumber]) {
             matchesByPage[pageNumber] = {}
           }
-          matchesByPage[pageNumber][itemIndex] = itemMatches
+          if (!matchesByPage[pageNumber][currentItemIndex]) {
+            matchesByPage[pageNumber][currentItemIndex] = []
+          }
+          matchesByPage[pageNumber][currentItemIndex].push({
+            start: localStart,
+            end: localEnd,
+            globalMatchIndex,
+          })
         }
-      })
+
+        runningMatchIndex += 1
+        searchPosition = matchEnd
+      }
     }
 
     return {
@@ -173,9 +225,12 @@ export default function PdfJsDocumentViewer({
     previousKeywordRef.current = ''
     lastEmittedSearchStateRef.current = null
     lastNavigationActionRef.current = null
-    if (lastActiveMatchElementRef.current) {
-      lastActiveMatchElementRef.current.classList.remove('pdf-search-match-active')
-      lastActiveMatchElementRef.current = null
+    documentReadyNotifiedRef.current = false
+    if (lastActiveMatchElementsRef.current.length > 0) {
+      lastActiveMatchElementsRef.current.forEach((element) => {
+        element.classList.remove('pdf-search-match-active')
+      })
+      lastActiveMatchElementsRef.current = []
     }
     setCurrentMatchIndex(-1)
     setNumPages(0)
@@ -261,26 +316,32 @@ export default function PdfJsDocumentViewer({
       return
     }
 
-    if (lastActiveMatchElementRef.current) {
-      lastActiveMatchElementRef.current.classList.remove('pdf-search-match-active')
-      lastActiveMatchElementRef.current = null
+    if (lastActiveMatchElementsRef.current.length > 0) {
+      lastActiveMatchElementsRef.current.forEach((element) => {
+        element.classList.remove('pdf-search-match-active')
+      })
+      lastActiveMatchElementsRef.current = []
     }
 
     if (currentMatchIndex < 0) {
       return
     }
 
-    const activeElement = container.querySelector(`[data-pdf-match-index="${currentMatchIndex}"]`)
+    // A single match can span multiple text items, so it may render as more
+    // than one <mark> element sharing the same data-pdf-match-index.
+    const activeElements = Array.from(
+      container.querySelectorAll(`[data-pdf-match-index="${currentMatchIndex}"]`)
+    ).filter((element): element is HTMLElement => element instanceof HTMLElement)
 
-    if (!(activeElement instanceof HTMLElement)) {
+    if (activeElements.length === 0) {
       return
     }
 
-    activeElement.classList.add('pdf-search-match-active')
-    lastActiveMatchElementRef.current = activeElement
+    activeElements.forEach((element) => element.classList.add('pdf-search-match-active'))
+    lastActiveMatchElementsRef.current = activeElements
     const isManualNavigation =
       lastNavigationActionRef.current === 'next' || lastNavigationActionRef.current === 'previous'
-    activeElement.scrollIntoView({
+    activeElements[0].scrollIntoView({
       block: 'center',
       inline: 'nearest',
       behavior: isManualNavigation ? 'smooth' : 'auto',
@@ -342,8 +403,22 @@ export default function PdfJsDocumentViewer({
 
   const handleDocumentLoadSuccess = (pdf: PDFDocumentProxy) => {
     setNumPages(pdf.numPages)
-    onDocumentLoad?.()
   }
+
+  useEffect(() => {
+    if (documentReadyNotifiedRef.current || numPages === 0) {
+      return
+    }
+
+    const hasExtractedAllPages = Object.keys(pageTextItems).length === numPages
+
+    if (!hasExtractedAllPages) {
+      return
+    }
+
+    documentReadyNotifiedRef.current = true
+    onDocumentLoad?.()
+  }, [numPages, pageTextItems, onDocumentLoad])
 
   if (!fileUrl) {
     return (

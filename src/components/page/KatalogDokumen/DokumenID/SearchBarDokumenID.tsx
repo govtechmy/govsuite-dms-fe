@@ -8,6 +8,7 @@ interface SearchBarDokumenIDProps {
   totalMatches: number
   onPreviousMatch: () => void
   onNextMatch: () => void
+  isPdfLoaded: boolean
 }
 
 export function SearchBarDokumenID({
@@ -17,6 +18,7 @@ export function SearchBarDokumenID({
   totalMatches,
   onPreviousMatch,
   onNextMatch,
+  isPdfLoaded,
 }: SearchBarDokumenIDProps) {
   const trimmedKeyword = searchKeyword.trim()
 
@@ -39,12 +41,13 @@ export function SearchBarDokumenID({
     }
   }
 
-  const displayText =
-    trimmedKeyword && totalMatches > 0
-      ? `${currentMatchIndex + 1} daripada ${totalMatches} ditemui`
-      : trimmedKeyword
-        ? 'Tiada hasil ditemui'
-        : ''
+  const displayText = !trimmedKeyword
+    ? ''
+    : !isPdfLoaded
+      ? 'Dokumen sedang dimuatkan...'
+      : totalMatches > 0
+        ? `${currentMatchIndex + 1} daripada ${totalMatches} ditemui`
+        : 'Tiada hasil ditemui'
 
   return (
     <div className="flex h-14 w-full items-center border-b border-otl-gray-200 bg-bg-white p-8">
@@ -57,6 +60,7 @@ export function SearchBarDokumenID({
             value={searchKeyword}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
+            disabled={!isPdfLoaded}
           >
             <InputIcon position="right">
               <SearchIcon className="size-4 text-txt-black-700" />
@@ -79,7 +83,7 @@ export function SearchBarDokumenID({
             className="flex size-6 items-center justify-center text-txt-black-700 hover:text-txt-black-900 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Previous"
             onClick={handlePrevious}
-            disabled={!trimmedKeyword || totalMatches === 0}
+            disabled={!isPdfLoaded || !trimmedKeyword || totalMatches === 0}
           >
             <ChevronUpIcon className="size-6" />
           </button>
@@ -88,7 +92,7 @@ export function SearchBarDokumenID({
             className="flex size-6 items-center justify-center text-txt-black-700 hover:text-txt-black-900 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Next"
             onClick={handleNext}
-            disabled={!trimmedKeyword || totalMatches === 0}
+            disabled={!isPdfLoaded || !trimmedKeyword || totalMatches === 0}
           >
             <ChevronDownIcon className="size-6" />
           </button>

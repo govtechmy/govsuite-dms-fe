@@ -28,12 +28,13 @@ export default function SearchInPdf({
     onNextMatch()
   }
 
-  const displayText =
-    isPdfLoaded && trimmedKeyword && totalMatches > 0
-      ? `${currentMatchIndex + 1} daripada ${totalMatches} ditemui`
-      : isPdfLoaded && trimmedKeyword
-        ? 'Tiada hasil ditemui'
-        : ''
+  const displayText = !trimmedKeyword
+    ? ''
+    : !isPdfLoaded
+      ? 'Dokumen sedang dimuatkan...'
+      : totalMatches > 0
+        ? `${currentMatchIndex + 1} daripada ${totalMatches} ditemui`
+        : 'Tiada hasil ditemui'
 
   return (
     <div className="flex h-14 w-full items-center border-otl-gray-200 p-8">
