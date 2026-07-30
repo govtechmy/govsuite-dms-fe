@@ -73,7 +73,7 @@ export function NavbarMyds() {
       </Navbar>
 
       {/* Mobile Drawer with Overlay */}
-      <div className={`fixed inset-0 z-20 lg:hidden ${open ? 'visible' : 'invisible'}`}>
+      <div className={`fixed inset-0 z-20 lg:hidden ${open ? '' : 'pointer-events-none'}`}>
         {/* Overlay background */}
         <div
           onClick={() => setOpen(false)}
@@ -84,7 +84,7 @@ export function NavbarMyds() {
 
         {/* Drawer */}
         <div
-          className={`absolute top-0 right-0 flex h-full w-64 flex-col bg-bg-white shadow-lg transform transition-transform duration-700 ease-in-out z-50 ${
+          className={`absolute top-0 right-0 flex h-full w-64 flex-col bg-bg-white shadow-lg transform transition-transform duration-500 ease-in-out z-50 ${
             open ? 'translate-x-0' : 'translate-x-full'
           }`}
         >

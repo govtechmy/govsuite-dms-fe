@@ -159,7 +159,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
       <div
         key={item.id}
         className={`cursor-pointer flex items-center py-2 pl-4 rounded-lg ${
-          isCollapsed ? '' : 'mr-6'
+          isCollapsed ? '' : 'mr-6 ml-4'
         } ${getItemClasses(isMenuItemActive(item))}`}
         onClick={() => handleMenuClick(item)}
       >
