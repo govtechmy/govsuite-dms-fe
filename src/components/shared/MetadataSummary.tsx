@@ -50,7 +50,9 @@ function renderMetadataRows(items: MetadataItem[]) {
   return items.map((item, index) => (
     <SummaryListRow key={`${item.title}-${index}`}>
       <SummaryListTerm className="font-medium">{item.title}</SummaryListTerm>
-      <SummaryListDetail>{String(item.value ?? '') || '-'}</SummaryListDetail>
+      <SummaryListDetail className="break-words">
+        {String(item.value ?? '') || '-'}
+      </SummaryListDetail>
       <SummaryListAction></SummaryListAction>
     </SummaryListRow>
   ))
@@ -92,7 +94,9 @@ export default function MetadataSummary({ metadata }: MetadataSummaryProps) {
                 <SummaryListTerm className="font-medium">
                   {RECORD_DATA_TERM_MAP[key] ?? key}
                 </SummaryListTerm>
-                <SummaryListDetail>{toRecordDataDisplayValue(key, value)}</SummaryListDetail>
+                <SummaryListDetail className="break-words">
+                  {toRecordDataDisplayValue(key, value)}
+                </SummaryListDetail>
                 <SummaryListAction></SummaryListAction>
               </SummaryListRow>
             ))}

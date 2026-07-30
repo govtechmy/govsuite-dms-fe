@@ -5,17 +5,17 @@ import SidebarMyds from './SidebarMyds'
 
 export default function LayoutMain() {
   return (
-    <div className="flex flex-col">
+    <div className="flex h-[100dvh] flex-col">
       <div className="sticky top-0 z-50">
         <MastheadMyds />
         <NavbarMyds />
       </div>
 
-      <div className="mx-auto px-4.5 flex w-full relative md:px-6 max-w-screen-xl">
-        <div className="hidden lg:block sticky top-[100px] h-[calc(100vh-100px)] overflow-y-hidden">
+      <div className="mx-auto px-4.5 flex w-full relative md:px-6 max-w-screen-xl min-h-0 flex-1">
+        <div className="hidden lg:block h-full overflow-y-hidden">
           <SidebarMyds />
         </div>
-        <div className="flex-1 h-[calc(100vh-100px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex-1 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <Outlet />
         </div>
       </div>

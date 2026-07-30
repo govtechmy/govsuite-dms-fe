@@ -177,7 +177,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
 
   return (
     <aside
-      className={`flex flex-col transition-all duration-300 text-body-sm font-normal font-body lg:h-[calc(100vh-100px)] lg:border lg:border-otl-gray-300 lg:border-t-0 lg:border-b-0 ${
+      className={`flex flex-col transition-all duration-300 text-body-sm font-normal font-body lg:h-full lg:border lg:border-otl-gray-300 lg:border-t-0 lg:border-b-0 ${
         isCollapsed ? 'lg:w-[56px] lg:border-l' : 'lg:w-[230px] lg:border-l-0'
       }`}
     >

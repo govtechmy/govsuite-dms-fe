@@ -27,7 +27,7 @@ export default function DialogUserDeletion({
 }: DialogUserDeletionProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogBody className="w-[400px] [&>button]:p-2 [&>button_svg]:size-4">
+      <DialogBody className="w-full max-w-[calc(100dvw-36px)] sm:max-w-[400px] [&>button]:p-2 [&>button_svg]:size-4">
         <DialogContent className="py-6">
           <DialogTitle className="pt-[16px]">Padam Pengguna</DialogTitle>
           <DialogDescription>

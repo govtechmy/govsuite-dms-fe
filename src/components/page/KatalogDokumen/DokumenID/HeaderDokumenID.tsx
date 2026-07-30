@@ -58,16 +58,16 @@ export function HeaderDokumenID({
   }
 
   return (
-    <div className="relative flex w-full flex-col gap-6 overflow-hidden border-b border-otl-gray-200 bg-[radial-gradient(ellipse_2500px_1100px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)] p-8 py-12">
+    <div className="relative flex w-full flex-col gap-6 overflow-hidden border-b border-otl-gray-200 bg-[radial-gradient(ellipse_2500px_1100px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)] p-4 py-8 sm:p-8 sm:py-12">
       <div className="pointer-events-none absolute inset-0">
         <MaskHeader className="h-full w-full" />
       </div>
 
       <div className="relative z-10 flex w-full max-w-[1000px] flex-col gap-6">
-        <div className="flex justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <BreadcrumbBuilder path={path} />
           {status === 'DALAM_SEMAKAN' && (
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               <Button variant="danger-fill" onClick={() => setIsTakDiluluskanOpen(true)}>
                 Tidak Diluluskan
               </Button>
@@ -82,7 +82,7 @@ export function HeaderDokumenID({
         </div>
 
         {/* Document Header */}
-        <div className="flex w-full items-end gap-3">
+        <div className="flex w-full flex-col gap-3 md:flex-row md:items-end">
           {/* Date Card */}
           <DateCard date={recordDate} size="lg" className="shadow-sm border border-otl-gray-200" />
 
@@ -108,7 +108,7 @@ export function HeaderDokumenID({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             <DialogKongsi onShareDataRefresh={onShareDataRefresh} />
             <Button
               variant="default-outline"

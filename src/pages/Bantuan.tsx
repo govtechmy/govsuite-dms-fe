@@ -33,8 +33,8 @@ export default function BantuanPage() {
 
           {/* Action Button - Retained from original code */}
           <div className="pt-2">
-            <Button variant="default-outline">
-              <EmailIcon /> {emailSupport}
+            <Button variant="default-outline" className="max-w-full">
+              <EmailIcon /> <span className="truncate">{emailSupport}</span>
             </Button>
           </div>
         </div>

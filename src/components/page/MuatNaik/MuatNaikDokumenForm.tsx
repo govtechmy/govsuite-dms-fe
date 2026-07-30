@@ -502,7 +502,7 @@ export default function MuatNaikDokumenForm({
 
   return (
     <>
-      <div className="flex justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <MainHeading>Muat Naik Dokumen</MainHeading>
         <Button variant="default-outline" className="gap-2" onClick={handleResetForm}>
           <ReloadIcon />
@@ -751,7 +751,7 @@ export default function MuatNaikDokumenForm({
             <div>Versi</div>
             <Input disabled value={version} readOnly />
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-wrap justify-between gap-2">
             <Button
               variant="default-outline"
               disabled={isActionButtonDisabled}

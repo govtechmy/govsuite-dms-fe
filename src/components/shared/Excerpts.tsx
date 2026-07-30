@@ -55,7 +55,7 @@ export default function Excerpts({
             {renderSecretTag(secretTag)}
           </div>
           <div className="text-body-md font-semibold line-clamp-1">{title}</div>
-          <div className="flex items-center gap-1.5 text-txt-black-500 text-body-sm font-normal ">
+          <div className="flex flex-wrap items-center gap-1.5 text-txt-black-500 text-body-sm font-normal ">
             <div>{type}</div>
             <div className="flex items-center justify-center">
               <DotIcon className="size-1.5" />

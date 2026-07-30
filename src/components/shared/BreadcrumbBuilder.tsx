@@ -13,15 +13,15 @@ export function BreadcrumbBuilder({ path, className = '' }: BreadcrumbBuilderPro
   if (segments.length === 0) return null
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex min-w-0 flex-wrap items-center gap-1 ${className}`}>
       {segments.map((segment, index) => {
         const isLast = index === segments.length - 1
 
         return (
-          <div key={index} className="flex items-center gap-1">
+          <div key={index} className="flex min-w-0 items-center gap-1">
             <span
-              className={`text-xs font-medium ${
-                isLast ? 'max-w-[200px] truncate text-txt-black-900' : 'text-txt-black-500'
+              className={`max-w-[200px] truncate text-xs font-medium ${
+                isLast ? 'text-txt-black-900' : 'text-txt-black-500'
               }`}
             >
               {segment}

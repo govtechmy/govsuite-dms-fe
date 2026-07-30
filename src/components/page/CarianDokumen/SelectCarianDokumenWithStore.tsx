@@ -122,7 +122,7 @@ export default function SelectCarianDokumenWithStore({
   }
 
   return (
-    <div className="flex justify-between items-start">
+    <div className="flex flex-wrap justify-between items-start gap-2">
       <div className="flex flex-row flex-wrap gap-2">
         <Select
           size={'small'}
@@ -161,7 +161,7 @@ export default function SelectCarianDokumenWithStore({
           </SelectContent>
         </Select>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           <DateRangePicker
             locale="ms"
             placeholder="Pilih Tarikh"

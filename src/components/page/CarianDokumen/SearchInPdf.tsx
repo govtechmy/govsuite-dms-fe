@@ -43,17 +43,17 @@ export default function SearchInPdf({
         : 'Tiada hasil ditemui'
 
   return (
-    <div className="flex h-14 w-full items-center border-otl-gray-200 p-2">
-      <div className="flex w-full max-w-[1000px] items-center gap-6">
+    <div className="flex min-h-14 w-full items-center border-otl-gray-200 p-2">
+      <div className="flex w-full max-w-[1000px] flex-wrap items-center gap-3 sm:gap-6">
         {isPdfLoaded && totalPages > 0 && (
-          <span className="whitespace-nowrap text-base font-medium text-txt-black-500">
+          <span className="whitespace-nowrap text-sm font-medium text-txt-black-500 sm:text-base">
             Page : {currentPage}/{totalPages}
           </span>
         )}
         <div className="flex-1" />
         <div className="flex items-center gap-3">
           {displayText && (
-            <span className="whitespace-nowrap text-base font-medium text-txt-black-500">
+            <span className="whitespace-nowrap text-sm font-medium text-txt-black-500 sm:text-base">
               {displayText}
             </span>
           )}

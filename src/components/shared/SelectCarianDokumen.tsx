@@ -110,7 +110,7 @@ export default function SelectCarianDokumen({
   }
 
   return (
-    <div className="flex justify-between items-start">
+    <div className="flex flex-wrap justify-between items-start gap-2">
       <div className="flex flex-row flex-wrap gap-2">
         {dropdownYears.length > 0 && (
           <Select
@@ -170,7 +170,7 @@ export default function SelectCarianDokumen({
           </SelectContent>
         </Select>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           <DateRangePicker
             locale="ms"
             placeholder="Pilih Tarikh"

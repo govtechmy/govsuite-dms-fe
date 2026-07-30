@@ -616,11 +616,11 @@ export default function MuatNaikDokumenIDPage() {
   return (
     <>
       {submissionProgress === null && (
-        <div className={clx('grid ', selectedProfile && savedRecordDate && 'grid-cols-2')}>
+        <div className={clx('grid ', selectedProfile && savedRecordDate && 'lg:grid-cols-2')}>
           <RightSidePageLayoutWrapper
             className={clx(
               'flex flex-col gap-6 w-full ',
-              selectedProfile && savedRecordDate && 'shadow-card pr-6'
+              selectedProfile && savedRecordDate && 'lg:shadow-card lg:pr-6'
             )}
           >
             <MuatNaikDokumenForm
@@ -653,7 +653,7 @@ export default function MuatNaikDokumenIDPage() {
             />
           </RightSidePageLayoutWrapper>
           {selectedProfile && savedRecordDate && (
-            <RightSidePageLayoutWrapper className="flex flex-col gap-6 w-full pr-3">
+            <RightSidePageLayoutWrapper className="flex flex-col gap-6 w-full lg:pr-3">
               <PratontonRekod docInfo={allInfoDocs} onSubmit={handleSubmitDokumen} />
             </RightSidePageLayoutWrapper>
           )}
@@ -672,7 +672,7 @@ export default function MuatNaikDokumenIDPage() {
             errorDescription={
               <div className="flex flex-col gap-2 items-center justify-center">
                 <div>Dokumen gagal dihantar, sila cuba lagi atau hubungi pentadbir sistem.</div>
-                <div>
+                <div className="break-words">
                   {submissionError?.code ?? 'REQUEST_FAILED'} :{' '}
                   {submissionError?.message ?? 'Permintaan penghantaran gagal diproses.'}
                 </div>

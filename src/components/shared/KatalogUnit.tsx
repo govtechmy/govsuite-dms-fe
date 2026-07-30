@@ -31,20 +31,20 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
         return (
           <AccordionItem key={unit.name} value={unit.name} className="border-none !mt-7">
             <AccordionTrigger className="py-0 hover:no-underline">
-              <div className="flex w-full items-center gap-3 text-left">
+              <div className="flex w-full min-w-0 items-center gap-3 text-left">
                 <img
                   src={isOpen ? folderOpen : folderClose}
                   alt="Folder"
                   className="h-8 w-8 shrink-0 object-contain transition-all duration-200"
                 />
 
-                <div className="flex items-center gap-3">
-                  <h2 className="whitespace-nowrap text-body-lg font-semibold font-body text-txt-black-900">
+                <div className="flex min-w-0 items-center gap-3">
+                  <h2 className="min-w-0 truncate text-body-lg font-semibold font-body text-txt-black-900">
                     {unit.name}
                   </h2>
 
                   {unit.items.length > 0 && (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-[20px] bg-primary-600 font-body px-1 text-body-sm font-medium text-white">
+                    <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-[20px] bg-primary-600 font-body px-1 text-body-sm font-medium text-white">
                       {unit.items.length}
                     </span>
                   )}

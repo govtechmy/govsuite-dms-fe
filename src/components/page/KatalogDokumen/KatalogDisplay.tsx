@@ -417,7 +417,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
           <AccordionItem key={unit.id} value={unit.id} className="border-none">
             <div className="flex flex-col gap-1">
               <AccordionTrigger className="py-0 hover:no-underline">
-                <div className="flex w-full items-center gap-3 text-left">
+                <div className="flex w-full min-w-0 items-center gap-3 text-left">
                   {currentPath.length > 0 ? (
                     <>
                       <div
@@ -440,7 +440,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                         <ArrowBackIcon />
                       </div>
 
-                      <Breadcrumb>
+                      <Breadcrumb className="min-w-0 flex-wrap">
                         <div className="relative h-[22px] shrink-0 pr-2">
                           <img
                             src={folderOpen}
@@ -491,7 +491,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                         className="h-8 w-8 shrink-0 object-contain transition-all duration-200"
                       />
 
-                      <h2 className="text-body-lg font-semibold text-txt-black-900 whitespace-nowrap">
+                      <h2 className="min-w-0 truncate text-body-lg font-semibold text-txt-black-900">
                         {unit.name}
                       </h2>
                     </>
@@ -502,7 +502,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
               </AccordionTrigger>
 
               {isOpen && (
-                <div className="flex items-center justify-end gap-1 pt-1">
+                <div className="flex flex-wrap items-center justify-end gap-1 pt-1">
                   <TambahFolderModal
                     open={dialogOpenUnit === unit.id}
                     onOpenChange={(open) => setDialogOpenUnit(open ? unit.id : null)}

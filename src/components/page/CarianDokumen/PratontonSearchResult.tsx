@@ -122,7 +122,7 @@ export default function PratontonSearchResult({
   }
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col border border-otl-gray-200 border-l-0 bg-bg-gray-50 p-6">
+    <div className="flex h-full min-h-[480px] min-w-0 flex-1 flex-col border border-otl-gray-200 border-l-0 bg-bg-gray-50 p-4 sm:p-6 lg:min-h-0">
       <div className="flex justify-between items-center">
         <p className="flex-1 text-body-md font-semibold text-txt-black-900">Pratonton</p>
         <Button

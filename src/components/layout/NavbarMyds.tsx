@@ -84,7 +84,7 @@ export function NavbarMyds() {
 
         {/* Drawer */}
         <div
-          className={`absolute top-0 right-0 h-full w-64 bg-bg-white shadow-lg transform transition-transform duration-700 ease-in-out z-50 ${
+          className={`absolute top-0 right-0 flex h-full w-64 flex-col bg-bg-white shadow-lg transform transition-transform duration-700 ease-in-out z-50 ${
             open ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
@@ -95,13 +95,15 @@ export function NavbarMyds() {
             </button>
           </div>
 
-          <SidebarMyds
-            onclick={() => {
-              setOpen(false)
-            }}
-          />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <SidebarMyds
+              onclick={() => {
+                setOpen(false)
+              }}
+            />
+          </div>
 
-          <div className="absolute inset-x-0 bottom-0 m-4 border-t pt-4">
+          <div className="m-4 border-t pt-4">
             <div className="flex flex-col gap-2">
               <UserLogin />
               <Button

@@ -106,8 +106,8 @@ export default function SelectionOfUser({
           <div className="flex flex-wrap gap-2">
             {selectedShareUsers.map((email) => (
               <Tag key={email} mode="pill" size="small" variant="default">
-                <div className="flex items-center gap-1.5">
-                  <span>{email}</span>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="max-w-[220px] truncate">{email}</span>
                   <button
                     type="button"
                     className="rounded-full px-1 text-body-xs leading-none text-txt-black-700 hover:bg-bg-primary-100"

@@ -57,7 +57,7 @@ export default function UploadDocument({
 
   return (
     <div className="border border-otl-gray-200 p-4 rounded-md">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="font-body font-medium text-body-md text-txt-black-900">
             Muat Naik Dokumen

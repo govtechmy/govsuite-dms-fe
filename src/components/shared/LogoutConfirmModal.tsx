@@ -27,7 +27,10 @@ export default function LogoutConfirmModal({
 }: LogoutConfirmModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogBody className="w-[400px] [&>button]:p-1 [&>button_svg]:size-3.5" onDismiss={onClose}>
+      <DialogBody
+        className="w-full max-w-[calc(100dvw-36px)] sm:max-w-[400px] [&>button]:p-1 [&>button_svg]:size-3.5"
+        onDismiss={onClose}
+      >
         <DialogContent className="py-6">
           {iconPasser}
           <DialogTitle className="pt-[16px]">{title}</DialogTitle>

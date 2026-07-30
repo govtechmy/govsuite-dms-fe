@@ -36,7 +36,9 @@ export default function AccessibleDocumentInfo({
             <div className="text-body-sm font-medium text-txt-black-700">
               {selectedUser.fullName}
             </div>
-            <div className="text-body-xs font-normal text-txt-black-500">{selectedUser.email}</div>
+            <div className="truncate text-body-xs font-normal text-txt-black-500">
+              {selectedUser.email}
+            </div>
           </div>
           <Button
             aria-label={`Padam pengguna ${selectedUser.fullName}`}

@@ -80,7 +80,7 @@ export default function MetadataModalTidakLulus({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogBody className="flex flex-col lg:min-w-[750px] lg:min-h-[400px]">
+      <DialogBody className="flex w-full max-w-[calc(100dvw-36px)] flex-col sm:max-w-2xl lg:min-w-[750px] lg:min-h-[400px]">
         {!isActionInProgress && (
           <>
             <DialogHeader className="pb-4.5">
@@ -92,7 +92,9 @@ export default function MetadataModalTidakLulus({
                 <SummaryListBody>
                   <SummaryListRow>
                     <SummaryListTerm className="font-medium">Lokasi Folder</SummaryListTerm>
-                    <SummaryListDetail>{selectedDocument?.path || 'Tiada Info'}</SummaryListDetail>
+                    <SummaryListDetail className="break-words">
+                      {selectedDocument?.path || 'Tiada Info'}
+                    </SummaryListDetail>
                     <SummaryListAction></SummaryListAction>
                   </SummaryListRow>
 
@@ -152,7 +154,7 @@ export default function MetadataModalTidakLulus({
                 </SummaryListBody>
               </SummaryList>
             </DialogContent>
-            <DialogFooter className="flex justify-between">
+            <DialogFooter className="flex flex-wrap justify-between gap-2">
               <Button variant="danger-outline" onClick={handleDeleteClick}>
                 <TrashIcon />
                 Hapus Dokumen

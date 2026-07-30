@@ -455,7 +455,9 @@ export default function ModalLokasiFolder({ selectedPath = '' }: ModalLokasiFold
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger>
         <Button variant="default-outline" size="medium" className="w-full justify-start">
-          <div className="text-txt-black-500 font-normal">{selectedPath || 'Lokasi Folder'}</div>
+          <div className="min-w-0 truncate text-txt-black-500 font-normal">
+            {selectedPath || 'Lokasi Folder'}
+          </div>
         </Button>
       </DialogTrigger>
 
@@ -492,7 +494,7 @@ export default function ModalLokasiFolder({ selectedPath = '' }: ModalLokasiFold
           {progressState === null && (
             <>
               {/* Breadcrumb Navigation */}
-              <div className="mb-6 flex items-center gap-3">
+              <div className="mb-6 flex min-w-0 flex-wrap items-center gap-3">
                 {currentPath.length > 0 && (
                   <button
                     type="button"
@@ -505,7 +507,7 @@ export default function ModalLokasiFolder({ selectedPath = '' }: ModalLokasiFold
                 )}
 
                 {currentPath.length > 0 && (
-                  <Breadcrumb>
+                  <Breadcrumb className="min-w-0 flex-wrap">
                     <div className="relative h-[22px] shrink-0 pr-2">
                       <img
                         src={folderClose}

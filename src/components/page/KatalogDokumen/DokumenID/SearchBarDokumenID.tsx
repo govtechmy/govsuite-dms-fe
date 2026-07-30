@@ -77,10 +77,10 @@ export function SearchBarDokumenID({
         : 'Tiada hasil ditemui'
 
   return (
-    <div className="sticky top-0 z-10 flex h-14 w-full items-center border-b border-otl-gray-200 bg-bg-white p-8">
-      <div className="flex w-full max-w-[1000px] items-center gap-6">
+    <div className="sticky top-0 z-10 flex min-h-14 w-full items-center border-b border-otl-gray-200 bg-bg-white px-4 py-2 sm:px-8">
+      <div className="flex w-full max-w-[1000px] flex-wrap items-center gap-3 sm:gap-6">
         {/* Search Input */}
-        <div className="flex-1">
+        <div className="min-w-[180px] flex-1">
           <Input
             placeholder="Cari"
             size="medium"
@@ -95,7 +95,7 @@ export function SearchBarDokumenID({
           </Input>
         </div>
         {isPdfLoaded && totalPages > 0 && (
-          <span className="whitespace-nowrap text-base font-medium text-txt-black-500">
+          <span className="whitespace-nowrap text-sm font-medium text-txt-black-500 sm:text-base">
             Page : {currentPage}/{totalPages}
           </span>
         )}
@@ -105,7 +105,7 @@ export function SearchBarDokumenID({
         {/* Navigation Controls */}
         <div className="flex items-center gap-3">
           {displayText && (
-            <span className="whitespace-nowrap text-base font-medium text-txt-black-500">
+            <span className="whitespace-nowrap text-sm font-medium text-txt-black-500 sm:text-base">
               {displayText}
             </span>
           )}
