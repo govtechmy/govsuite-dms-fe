@@ -52,7 +52,8 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     setPdfSearchState((previousSearchState) => {
       if (
         previousSearchState.totalMatches === nextSearchState.totalMatches &&
-        previousSearchState.currentMatchIndex === nextSearchState.currentMatchIndex
+        previousSearchState.currentMatchIndex === nextSearchState.currentMatchIndex &&
+        previousSearchState.isIndexing === nextSearchState.isIndexing
       ) {
         return previousSearchState
       }

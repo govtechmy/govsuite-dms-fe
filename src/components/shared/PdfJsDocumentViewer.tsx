@@ -97,6 +97,7 @@ export default function PdfJsDocumentViewer({
   const [currentMatchIndex, setCurrentMatchIndex] = useState(-1)
   const [pageWidth, setPageWidth] = useState<number | undefined>()
   const [currentPageNumber, setCurrentPageNumber] = useState(1)
+  const [hasIndexingTimedOut, setHasIndexingTimedOut] = useState(false)
   const pageRefs = useRef<Record<number, HTMLDivElement | null>>({})
   // Bumped whenever a page's text layer finishes rendering (marks are
   // injected asynchronously by react-pdf), so the highlight/scroll effect
@@ -244,6 +245,7 @@ export default function PdfJsDocumentViewer({
     setPageTextItems({})
     setTextLayerRenderTick(0)
     setCurrentPageNumber(1)
+    setHasIndexingTimedOut(false)
     pageRefs.current = {}
   }, [fileUrl])
 
@@ -299,7 +301,20 @@ export default function PdfJsDocumentViewer({
     })
   }, [matchesData.totalMatches, navigationRequest])
 
-  const isIndexing = numPages === 0 || Object.keys(pageTextItems).length < numPages
+  const isIndexing =
+    !hasIndexingTimedOut && (numPages === 0 || Object.keys(pageTextItems).length < numPages)
+
+  // Some documents contain pages whose text extraction never resolves, which
+  // would otherwise leave isIndexing true forever. Force-complete indexing
+  // 5 seconds after the document has loaded.
+  useEffect(() => {
+    if (numPages === 0 || !isIndexing) {
+      return
+    }
+
+    const timeoutId = setTimeout(() => setHasIndexingTimedOut(true), 5000)
+    return () => clearTimeout(timeoutId)
+  }, [numPages, isIndexing])
 
   useEffect(() => {
     const nextSearchState: PdfSearchState = {
@@ -415,6 +430,19 @@ export default function PdfJsDocumentViewer({
     })
   }
 
+  const handlePageTextError = (pageNumber: number) => {
+    setPageTextItems((previousPageTextItems) => {
+      if (pageNumber in previousPageTextItems) {
+        return previousPageTextItems
+      }
+
+      return {
+        ...previousPageTextItems,
+        [pageNumber]: [],
+      }
+    })
+  }
+
   const handleDocumentLoadSuccess = (pdf: PDFDocumentProxy) => {
     setNumPages(pdf.numPages)
     onDocumentLoad?.()
@@ -514,6 +542,7 @@ export default function PdfJsDocumentViewer({
                   onGetTextSuccess={(textContent) =>
                     handlePageTextSuccess(pageNumber, textContent as TextLayerSuccessPayload)
                   }
+                  onGetTextError={() => handlePageTextError(pageNumber)}
                   customTextRenderer={customTextRenderer}
                   onRenderTextLayerSuccess={handleTextLayerRenderSuccess}
                 />

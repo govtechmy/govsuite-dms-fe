@@ -70,7 +70,7 @@ export function SearchBarDokumenID({
 
   const displayText = !trimmedKeyword
     ? ''
-    : !isPdfLoaded || (isIndexing && totalMatches === 0)
+    : !isPdfLoaded || isIndexing
       ? 'Dokumen sedang dimuatkan...'
       : totalMatches > 0
         ? `${currentMatchIndex + 1} daripada ${totalMatches} ditemui`
