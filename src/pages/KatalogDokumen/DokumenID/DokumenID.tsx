@@ -38,6 +38,7 @@ export default function DokumenIDPage() {
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
     totalMatches: 0,
     currentMatchIndex: -1,
+    isIndexing: true,
   })
   const [navigationRequest, setNavigationRequest] = useState<PdfSearchNavigationRequest | null>(
     null
@@ -275,6 +276,7 @@ export default function DokumenIDPage() {
     setPdfSearchState({
       totalMatches: 0,
       currentMatchIndex: -1,
+      isIndexing: true,
     })
     setNavigationRequest(null)
     navigationTokenRef.current = 0
@@ -315,6 +317,7 @@ export default function DokumenIDPage() {
             onPreviousMatch={() => queueNavigationRequest('previous')}
             onNextMatch={() => queueNavigationRequest('next')}
             isPdfLoaded={isPdfLoaded}
+            isIndexing={pdfSearchState.isIndexing}
           />
           <DokumenContentID
             pdfUrl={pdfData.url}

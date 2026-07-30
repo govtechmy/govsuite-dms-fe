@@ -9,6 +9,7 @@ interface SearchBarDokumenIDProps {
   onPreviousMatch: () => void
   onNextMatch: () => void
   isPdfLoaded: boolean
+  isIndexing: boolean
 }
 
 export function SearchBarDokumenID({
@@ -19,6 +20,7 @@ export function SearchBarDokumenID({
   onPreviousMatch,
   onNextMatch,
   isPdfLoaded,
+  isIndexing,
 }: SearchBarDokumenIDProps) {
   const trimmedKeyword = searchKeyword.trim()
 
@@ -43,7 +45,7 @@ export function SearchBarDokumenID({
 
   const displayText = !trimmedKeyword
     ? ''
-    : !isPdfLoaded
+    : !isPdfLoaded || (isIndexing && totalMatches === 0)
       ? 'Dokumen sedang dimuatkan...'
       : totalMatches > 0
         ? `${currentMatchIndex + 1} daripada ${totalMatches} ditemui`

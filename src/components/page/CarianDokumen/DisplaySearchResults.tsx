@@ -22,6 +22,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
     totalMatches: 0,
     currentMatchIndex: -1,
+    isIndexing: true,
   })
   const [navigationRequest, setNavigationRequest] = useState<PdfSearchNavigationRequest | null>(
     null
@@ -89,6 +90,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
       setPdfSearchState({
         totalMatches: 0,
         currentMatchIndex: -1,
+        isIndexing: true,
       })
       setNavigationRequest(null)
       navigationTokenRef.current = 0
@@ -150,6 +152,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
           navigationRequest={navigationRequest}
           onSearchStateChange={handleSearchStateChange}
           onDocumentLoad={handleDocumentLoad}
+          isIndexing={pdfSearchState.isIndexing}
         />
         <div className="flex h-full min-h-0 w-[320px] shrink-0 self-stretch flex-col items-center gap-6 border-y py-6 pl-6">
           <RecordResultSearch onLazyLoad={onLazyLoad} />

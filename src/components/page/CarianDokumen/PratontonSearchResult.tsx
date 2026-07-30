@@ -20,6 +20,7 @@ interface PratontonSearchResultProps {
   navigationRequest?: PdfSearchNavigationRequest | null
   onSearchStateChange: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
+  isIndexing: boolean
 }
 
 export default function PratontonSearchResult({
@@ -32,6 +33,7 @@ export default function PratontonSearchResult({
   navigationRequest,
   onSearchStateChange,
   onDocumentLoad,
+  isIndexing,
 }: PratontonSearchResultProps) {
   const navigate = useNavigate()
   const { lang } = useParams()
@@ -133,6 +135,7 @@ export default function PratontonSearchResult({
         onPreviousMatch={onPreviousMatch}
         onNextMatch={onNextMatch}
         isPdfLoaded={isPdfLoaded}
+        isIndexing={isIndexing}
       />
       <div className="h-full min-h-0 w-full overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
         <div className="h-full min-h-0 overflow-auto">

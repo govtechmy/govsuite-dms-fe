@@ -8,6 +8,7 @@ interface SearchInPdfProps {
   onPreviousMatch: () => void
   onNextMatch: () => void
   isPdfLoaded: boolean
+  isIndexing: boolean
 }
 
 export default function SearchInPdf({
@@ -17,6 +18,7 @@ export default function SearchInPdf({
   onPreviousMatch,
   onNextMatch,
   isPdfLoaded,
+  isIndexing,
 }: SearchInPdfProps) {
   const trimmedKeyword = searchKeyword.trim()
 
@@ -30,7 +32,7 @@ export default function SearchInPdf({
 
   const displayText = !trimmedKeyword
     ? ''
-    : !isPdfLoaded
+    : !isPdfLoaded || (isIndexing && totalMatches === 0)
       ? 'Dokumen sedang dimuatkan...'
       : totalMatches > 0
         ? `${currentMatchIndex + 1} daripada ${totalMatches} ditemui`

@@ -33,6 +33,7 @@ export type PdfSearchNavigationRequest = {
 export type PdfSearchState = {
   totalMatches: number
   currentMatchIndex: number
+  isIndexing: boolean
 }
 
 interface PdfJsDocumentViewerProps {
@@ -99,7 +100,6 @@ export default function PdfJsDocumentViewer({
   const lastActiveMatchElementsRef = useRef<HTMLElement[]>([])
   const lastNavigationActionRef = useRef<PdfSearchNavigationRequest['action'] | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const documentReadyNotifiedRef = useRef(false)
 
   const normalizedKeyword = searchKeyword.trim().toLocaleLowerCase()
 
@@ -225,7 +225,6 @@ export default function PdfJsDocumentViewer({
     previousKeywordRef.current = ''
     lastEmittedSearchStateRef.current = null
     lastNavigationActionRef.current = null
-    documentReadyNotifiedRef.current = false
     if (lastActiveMatchElementsRef.current.length > 0) {
       lastActiveMatchElementsRef.current.forEach((element) => {
         element.classList.remove('pdf-search-match-active')
@@ -289,25 +288,29 @@ export default function PdfJsDocumentViewer({
     })
   }, [matchesData.totalMatches, navigationRequest])
 
+  const isIndexing = numPages === 0 || Object.keys(pageTextItems).length < numPages
+
   useEffect(() => {
     const nextSearchState: PdfSearchState = {
       totalMatches: matchesData.totalMatches,
       currentMatchIndex:
         matchesData.totalMatches > 0 && currentMatchIndex >= 0 ? currentMatchIndex : -1,
+      isIndexing,
     }
 
     const previousSearchState = lastEmittedSearchStateRef.current
     if (
       previousSearchState &&
       previousSearchState.totalMatches === nextSearchState.totalMatches &&
-      previousSearchState.currentMatchIndex === nextSearchState.currentMatchIndex
+      previousSearchState.currentMatchIndex === nextSearchState.currentMatchIndex &&
+      previousSearchState.isIndexing === nextSearchState.isIndexing
     ) {
       return
     }
 
     lastEmittedSearchStateRef.current = nextSearchState
     onSearchStateChange?.(nextSearchState)
-  }, [currentMatchIndex, matchesData.totalMatches, onSearchStateChange])
+  }, [currentMatchIndex, matchesData.totalMatches, isIndexing, onSearchStateChange])
 
   useEffect(() => {
     const container = viewportRef.current
@@ -403,22 +406,8 @@ export default function PdfJsDocumentViewer({
 
   const handleDocumentLoadSuccess = (pdf: PDFDocumentProxy) => {
     setNumPages(pdf.numPages)
-  }
-
-  useEffect(() => {
-    if (documentReadyNotifiedRef.current || numPages === 0) {
-      return
-    }
-
-    const hasExtractedAllPages = Object.keys(pageTextItems).length === numPages
-
-    if (!hasExtractedAllPages) {
-      return
-    }
-
-    documentReadyNotifiedRef.current = true
     onDocumentLoad?.()
-  }, [numPages, pageTextItems, onDocumentLoad])
+  }
 
   if (!fileUrl) {
     return (
