@@ -77,7 +77,7 @@ export function SearchBarDokumenID({
         : 'Tiada hasil ditemui'
 
   return (
-    <div className="flex h-14 w-full items-center border-b border-otl-gray-200 bg-bg-white p-8">
+    <div className="sticky top-0 z-10 flex h-14 w-full items-center border-b border-otl-gray-200 bg-bg-white p-8">
       <div className="flex w-full max-w-[1000px] items-center gap-6">
         {/* Search Input */}
         <div className="flex-1">

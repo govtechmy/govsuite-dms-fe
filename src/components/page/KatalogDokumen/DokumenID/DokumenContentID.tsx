@@ -21,17 +21,15 @@ export default function DokumenContentID({
   onPageChange,
 }: DokumenContentIDProps) {
   return (
-    <div className="h-[1200px] overflow-auto">
-      <div className="h-full w-full">
-        <PdfJsDocumentViewer
-          fileUrl={pdfUrl}
-          searchKeyword={searchKeyword}
-          navigationRequest={navigationRequest}
-          onSearchStateChange={onSearchStateChange}
-          onDocumentLoad={onDocumentLoad}
-          onPageChange={onPageChange}
-        />
-      </div>
+    <div className="w-full">
+      <PdfJsDocumentViewer
+        fileUrl={pdfUrl}
+        searchKeyword={searchKeyword}
+        navigationRequest={navigationRequest}
+        onSearchStateChange={onSearchStateChange}
+        onDocumentLoad={onDocumentLoad}
+        onPageChange={onPageChange}
+      />
     </div>
   )
 }

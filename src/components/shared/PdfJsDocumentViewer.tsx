@@ -457,7 +457,7 @@ export default function PdfJsDocumentViewer({
         }
       },
       {
-        root: container,
+        root: null,
         threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
       }
     )
@@ -477,14 +477,14 @@ export default function PdfJsDocumentViewer({
 
   if (!fileUrl) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-bg-white text-body-sm text-txt-black-500">
+      <div className="flex w-full items-center justify-center bg-bg-white py-12 text-body-sm text-txt-black-500">
         Tiada dokumen untuk dipaparkan.
       </div>
     )
   }
 
   return (
-    <div ref={viewportRef} className="h-full w-full overflow-auto p-3">
+    <div ref={viewportRef} className="w-full p-3">
       <Document
         file={fileUrl}
         onLoadSuccess={handleDocumentLoadSuccess}
