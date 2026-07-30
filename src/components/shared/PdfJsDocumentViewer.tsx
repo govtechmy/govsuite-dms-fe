@@ -94,6 +94,10 @@ export default function PdfJsDocumentViewer({
   const [pageTextItems, setPageTextItems] = useState<Record<number, string[]>>({})
   const [currentMatchIndex, setCurrentMatchIndex] = useState(-1)
   const [pageWidth, setPageWidth] = useState<number | undefined>()
+  // Bumped whenever a page's text layer finishes rendering (marks are
+  // injected asynchronously by react-pdf), so the highlight/scroll effect
+  // below can retry once the target <mark> actually exists in the DOM.
+  const [textLayerRenderTick, setTextLayerRenderTick] = useState(0)
   const handledNavigationTokenRef = useRef<number | null>(null)
   const previousKeywordRef = useRef('')
   const lastEmittedSearchStateRef = useRef<PdfSearchState | null>(null)
@@ -234,6 +238,7 @@ export default function PdfJsDocumentViewer({
     setCurrentMatchIndex(-1)
     setNumPages(0)
     setPageTextItems({})
+    setTextLayerRenderTick(0)
   }, [fileUrl])
 
   useEffect(() => {
@@ -350,7 +355,7 @@ export default function PdfJsDocumentViewer({
       behavior: isManualNavigation ? 'smooth' : 'auto',
     })
     lastNavigationActionRef.current = null
-  }, [currentMatchIndex, normalizedKeyword])
+  }, [currentMatchIndex, normalizedKeyword, textLayerRenderTick])
 
   useEffect(() => {
     const container = viewportRef.current
@@ -409,6 +414,10 @@ export default function PdfJsDocumentViewer({
     onDocumentLoad?.()
   }
 
+  const handleTextLayerRenderSuccess = useCallback(() => {
+    setTextLayerRenderTick((previousTick) => previousTick + 1)
+  }, [])
+
   if (!fileUrl) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-bg-white text-body-sm text-txt-black-500">
@@ -445,6 +454,7 @@ export default function PdfJsDocumentViewer({
                     handlePageTextSuccess(pageNumber, textContent as TextLayerSuccessPayload)
                   }
                   customTextRenderer={customTextRenderer}
+                  onRenderTextLayerSuccess={handleTextLayerRenderSuccess}
                 />
               </div>
             )
