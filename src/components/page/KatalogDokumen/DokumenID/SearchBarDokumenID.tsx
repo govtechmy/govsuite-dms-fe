@@ -1,5 +1,6 @@
 import { SearchIcon, ChevronDownIcon, ChevronUpIcon } from '@govtechmy/myds-react/icon'
 import { Input, InputIcon } from '@govtechmy/myds-react/input'
+import { useEffect, useState } from 'react'
 
 interface SearchBarDokumenIDProps {
   searchKeyword: string
@@ -24,8 +25,16 @@ export function SearchBarDokumenID({
 }: SearchBarDokumenIDProps) {
   const trimmedKeyword = searchKeyword.trim()
 
+  // Typing only updates this local draft; the committed searchKeyword (which
+  // triggers the actual PDF search) only advances on Enter.
+  const [draftKeyword, setDraftKeyword] = useState(searchKeyword)
+
+  useEffect(() => {
+    setDraftKeyword(searchKeyword)
+  }, [searchKeyword])
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSearchKeywordChange(e.target.value)
+    setDraftKeyword(e.target.value)
   }
 
   const handlePrevious = () => {
@@ -37,8 +46,20 @@ export function SearchBarDokumenID({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && trimmedKeyword && totalMatches > 0) {
-      e.preventDefault()
+    if (e.key !== 'Enter') {
+      return
+    }
+
+    e.preventDefault()
+
+    const trimmedDraft = draftKeyword.trim()
+
+    if (trimmedDraft !== trimmedKeyword) {
+      onSearchKeywordChange(draftKeyword)
+      return
+    }
+
+    if (trimmedDraft && totalMatches > 0) {
       handleNext()
     }
   }
@@ -59,7 +80,7 @@ export function SearchBarDokumenID({
           <Input
             placeholder="Cari"
             size="medium"
-            value={searchKeyword}
+            value={draftKeyword}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
             disabled={!isPdfLoaded}
