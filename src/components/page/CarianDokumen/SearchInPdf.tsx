@@ -9,6 +9,8 @@ interface SearchInPdfProps {
   onNextMatch: () => void
   isPdfLoaded: boolean
   isIndexing: boolean
+  currentPage: number
+  totalPages: number
 }
 
 export default function SearchInPdf({
@@ -19,6 +21,8 @@ export default function SearchInPdf({
   onNextMatch,
   isPdfLoaded,
   isIndexing,
+  currentPage,
+  totalPages,
 }: SearchInPdfProps) {
   const trimmedKeyword = searchKeyword.trim()
 
@@ -39,10 +43,14 @@ export default function SearchInPdf({
         : 'Tiada hasil ditemui'
 
   return (
-    <div className="flex h-14 w-full items-center border-otl-gray-200 p-8">
+    <div className="flex h-14 w-full items-center border-otl-gray-200 p-2">
       <div className="flex w-full max-w-[1000px] items-center gap-6">
+        {isPdfLoaded && totalPages > 0 && (
+          <span className="whitespace-nowrap text-base font-medium text-txt-black-500">
+            Page : {currentPage}/{totalPages}
+          </span>
+        )}
         <div className="flex-1" />
-
         <div className="flex items-center gap-3">
           {displayText && (
             <span className="whitespace-nowrap text-base font-medium text-txt-black-500">

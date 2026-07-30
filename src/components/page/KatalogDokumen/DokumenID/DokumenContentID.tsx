@@ -9,6 +9,7 @@ interface DokumenContentIDProps {
   navigationRequest?: PdfSearchNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
+  onPageChange?: (currentPage: number, totalPages: number) => void
 }
 
 export default function DokumenContentID({
@@ -17,6 +18,7 @@ export default function DokumenContentID({
   navigationRequest,
   onSearchStateChange,
   onDocumentLoad,
+  onPageChange,
 }: DokumenContentIDProps) {
   return (
     <div className="h-[1200px] overflow-auto">
@@ -27,6 +29,7 @@ export default function DokumenContentID({
           navigationRequest={navigationRequest}
           onSearchStateChange={onSearchStateChange}
           onDocumentLoad={onDocumentLoad}
+          onPageChange={onPageChange}
         />
       </div>
     </div>

@@ -42,6 +42,7 @@ interface PdfJsDocumentViewerProps {
   navigationRequest?: PdfSearchNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
+  onPageChange?: (currentPage: number, totalPages: number) => void
 }
 
 const escapeHtml = (value: string) =>
@@ -89,11 +90,14 @@ export default function PdfJsDocumentViewer({
   navigationRequest,
   onSearchStateChange,
   onDocumentLoad,
+  onPageChange,
 }: PdfJsDocumentViewerProps) {
   const [numPages, setNumPages] = useState(0)
   const [pageTextItems, setPageTextItems] = useState<Record<number, string[]>>({})
   const [currentMatchIndex, setCurrentMatchIndex] = useState(-1)
   const [pageWidth, setPageWidth] = useState<number | undefined>()
+  const [currentPageNumber, setCurrentPageNumber] = useState(1)
+  const pageRefs = useRef<Record<number, HTMLDivElement | null>>({})
   // Bumped whenever a page's text layer finishes rendering (marks are
   // injected asynchronously by react-pdf), so the highlight/scroll effect
   // below can retry once the target <mark> actually exists in the DOM.
@@ -239,6 +243,8 @@ export default function PdfJsDocumentViewer({
     setNumPages(0)
     setPageTextItems({})
     setTextLayerRenderTick(0)
+    setCurrentPageNumber(1)
+    pageRefs.current = {}
   }, [fileUrl])
 
   useEffect(() => {
@@ -418,6 +424,57 @@ export default function PdfJsDocumentViewer({
     setTextLayerRenderTick((previousTick) => previousTick + 1)
   }, [])
 
+  useEffect(() => {
+    const container = viewportRef.current
+
+    if (!container || numPages === 0) {
+      return
+    }
+
+    const visibilityByPage = new Map<number, number>()
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const pageNumber = Number(entry.target.getAttribute('data-page-number'))
+          if (!pageNumber) {
+            return
+          }
+          visibilityByPage.set(pageNumber, entry.intersectionRatio)
+        })
+
+        let mostVisiblePage = 0
+        let highestRatio = 0
+        visibilityByPage.forEach((ratio, pageNumber) => {
+          if (ratio > highestRatio) {
+            highestRatio = ratio
+            mostVisiblePage = pageNumber
+          }
+        })
+
+        if (mostVisiblePage > 0) {
+          setCurrentPageNumber(mostVisiblePage)
+        }
+      },
+      {
+        root: container,
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+      }
+    )
+
+    Object.values(pageRefs.current).forEach((pageElement) => {
+      if (pageElement) {
+        observer.observe(pageElement)
+      }
+    })
+
+    return () => observer.disconnect()
+  }, [numPages, pageWidth])
+
+  useEffect(() => {
+    onPageChange?.(currentPageNumber, numPages)
+  }, [currentPageNumber, numPages, onPageChange])
+
   if (!fileUrl) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-bg-white text-body-sm text-txt-black-500">
@@ -443,6 +500,10 @@ export default function PdfJsDocumentViewer({
             return (
               <div
                 key={pageNumber}
+                ref={(pageElement) => {
+                  pageRefs.current[pageNumber] = pageElement
+                }}
+                data-page-number={pageNumber}
                 className="mx-auto w-fit rounded-md border border-otl-gray-200 bg-bg-white"
               >
                 <Page

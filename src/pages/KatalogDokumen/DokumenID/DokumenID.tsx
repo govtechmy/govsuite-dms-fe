@@ -44,6 +44,8 @@ export default function DokumenIDPage() {
     null
   )
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
 
   const setAvailableUsers = useShareDocumentStore((state) => state.setAvailableUsers)
   const setAvailableUserGroups = useShareDocumentStore((state) => state.setAvailableUserGroups)
@@ -281,7 +283,14 @@ export default function DokumenIDPage() {
     setNavigationRequest(null)
     navigationTokenRef.current = 0
     setIsPdfLoaded(false)
+    setCurrentPage(1)
+    setTotalPages(0)
   }, [DokumenID])
+
+  const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {
+    setCurrentPage(nextCurrentPage)
+    setTotalPages(nextTotalPages)
+  }
 
   const isApprovalProgressIdle = progressApprove === null && progressDisapprove === null
 
@@ -318,6 +327,8 @@ export default function DokumenIDPage() {
             onNextMatch={() => queueNavigationRequest('next')}
             isPdfLoaded={isPdfLoaded}
             isIndexing={pdfSearchState.isIndexing}
+            currentPage={currentPage}
+            totalPages={totalPages}
           />
           <DokumenContentID
             pdfUrl={pdfData.url}
@@ -325,6 +336,7 @@ export default function DokumenIDPage() {
             navigationRequest={navigationRequest}
             onSearchStateChange={setPdfSearchState}
             onDocumentLoad={() => setIsPdfLoaded(true)}
+            onPageChange={handlePageChange}
           />
         </div>
       )}

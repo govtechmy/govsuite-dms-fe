@@ -41,6 +41,8 @@ export default function PratontonSearchResult({
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const [isReferenceCopied, setIsReferenceCopied] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
 
   const currentDocumentTitle = documentRecords.find(
     (documentRecord) => documentRecord.documentId === documentInfo?.documentID
@@ -48,6 +50,8 @@ export default function PratontonSearchResult({
 
   useEffect(() => {
     setIsPdfLoaded(false)
+    setCurrentPage(1)
+    setTotalPages(0)
   }, [documentInfo?.documentID])
 
   useEffect(() => {
@@ -71,6 +75,11 @@ export default function PratontonSearchResult({
   const handleDocumentLoad = () => {
     setIsPdfLoaded(true)
     onDocumentLoad?.()
+  }
+
+  const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {
+    setCurrentPage(nextCurrentPage)
+    setTotalPages(nextTotalPages)
   }
 
   const handleDownloadDokumen = () => {
@@ -113,7 +122,7 @@ export default function PratontonSearchResult({
   }
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-6 border border-otl-gray-200 border-l-0 bg-bg-gray-50 p-6">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col border border-otl-gray-200 border-l-0 bg-bg-gray-50 p-6">
       <div className="flex justify-between items-center">
         <p className="flex-1 text-body-md font-semibold text-txt-black-900">Pratonton</p>
         <Button
@@ -136,6 +145,8 @@ export default function PratontonSearchResult({
         onNextMatch={onNextMatch}
         isPdfLoaded={isPdfLoaded}
         isIndexing={isIndexing}
+        currentPage={currentPage}
+        totalPages={totalPages}
       />
       <div className="h-full min-h-0 w-full overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
         <div className="h-full min-h-0 overflow-auto">
@@ -145,10 +156,11 @@ export default function PratontonSearchResult({
             navigationRequest={navigationRequest}
             onSearchStateChange={onSearchStateChange}
             onDocumentLoad={handleDocumentLoad}
+            onPageChange={handlePageChange}
           />
         </div>
       </div>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center pt-6">
         <Button
           variant="default-outline"
           size="small"

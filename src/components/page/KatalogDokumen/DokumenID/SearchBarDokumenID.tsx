@@ -11,6 +11,8 @@ interface SearchBarDokumenIDProps {
   onNextMatch: () => void
   isPdfLoaded: boolean
   isIndexing: boolean
+  currentPage: number
+  totalPages: number
 }
 
 export function SearchBarDokumenID({
@@ -22,6 +24,8 @@ export function SearchBarDokumenID({
   onNextMatch,
   isPdfLoaded,
   isIndexing,
+  currentPage,
+  totalPages,
 }: SearchBarDokumenIDProps) {
   const trimmedKeyword = searchKeyword.trim()
 
@@ -90,7 +94,11 @@ export function SearchBarDokumenID({
             </InputIcon>
           </Input>
         </div>
-
+        {isPdfLoaded && totalPages > 0 && (
+          <span className="whitespace-nowrap text-base font-medium text-txt-black-500">
+            Page : {currentPage}/{totalPages}
+          </span>
+        )}
         {/* Spacer */}
         <div className="flex-1" />
 
@@ -110,6 +118,7 @@ export function SearchBarDokumenID({
           >
             <ChevronUpIcon className="size-6" />
           </button>
+
           <button
             type="button"
             className="flex size-6 items-center justify-center text-txt-black-700 hover:text-txt-black-900 disabled:cursor-not-allowed disabled:opacity-50"
