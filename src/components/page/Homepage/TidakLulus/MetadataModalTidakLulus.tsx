@@ -24,6 +24,7 @@ import normalizeWord from '@/utils/NormalizeWord'
 import { formatISODateString } from '@/utils/formatDate'
 import formatRejectReason from '@/utils/formatRejectReason'
 import removeLainLain from '@/utils/removeLainLain'
+import { useNavigate, useParams } from 'react-router-dom'
 
 type MetadataModalTidakLulusProps = {
   open: boolean
@@ -36,6 +37,9 @@ export default function MetadataModalTidakLulus({
   onOpenChange,
   selectedDocument,
 }: MetadataModalTidakLulusProps) {
+  const navigate = useNavigate()
+  const { lang } = useParams()
+  const activeLang = lang ?? localStorage.getItem('lang') ?? 'ms'
   const recordId = selectedDocument?.recordId
   const {
     progressResubmit,
@@ -78,6 +82,11 @@ export default function MetadataModalTidakLulus({
 
   const handleCloseProgress = () => {
     closeThenResetState(reloadIfActionSucceeded)
+  }
+
+  const handleEditDokumenClick = () => {
+    if (!recordId) return
+    navigate(`/${activeLang}/muatnaik-dokumen/${recordId}`)
   }
 
   return (
@@ -177,6 +186,8 @@ export default function MetadataModalTidakLulus({
                 successTitle="Dokumen Berjaya Dihantar Semula"
                 successDescription="Dokumen telah dihantar semula untuk semakan seterusnya."
                 successButtonText="Tutup"
+                successButtonText2="Edit Dokumen Anda!"
+                successButtonClassName2="bg-bg-white border border-success-700/20 hover:border-success-700/10 text-txt-success shadow-button hover:text-txt-success hover:bg-bg-success-50 disabled:bg-bg-white-disabled disabled:text-txt-success-disabled disabled:border-transparent"
                 errorTitle="Dokumen Gagal Dihantar Semula"
                 errorDescription={
                   <div className="flex flex-col gap-2 items-center justify-center">
@@ -189,6 +200,7 @@ export default function MetadataModalTidakLulus({
                 }
                 errorButtonText="Tutup"
                 onSuccessClick={handleCloseProgress}
+                onSuccessClick2={handleEditDokumenClick}
                 onErrorClick={handleCloseProgress}
               />
             </div>

@@ -14,6 +14,7 @@ interface ProgressResultProps {
   buttonDisplay2?: boolean
   buttonText2?: string
   onButtonClick2?: () => void
+  buttonClassName2?: string
 }
 
 export type ProgressState = 'loading' | 'success' | 'error' | 'errorUploading' | null
@@ -31,7 +32,12 @@ export function ProgressResult(props: ProgressResultProps) {
           </Button>
         )}
         {props.buttonDisplay2 && props.buttonText2 && (
-          <Button variant="default-outline" size="small" onClick={props.onButtonClick2}>
+          <Button
+            variant="default-outline"
+            size="small"
+            className={props.buttonClassName2}
+            onClick={props.onButtonClick2}
+          >
             {props.buttonText2}
           </Button>
         )}
@@ -55,6 +61,7 @@ interface ProgressResultCheckerProps {
   successDescription?: ReactNode
   successButtonText?: string
   successButtonText2?: string
+  successButtonClassName2?: string
   errorTitle: string
   errorDescription: ReactNode
   errorButtonText: string
@@ -70,6 +77,7 @@ export default function ProgressResultChecker({
   successDescription,
   successButtonText,
   successButtonText2,
+  successButtonClassName2,
   navigateSuccess = '/ms',
   navigateSuccess2 = '/ms',
   onSuccessClick,
@@ -99,6 +107,7 @@ export default function ProgressResultChecker({
           description={successDescription}
           buttonText={successButtonText}
           buttonText2={successButtonText2}
+          buttonClassName2={successButtonClassName2}
           buttonDisplay={true}
           buttonDisplay2={true}
           onButtonClick={onSuccessClick ?? (() => navigate(`${navigateSuccess}`))}
