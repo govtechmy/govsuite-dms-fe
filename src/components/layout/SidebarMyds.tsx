@@ -180,7 +180,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
               variant="primary"
               size="small"
               mode="default"
-              className="h-auto shrink-0 flex-col gap-0 whitespace-normal py-1 text-center leading-none"
+              className="h-auto shrink-0 flex-col gap-0 whitespace-normal py-1 text-center leading-none text-[10px]/[12px] p-[4px]"
             >
               Akan
               <br />
