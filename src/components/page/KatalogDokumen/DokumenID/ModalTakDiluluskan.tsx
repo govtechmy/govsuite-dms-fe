@@ -65,7 +65,7 @@ export default function ModalTakDiluluskan({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogBody className="lg:min-w-[750px] lg:min-h-[750px]">
+      <DialogBody className="lg:min-w-[400px] lg:min-h-[400px]">
         <DialogHeader className="pb-4.5">
           <DialogTitle>Ulasan Tidak Meluluskan</DialogTitle>
         </DialogHeader>
