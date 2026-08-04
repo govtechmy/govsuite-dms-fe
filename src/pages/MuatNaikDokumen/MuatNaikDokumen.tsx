@@ -67,6 +67,8 @@ export default function MuatNaikDokumenPage() {
 
   // In-flight guard to prevent duplicate save submissions
   const isSavingRef = useRef(false)
+  // Wraps the Pratonton Rekod section so it can be scrolled into view after a successful draft save
+  const previewSectionRef = useRef<HTMLDivElement>(null)
 
   // Zustand stores for folder and upload context
   const { folderSelection, resetFolderSelection, setFolderSelection } = useFolderLocationStore()
@@ -503,11 +505,14 @@ export default function MuatNaikDokumenPage() {
               savedRecordDate={savedRecordDate}
               setSavedRecordDate={setSavedRecordDate}
               version={version}
+              previewSectionRef={previewSectionRef}
             />
           </RightSidePageLayoutWrapper>
           {selectedProfile && savedRecordDate && (
             <RightSidePageLayoutWrapper className="flex flex-col gap-6 w-full lg:pr-3">
-              <PratontonRekod docInfo={allInfoDocs} onSubmit={handleSubmitDokumen} />
+              <div ref={previewSectionRef}>
+                <PratontonRekod docInfo={allInfoDocs} onSubmit={handleSubmitDokumen} />
+              </div>
             </RightSidePageLayoutWrapper>
           )}
         </div>

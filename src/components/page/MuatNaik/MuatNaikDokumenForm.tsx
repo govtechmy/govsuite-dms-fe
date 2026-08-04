@@ -1,6 +1,6 @@
 import { Button } from '@govtechmy/myds-react/button'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useUploadStore } from '@/store/UploadStore'
@@ -81,6 +81,8 @@ interface MuatNaikDokumenFormProps {
   lastUploadedFile?: FileInfo | null
   draftStatus?: boolean
   newRecordId?: string
+  /** Wraps the Pratonton Rekod section; scrolled into view after a successful draft save. */
+  previewSectionRef?: React.RefObject<HTMLDivElement | null>
 }
 
 export default function MuatNaikDokumenForm({
@@ -110,6 +112,7 @@ export default function MuatNaikDokumenForm({
   lastUploadedFile,
   draftStatus,
   newRecordId,
+  previewSectionRef,
 }: MuatNaikDokumenFormProps) {
   const fullName = useAuthStore((state) => state.user?.fullName ?? '')
   const normalizedFullName = fullName.trim()
@@ -132,6 +135,17 @@ export default function MuatNaikDokumenForm({
     setPreviewDocumentInfoData,
   } = useUploadDraftStore()
   const { selectedFile, setSelectedFile } = useUploadStore()
+  const draftFeedbackRef = useRef<HTMLDivElement>(null)
+
+  // Waits for the feedback callout to be committed to the DOM (state update
+  // from onSaveDraft) before scrolling it into view, so it isn't missed.
+  const scrollToDraftFeedback = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        draftFeedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+    })
+  }
 
   const profileDokumenOptions = dropdownJenisDokumen.map((item) => item.documentProfile)
   const creatorMetadataField = useMemo(
@@ -484,10 +498,20 @@ export default function MuatNaikDokumenForm({
       await onSaveDraft(previewInfo)
       // Only set preview on successful save
       onPreview(previewInfo)
+      // Scroll down to reveal the success callout once it has rendered.
+      scrollToDraftFeedback()
+      // Give the user a moment to read it, then bring the Pratonton Rekod
+      // section into view. Its actual position (beside the form on desktop,
+      // below it on mobile) determines whether this scrolls up or down.
+      setTimeout(() => {
+        previewSectionRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 1800)
     } catch (error) {
       // Error is handled by parent component's draft feedback state
       // Do not proceed with preview
       console.error('Draft save failed, preview not shown:', error)
+      // Scroll down to reveal the error callout once it has rendered.
+      scrollToDraftFeedback()
     }
   }
 
@@ -756,15 +780,17 @@ export default function MuatNaikDokumenForm({
               variant="default-outline"
               disabled={isActionButtonDisabled}
               onClick={handleSaveDraftClick}
+              className="hidden"
             >
               Simpan Draf
             </Button>
+            <div></div>
             <Button
               variant="primary-outline"
               disabled={isActionButtonDisabled}
               onClick={handlePreviewClick}
             >
-              Muat Naik Pratonton
+              Simpan Draf
             </Button>
           </div>
           {titleFallbackNotice && (
@@ -774,19 +800,21 @@ export default function MuatNaikDokumenForm({
             </Callout>
           )}
           {draftFeedback && (
-            <Callout variant={draftFeedback.status === 'success' ? 'success' : 'danger'}>
-              <CalloutTitle>
-                {draftFeedback.status === 'success' ? 'Success' : 'Error'}
-              </CalloutTitle>
-              <CalloutContent>
-                <span className="flex flex-col gap-1">
-                  <span>{draftFeedback.message}</span>
-                  {draftFeedback.errorDetail && (
-                    <span className="text-body-sm">{draftFeedback.errorDetail}</span>
-                  )}
-                </span>
-              </CalloutContent>
-            </Callout>
+            <div ref={draftFeedbackRef}>
+              <Callout variant={draftFeedback.status === 'success' ? 'success' : 'danger'}>
+                <CalloutTitle>
+                  {draftFeedback.status === 'success' ? 'Success' : 'Error'}
+                </CalloutTitle>
+                <CalloutContent>
+                  <span className="flex flex-col gap-1">
+                    <span>{draftFeedback.message}</span>
+                    {draftFeedback.errorDetail && (
+                      <span className="text-body-sm">{draftFeedback.errorDetail}</span>
+                    )}
+                  </span>
+                </CalloutContent>
+              </Callout>
+            </div>
           )}
         </>
       )}
