@@ -189,7 +189,7 @@ export const getSearchKatalogItems = async ({
   }
 
   if (jenisDokumen) {
-    params.set('jenisDokumen', jenisDokumen)
+    params.set('documentProfile', jenisDokumen)
   }
 
   if (dateFrom) {
@@ -276,7 +276,7 @@ export const getSearchRecordCarianDokumen = async ({
   }
 
   if (jenisDokumen) {
-    params.set('jenisDokumen', jenisDokumen)
+    params.set('documentProfile', jenisDokumen)
   }
 
   if (dateFrom) {
