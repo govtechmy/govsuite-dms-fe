@@ -33,6 +33,8 @@ import Excerpts from '@/components/shared/Excerpts'
 import { clx } from '@govtechmy/myds-react/utils'
 import TambahFolderModal from './TambahFolderModal'
 import FolderGrid, { type Folder } from '@/components/shared/FolderGrid'
+import { useAuthStore } from '@/store/AuthStore'
+import { resolveUserRoles } from '@/models/userRoles'
 
 interface KatalogDisplayProps {
   catalogBase: CatalogBaseItem[]
@@ -90,6 +92,9 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
   const [loadingFolders, setLoadingFolders] = useState<Record<string, boolean>>({})
   const appendRequestInFlightRef = useRef<Record<string, boolean>>({})
   const latestRequestTokenRef = useRef<Record<string, number>>({})
+
+  const userRoles = useAuthStore((state) => state.user?.roles)
+  const isPengurus = resolveUserRoles(userRoles).includes('PENGURUS_REKOD')
 
   const unitsById = catalogBase.reduce<Record<string, CatalogBaseItem>>((acc, unit) => {
     acc[unit.id] = unit
@@ -509,14 +514,18 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                     onAddFolder={handleAddFolder}
                     existingFolders={existingFolderNames}
                     trigger={
-                      <Button
-                        variant="default-outline"
-                        size="small"
-                        onClick={() => setDialogOpenUnit(unit.id)}
-                      >
-                        <PlusIcon className="size-4" />
-                        Tambah Folder
-                      </Button>
+                      <div>
+                        {isPengurus && (
+                          <Button
+                            variant="default-outline"
+                            size="small"
+                            onClick={() => setDialogOpenUnit(unit.id)}
+                          >
+                            <PlusIcon className="size-4" />
+                            Tambah Folder
+                          </Button>
+                        )}
+                      </div>
                     }
                   />
 
