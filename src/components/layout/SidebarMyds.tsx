@@ -10,6 +10,7 @@ import {
   SettingIcon,
   UploadIcon,
 } from '@govtechmy/myds-react/icon'
+import { Tag } from '@govtechmy/myds-react/tag'
 import React from 'react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -26,6 +27,7 @@ interface MenuItem {
   path: string
   activeStates: string[]
   roles: string[]
+  inProgress?: boolean
 }
 
 const menuItems: Omit<MenuItem, 'roles'>[] = [
@@ -63,6 +65,7 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
     icon: HeartIcon,
     path: 'kegemaran',
     activeStates: ['kegemaran'],
+    inProgress: true,
   },
   {
     id: 'pengurusan',
@@ -70,6 +73,7 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
     icon: SettingIcon,
     path: 'pengurusan',
     activeStates: ['pengurusan'],
+    inProgress: true,
   },
   {
     id: 'log-aktiviti',
@@ -77,6 +81,7 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
     icon: DocumentFilledIcon,
     path: 'log-aktiviti',
     activeStates: ['log-aktiviti'],
+    inProgress: true,
   },
   {
     id: 'bantuan',
@@ -165,11 +170,23 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
       >
         <IconComponent className="size-5 flex-shrink-0" />
         <span
-          className={`whitespace-nowrap transition-opacity duration-300 overflow-hidden ${
+          className={`flex min-w-0 items-center gap-2 transition-opacity duration-300 overflow-hidden ${
             isCollapsed ? 'w-0 opacity-0 ml-0' : 'opacity-100 ml-2'
           }`}
         >
-          {item.label}
+          <span className="truncate">{item.label}</span>
+          {item.inProgress && (
+            <Tag
+              variant="primary"
+              size="small"
+              mode="default"
+              className="h-auto shrink-0 flex-col gap-0 whitespace-normal py-1 text-center leading-none"
+            >
+              Akan
+              <br />
+              Datang
+            </Tag>
+          )}
         </span>
       </div>
     )
