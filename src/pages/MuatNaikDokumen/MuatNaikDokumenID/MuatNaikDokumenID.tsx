@@ -37,6 +37,7 @@ import {
   type MetadataValueMap,
 } from '@/utils/metadataPrefill'
 import type { FileInfo } from '@/components/shared/UploadDocument'
+import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 
 type DraftFeedback = {
   status: 'success' | 'error'
@@ -76,6 +77,8 @@ export default function MuatNaikDokumenIDPage() {
   const [lastUploadedFile, setLastUploadedFile] = useState<FileInfo | null>(null)
   const [draftStatus, setDraftStatus] = useState<boolean>(false)
   const [newRecordId, setNewRecordId] = useState<string>('')
+  const [recordLoadError, setRecordLoadError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState<boolean>(false)
 
   // In-flight guard to prevent duplicate save submissions
   const isSavingRef = useRef(false)
@@ -128,6 +131,8 @@ export default function MuatNaikDokumenIDPage() {
     setRecordMetadataValues({})
     setLastUploadedFile(null)
     setNewRecordId('')
+    setDraftStatus(false)
+    setRecordLoadError(null)
 
     // Clear global store states
     setSelectedFile(null)
@@ -247,6 +252,7 @@ export default function MuatNaikDokumenIDPage() {
     }
 
     isSavingRef.current = true
+    setIsSaving(true)
 
     // Only set full-screen progress for final submission, not draft
     if (status === 'DALAM_SEMAKAN') {
@@ -290,6 +296,7 @@ export default function MuatNaikDokumenIDPage() {
       throw error // Re-throw so caller can handle flow control
     } finally {
       isSavingRef.current = false
+      setIsSaving(false)
     }
   }
 
@@ -413,12 +420,19 @@ export default function MuatNaikDokumenIDPage() {
     const fetchRecordInformation = async () => {
       try {
         if (MuatNaikDokumenID) {
+          setRecordLoadError(null)
           const fullRecordInformation = await getRecordInfo(MuatNaikDokumenID)
           const fullRecordInformationData = fullRecordInformation.data
 
-          if (fullRecordInformationData) {
-            setDraftStatus(true)
+          if (!fullRecordInformationData) {
+            console.error('Record information not found for ID:', MuatNaikDokumenID)
+            setRecordLoadError(
+              'Dokumen draf tidak ditemui atau tiada capaian. Sila kembali ke senarai draf dan cuba lagi.'
+            )
+            return
           }
+
+          setDraftStatus(true)
 
           // Set Lokasi Folder using record information
           if (fullRecordInformationData.folderId && fullRecordInformationData.filePath) {
@@ -516,6 +530,9 @@ export default function MuatNaikDokumenIDPage() {
         }
       } catch (err) {
         console.error('Error fetching record information:', err)
+        setRecordLoadError(
+          'Gagal memuatkan maklumat draf. Sila semak sambungan anda dan cuba lagi.'
+        )
       }
     }
 
@@ -623,6 +640,12 @@ export default function MuatNaikDokumenIDPage() {
               selectedProfile && savedRecordDate && 'lg:shadow-card lg:pr-6'
             )}
           >
+            {recordLoadError && (
+              <Callout variant="danger">
+                <CalloutTitle>Ralat Memuatkan Draf</CalloutTitle>
+                <CalloutContent>{recordLoadError}</CalloutContent>
+              </Callout>
+            )}
             <MuatNaikDokumenForm
               dropdownJenisDokumen={dropdownJenisDokumen}
               acceptedFileTypes={acceptedFileTypes}
@@ -640,7 +663,7 @@ export default function MuatNaikDokumenIDPage() {
               retentionPeriod={retentionPeriod}
               onUploadToS3={handleUploadToS3}
               uploadPercentage={uploadPercentage}
-              isSaving={isSavingRef.current}
+              isSaving={isSaving}
               draftFeedback={draftFeedback}
               onDraftFeedbackDismiss={() => setDraftFeedback(null)}
               titleFallbackNotice={titleFallbackNotice}
