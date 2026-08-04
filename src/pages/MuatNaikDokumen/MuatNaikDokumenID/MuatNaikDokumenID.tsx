@@ -683,7 +683,7 @@ export default function MuatNaikDokumenIDPage() {
           </RightSidePageLayoutWrapper>
           {selectedProfile && savedRecordDate && (
             <RightSidePageLayoutWrapper className="flex flex-col gap-6 w-full lg:pr-3">
-              <div ref={previewSectionRef}>
+              <div ref={previewSectionRef} className="h-full">
                 <PratontonRekod docInfo={allInfoDocs} onSubmit={handleSubmitDokumen} />
               </div>
             </RightSidePageLayoutWrapper>
