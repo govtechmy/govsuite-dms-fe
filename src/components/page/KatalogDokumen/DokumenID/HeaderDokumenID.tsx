@@ -9,6 +9,8 @@ import ModalTakDiluluskan from './ModalTakDiluluskan'
 import type { MetadataDocument } from '@/services/metadata.svc'
 import DialogMetadataInfo from './DialogMetadataInfo'
 import DialogKongsi from './DialogKongsi'
+import { useAuthStore } from '@/store/AuthStore'
+import { resolveUserRoles } from '@/models/userRoles'
 
 // rework metadata info once finalized
 interface HeaderDokumenIDProps {
@@ -48,6 +50,9 @@ export function HeaderDokumenID({
 }: HeaderDokumenIDProps) {
   const [isTakDiluluskanOpen, setIsTakDiluluskanOpen] = useState(false)
 
+  const userRoles = useAuthStore((state) => state.user?.roles)
+  const isPelulus = resolveUserRoles(userRoles).includes('PELULUS')
+
   const handleCloseTakDiluluskanModal = () => {
     setIsTakDiluluskanOpen(false)
   }
@@ -66,7 +71,7 @@ export function HeaderDokumenID({
       <div className="relative z-10 flex w-full max-w-[1000px] flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <BreadcrumbBuilder path={path} />
-          {status === 'DALAM_SEMAKAN' && (
+          {isPelulus && status === 'DALAM_SEMAKAN' && (
             <div className="flex flex-wrap gap-1">
               <Button variant="danger-fill" onClick={() => setIsTakDiluluskanOpen(true)}>
                 Tidak Diluluskan
