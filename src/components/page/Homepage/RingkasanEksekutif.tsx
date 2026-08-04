@@ -54,7 +54,7 @@ export default function RingkasanEksekutif({
     <div>
       <h1 className="text-heading-3xs font-heading font-semibold">Selamat Datang,</h1>
       <p className="text-body-md font-normal text-XL-400 mb-4">{fullName}</p>
-      <div className="text-body-md font-semibold text-txt-black-900">Ringkasan Eksekutif</div>
+      <div className="text-body-md font-semibold text-txt-black-900">Paparan Utama Saya</div>
 
       <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
         <div className="text-body-sm font-normal text-txt-black-500 pt-1 pb-3">
