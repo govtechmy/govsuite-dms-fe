@@ -638,7 +638,9 @@ export default function MuatNaikDokumenIDPage() {
   return (
     <>
       {submissionProgress === null && (
-        <div className={clx('grid ', selectedProfile && savedRecordDate && 'lg:grid-cols-2')}>
+        <div
+          className={clx('grid ', selectedProfile && savedRecordDate && 'lg:grid-cols-[7fr_3fr]')}
+        >
           <RightSidePageLayoutWrapper
             className={clx(
               'flex flex-col gap-6 w-full ',
