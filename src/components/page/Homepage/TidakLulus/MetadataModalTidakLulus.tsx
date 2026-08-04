@@ -61,13 +61,15 @@ export default function MetadataModalTidakLulus({
     })
   }
 
+  const reloadIfActionSucceeded = () => {
+    if (progressDelete === 'success' || progressResubmit === 'success') {
+      window.location.reload()
+    }
+  }
+
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      closeThenResetState(() => {
-        if (progressDelete === 'success') {
-          window.location.reload()
-        }
-      })
+      closeThenResetState(reloadIfActionSucceeded)
       return
     }
 
@@ -75,7 +77,7 @@ export default function MetadataModalTidakLulus({
   }
 
   const handleCloseProgress = () => {
-    closeThenResetState()
+    closeThenResetState(reloadIfActionSucceeded)
   }
 
   return (
