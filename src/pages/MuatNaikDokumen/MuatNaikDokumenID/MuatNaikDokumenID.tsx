@@ -17,7 +17,7 @@ import {
   uploadFileToPresignedUrl,
   type MetadataField,
   type PresignUploadResponse,
-  saveOrUpdateUploadedRecord,
+  updateUploadedRecord,
   type SaveUploadRecordRequest,
   getProfileDocumentConfig,
 } from '@/services/upload.svc'
@@ -170,6 +170,11 @@ export default function MuatNaikDokumenIDPage() {
     if (!previewInfo.tahapKeselamatan) {
       throw new Error('Missing accessLevel - please select security level')
     }
+    if (!mongoDbRecordId.trim()) {
+      throw new Error(
+        'Missing document reference - draf tidak dimuat dengan betul, sila muat semula halaman'
+      )
+    }
 
     const recordDate = convertDdMmYyToIso(savedRecordDate) ?? new Date().toISOString()
     const year = new Date(recordDate).getUTCFullYear()
@@ -210,7 +215,7 @@ export default function MuatNaikDokumenIDPage() {
 
     const payload: SaveUploadRecordRequest = {
       title,
-      recordId: newRecordId ? newRecordId : (MuatNaikDokumenID ?? ''),
+      recordId: MuatNaikDokumenID ?? '',
       fileName,
       fileType,
       fileExtension,
@@ -269,12 +274,10 @@ export default function MuatNaikDokumenIDPage() {
         setTitleFallbackNotice('Metadata TAJUK tidak ditemui. Nama fail digunakan sebagai tajuk.')
       }
 
-      const result = await saveOrUpdateUploadedRecord(payload, mongoDbRecordId)
-
-      // Persist MongoDB ID from backend response for future PUT operations
-      if (result.id) {
-        setMongoDbRecordId(result.id)
-      }
+      // mongoDbRecordId stays pinned to the original record loaded on page mount;
+      // the save response's id is not adopted, since a file replacement can cause
+      // the backend to delete and regenerate the record with a different id.
+      await updateUploadedRecord(payload, mongoDbRecordId)
 
       if (status === 'DALAM_SEMAKAN') {
         setSubmissionProgress('success')
