@@ -141,7 +141,7 @@ export default function AppRoutes() {
             <Route path=":MuatNaikDokumenID" element={<MuatNaikDokumenIDPage />} />
           </Route>
           <Route
-            path="carian-dokumen"
+            path="carian-kandungan"
             element={
               <ProtectedRoute routeKey="carian-dokumen">
                 <CarianDokumenPage />

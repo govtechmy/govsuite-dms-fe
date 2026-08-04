@@ -52,10 +52,10 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
   },
   {
     id: 'carian-dokumen',
-    label: 'Carian Dokumen',
+    label: 'Carian Kandungan',
     icon: SearchIcon,
-    path: 'carian-dokumen',
-    activeStates: ['carian-dokumen'],
+    path: 'carian-kandungan',
+    activeStates: ['carian-kandungan'],
   },
   {
     id: 'kegemaran',

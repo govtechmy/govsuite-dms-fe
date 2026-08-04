@@ -255,7 +255,7 @@ export default function CarianDokumenPage() {
   return (
     <div className="flex flex-col gap-6 w-full h-full">
       <RightSidePageLayoutWrapper className="pb-0 flex flex-col gap-6">
-        <MainHeading>Carian Dokumen</MainHeading>
+        <MainHeading>Carian Kandungan</MainHeading>
         <div className="flex flex-col gap-3">
           <SearchBarCarianDokumen />
           <SelectCarianDokumenWithStore />
