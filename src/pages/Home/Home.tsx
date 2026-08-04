@@ -1,6 +1,6 @@
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import AktivitiTerkini from '@/components/page/Homepage/AktivitiTerkini'
-import KategoriMesyuarat from '@/components/page/Homepage/KategoriMesyuarat'
+// import KategoriMesyuarat from '@/components/page/Homepage/KategoriMesyuarat'
 import RingkasanEksekutif from '@/components/page/Homepage/RingkasanEksekutif'
 import TrendKekerapanDokumen from '@/components/page/Homepage/TrendKekerapanDokumen'
 // import BubbleChart from '@/components/shared/BubbleChart'
@@ -60,7 +60,7 @@ export default function HomePage() {
   const [trendKekerapanByUnit, setTrendKekerapanByUnit] = useState<
     Record<string, DocumentProfileTrend[]>
   >({})
-  const [meetingCategoriesStore, setMeetingCategoriesStore] = useState<MeetingCategory[]>([])
+  const [, setMeetingCategoriesStore] = useState<MeetingCategory[]>([])
   const [latestActivitiesStore, setLatestActivitiesStore] = useState<LatestActivity[]>([])
   const [selectedRingkasanYear, setSelectedRingkasanYear] = useState(RINGKASAN_ALL_VALUE)
   const [ringkasanYearRange, setRingkasanYearRange] = useState<RingkasanYearRange>(
@@ -158,7 +158,7 @@ export default function HomePage() {
     value: item.count,
   }))
   return (
-    <>
+    <div className="flex h-full flex-col">
       <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
         <RingkasanEksekutif
           yearOptions={ringkasanYearOptions}
@@ -175,14 +175,14 @@ export default function HomePage() {
           data={trendChartData}
         />
       </RightSidePageLayoutWrapper>
-      <div className="grid grid-cols-2 max-[840px]:grid-cols-1 divide-x-[1px] max-[840px]:divide-x-0 max-[840px]:divide-y-[1px] divide-otl-gray-200 border-b border-b-otl-gray-200">
-        <KategoriMesyuarat data={meetingCategoriesStore} />
+      <div className="grid flex-1 grid-cols-1 border-b border-b-otl-gray-200">
+        {/* <KategoriMesyuarat data={meetingCategoriesStore} /> */}
         <AktivitiTerkini data={latestActivitiesStore} />
       </div>
       {/* Next Phase */}
       {/* <RightSidePageLayoutWrapper className="border-b border-otl-gray-200">
         <BubbleChart data={dataBubble} className="h-[700px] w-full" />
       </RightSidePageLayoutWrapper> */}
-    </>
+    </div>
   )
 }
