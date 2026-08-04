@@ -447,7 +447,7 @@ export default function MuatNaikDokumenPage() {
     fetchProfileDocumentConfig()
   }, [selectedProfileId])
 
-  const acceptedFileTypes = '.docx,.pdf'
+  const acceptedFileTypes = '.pdf'
 
   const handleUnitChange = (unitCode: string) => {
     setSelectedUnitsFromDropdown(unitCode)
