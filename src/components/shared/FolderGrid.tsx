@@ -1,4 +1,4 @@
-import BookmarkIcon from '@/assets/Icons/Bookmark'
+// import BookmarkIcon from '@/assets/Icons/Bookmark'
 import folderClose from '@/assets/png/Folder_close.png'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 
@@ -70,14 +70,14 @@ export default function FolderGrid({
                     className="h-16 w-[84px] shrink-0 object-contain"
                   />
 
-                  {folder.value !== undefined && (
+                  {/* {folder.value !== undefined && (
                     <div className="absolute right-[13px] top-[calc(50%+13px)] flex -translate-y-1/2 items-center justify-center gap-0.5 rounded-md bg-primary-900 px-1.5 py-0.5">
                       <BookmarkIcon className="size-3.5 text-white" />
                       <span className="font-body text-body-sm font-medium leading-6 text-white">
                         {folder.value}
                       </span>
                     </div>
-                  )}
+                  )} */}
                 </>
               )}
             </div>
