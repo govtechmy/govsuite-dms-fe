@@ -293,7 +293,7 @@ export default function MuatNaikDokumenPage() {
       fileName: file.name,
       fileType: file.type,
       fileExtension,
-      fileSize: parseFloat((file.size / 1048576).toFixed(1)),
+      fileSize: parseFloat((file.size / 1048576).toFixed(5)),
       recordConfig: selectedProfileDetail.definitionGroupId,
       recordDate,
     }
