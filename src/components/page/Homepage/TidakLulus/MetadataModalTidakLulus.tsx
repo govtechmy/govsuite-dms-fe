@@ -171,7 +171,7 @@ export default function MetadataModalTidakLulus({
                 Hapus Dokumen
               </Button>
               <Button variant="primary-fill" onClick={handleResubmitClick}>
-                Hantar Semula
+                Kemaskini Dokumen
               </Button>
             </DialogFooter>
           </>
