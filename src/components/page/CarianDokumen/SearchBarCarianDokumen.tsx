@@ -8,7 +8,7 @@ import {
   SearchBarHint,
 } from '@govtechmy/myds-react/search-bar'
 import { Pill } from '@govtechmy/myds-react/pill'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { clx } from '@govtechmy/myds-react/utils'
 import { useSearchStore } from '@/store/SearchStore'
@@ -27,6 +27,7 @@ export default function SearchBarCarianDokumen({ className }: SearchBarCarianDok
   const [hasFocus, setHasFocus] = useState(false)
   const [search, setSearch] = useState(searchParams.get('search') || '')
   const hasSearch = search.length > 0
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const clearSearchAndFilters = (params: URLSearchParams) => {
     params.delete('search')
@@ -42,6 +43,26 @@ export default function SearchBarCarianDokumen({ className }: SearchBarCarianDok
   useEffect(() => {
     setSearch(searchParams.get('search') || '')
   }, [searchParams])
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+
+      const activeElement = document.activeElement
+      const isTypingInField =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        (activeElement instanceof HTMLElement && activeElement.isContentEditable)
+
+      if (isTypingInField) return
+
+      e.preventDefault()
+      inputRef.current?.focus()
+    }
+
+    document.addEventListener('keydown', handleGlobalKeyDown)
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
 
   const handleSearch = () => {
     const nextSearch = search.trim()
@@ -86,6 +107,7 @@ export default function SearchBarCarianDokumen({ className }: SearchBarCarianDok
       <div className="flex flex-col gap-1">
         <SearchBarInputContainer>
           <SearchBarInput
+            ref={inputRef}
             placeholder="Carian melalui kata kunci"
             value={search}
             onValueChange={setSearch}

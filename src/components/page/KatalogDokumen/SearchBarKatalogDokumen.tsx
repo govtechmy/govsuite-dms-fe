@@ -8,7 +8,7 @@ import {
   SearchBarHint,
 } from '@govtechmy/myds-react/search-bar'
 import { Pill } from '@govtechmy/myds-react/pill'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export default function SearchBarKatalogDokumen() {
@@ -17,6 +17,7 @@ export default function SearchBarKatalogDokumen() {
   const [hasFocus, setHasFocus] = useState(false)
   const [query, setQuery] = useState(searchParams.get('search') || '')
   // const hasQuery = query.length > 0
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const clearSearchAndFilters = (params: URLSearchParams) => {
     params.delete('search')
@@ -31,6 +32,26 @@ export default function SearchBarKatalogDokumen() {
   useEffect(() => {
     setQuery(searchParams.get('search') || '')
   }, [searchParams])
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+
+      const activeElement = document.activeElement
+      const isTypingInField =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        (activeElement instanceof HTMLElement && activeElement.isContentEditable)
+
+      if (isTypingInField) return
+
+      e.preventDefault()
+      inputRef.current?.focus()
+    }
+
+    document.addEventListener('keydown', handleGlobalKeyDown)
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
 
   const handleSearch = () => {
     const nextQuery = query.trim()
@@ -70,6 +91,7 @@ export default function SearchBarKatalogDokumen() {
     >
       <SearchBarInputContainer>
         <SearchBarInput
+          ref={inputRef}
           placeholder="Carian nama dokumen"
           value={query}
           onValueChange={setQuery}
