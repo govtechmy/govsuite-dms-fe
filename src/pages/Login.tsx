@@ -30,7 +30,7 @@ export default function LoginPage() {
       navigate(`/${lang}/`)
     } catch (error) {
       setIsLoading(false)
-      setError('Gagal log masuk. Sila semak Nombor IC dan kata laluan.')
+      setError('Gagal log masuk. Sila semak ID Pengguna dan Kata Laluan.')
       console.error('Login error:', error)
     }
   }
