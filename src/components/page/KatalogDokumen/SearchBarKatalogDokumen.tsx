@@ -70,7 +70,7 @@ export default function SearchBarKatalogDokumen() {
     >
       <SearchBarInputContainer>
         <SearchBarInput
-          placeholder="Search by name"
+          placeholder="Carian nama dokumen"
           value={query}
           onValueChange={setQuery}
           onFocus={() => setHasFocus(true)}
