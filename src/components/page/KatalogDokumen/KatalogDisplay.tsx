@@ -2,6 +2,7 @@ import { useRef, useState, type UIEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@govtechmy/myds-react/button'
 import { ArrowBackIcon, PlusIcon, UploadIcon } from '@govtechmy/myds-react/icon'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@govtechmy/myds-react/tooltip'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -444,7 +445,12 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                         className="flex size-[18px] shrink-0 items-center justify-center text-txt-black-700 transition-colors hover:text-txt-black-900 cursor-pointer"
                         aria-label="Go back"
                       >
-                        <ArrowBackIcon />
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <ArrowBackIcon />
+                          </TooltipTrigger>
+                          <TooltipContent>Kembali</TooltipContent>
+                        </Tooltip>
                       </div>
 
                       <Breadcrumb className="min-w-0 flex-wrap">
