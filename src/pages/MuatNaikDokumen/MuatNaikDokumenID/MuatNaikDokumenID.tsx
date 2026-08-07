@@ -217,7 +217,7 @@ export default function MuatNaikDokumenIDPage() {
 
     const payload: SaveUploadRecordRequest = {
       title,
-      recordId: MuatNaikDokumenID ?? '',
+      recordId: newRecordId ? newRecordId : (MuatNaikDokumenID ?? ''),
       fileName,
       fileType,
       fileExtension,
@@ -280,6 +280,11 @@ export default function MuatNaikDokumenIDPage() {
       // the save response's id is not adopted, since a file replacement can cause
       // the backend to delete and regenerate the record with a different id.
       await updateUploadedRecord(payload, mongoDbRecordId)
+
+      // Reset newRecordId after a successful submit so a subsequent save
+      // without a fresh file upload falls back to MuatNaikDokumenID instead
+      // of reusing a stale presigned recordId.
+      setNewRecordId('')
 
       if (status === 'DALAM_SEMAKAN') {
         setSubmissionProgress('success')
