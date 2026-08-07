@@ -8,7 +8,7 @@ export interface DateCardProps {
 }
 
 export const DateCard: React.FC<DateCardProps> = ({ className, date, size }) => {
-  const _date = formatISODate(date)
+  const _date = formatISODate(date, 'ms')
 
   return (
     <div
@@ -26,7 +26,7 @@ export const DateCard: React.FC<DateCardProps> = ({ className, date, size }) => 
           size === 'lg' ? 'text-xs lg:text-sm lg:font-medium' : ''
         )}
       >
-        {_date[1]}
+        {_date.month}
       </span>
       <span
         className={clx(
@@ -35,7 +35,7 @@ export const DateCard: React.FC<DateCardProps> = ({ className, date, size }) => 
           size === 'lg' ? 'text-xl font-semibold lg:text-[32px] lg:leading-tight' : ''
         )}
       >
-        {_date[2]}
+        {_date.day}
       </span>
       <span
         className={clx(
@@ -44,7 +44,7 @@ export const DateCard: React.FC<DateCardProps> = ({ className, date, size }) => 
           size === 'lg' ? 'text-xs lg:text-sm lg:font-medium' : ''
         )}
       >
-        {_date[3]}
+        {_date.year}
       </span>
     </div>
   )

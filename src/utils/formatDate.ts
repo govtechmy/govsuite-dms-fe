@@ -1,11 +1,37 @@
+export interface FormattedDateParts {
+  weekday: string
+  day: string
+  month: string
+  year: string
+}
+
 /**
- * Converts an ISO date string to date components (month, day, year)
+ * Converts an ISO date string to date components (weekday, day, month, year).
  * @param dateString - ISO date string or any date parseable by Date constructor
- * @returns Array with [dayOfWeek, month, day, year] from toDateString().split(' ')
+ * @param lang - Locale-aware language: 'en' -> 'en-GB', 'ms' -> 'ms-MY'. Defaults to 'en'.
+ * @returns Named date parts, not a positional array, since part ordering differs between locales
  */
-export const formatISODate = (dateString: string): string[] => {
-  const _date = (dateString ? new Date(dateString) : new Date()).toDateString().split(' ')
-  return _date
+export const formatISODate = (dateString: string, lang: 'en' | 'ms' = 'en'): FormattedDateParts => {
+  const date = dateString ? new Date(dateString) : new Date()
+  const locale = lang === 'ms' ? 'ms-MY' : 'en-GB'
+  const parts = new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).formatToParts(date)
+
+  const month = parts.find((part) => part.type === 'month')?.value ?? ''
+
+  // just for OGOS we chaange it to OGOS, not OGO
+  const normalizedMonth = lang === 'ms' && month === 'Ogo' ? 'Ogos' : month
+
+  return {
+    weekday: parts.find((part) => part.type === 'weekday')?.value ?? '',
+    day: parts.find((part) => part.type === 'day')?.value ?? '',
+    month: normalizedMonth,
+    year: parts.find((part) => part.type === 'year')?.value ?? '',
+  }
 }
 
 /**

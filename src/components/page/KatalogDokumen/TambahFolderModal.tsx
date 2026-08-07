@@ -19,7 +19,7 @@ import { clx } from '@govtechmy/myds-react/utils'
 interface TambahFolderModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAddFolder: (folderName: string) => Promise<boolean>
+  onAddFolder: (folderName: string) => Promise<{ success: boolean; message?: string }>
   existingFolders: string[]
   trigger?: React.ReactNode
 }
@@ -33,9 +33,15 @@ export default function TambahFolderModal({
 }: TambahFolderModalProps) {
   type FolderErrorType = 'duplicate' | 'createFailed' | null
 
+  const DEFAULT_CREATE_FAILED_MESSAGE =
+    'Folder gagal dicipta. Sila cuba lagi. Jika masih gagal, hubungi admin anda!'
+
   const [folderName, setFolderName] = useState<string>('')
   const [isCreating, setIsCreating] = useState<boolean>(false)
   const [errorType, setErrorType] = useState<FolderErrorType>(null)
+  const [createFailedMessage, setCreateFailedMessage] = useState<string>(
+    DEFAULT_CREATE_FAILED_MESSAGE
+  )
 
   const handleDialogOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen)
@@ -44,6 +50,7 @@ export default function TambahFolderModal({
       setFolderName('')
       setErrorType(null)
       setIsCreating(false)
+      setCreateFailedMessage(DEFAULT_CREATE_FAILED_MESSAGE)
     }
   }
 
@@ -66,21 +73,24 @@ export default function TambahFolderModal({
     setErrorType(null)
 
     try {
-      const isSuccess = await onAddFolder(trimmedName)
+      const result = await onAddFolder(trimmedName)
 
-      if (!isSuccess) {
+      if (!result.success) {
         setIsCreating(false)
         setErrorType('createFailed')
+        setCreateFailedMessage(result.message ?? DEFAULT_CREATE_FAILED_MESSAGE)
         return
       }
 
       setIsCreating(false)
       setFolderName('')
       setErrorType(null)
+      setCreateFailedMessage(DEFAULT_CREATE_FAILED_MESSAGE)
       onOpenChange(false)
     } catch {
       setIsCreating(false)
       setErrorType('createFailed')
+      setCreateFailedMessage(DEFAULT_CREATE_FAILED_MESSAGE)
     }
   }
 
@@ -146,9 +156,7 @@ export default function TambahFolderModal({
               {errorType === 'createFailed' && (
                 <Callout variant={'danger'}>
                   <CalloutTitle>Ralat</CalloutTitle>
-                  <CalloutContent>
-                    Folder gagal dicipta. Sila cuba lagi. Jika masih gagal, hubungi admin anda!
-                  </CalloutContent>
+                  <CalloutContent>{createFailedMessage}</CalloutContent>
                 </Callout>
               )}
             </>

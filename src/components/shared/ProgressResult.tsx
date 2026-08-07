@@ -11,6 +11,7 @@ interface ProgressResultProps {
   buttonDisplay?: boolean
   buttonText?: string
   onButtonClick?: () => void
+  buttonClassName?: string
   buttonDisplay2?: boolean
   buttonText2?: string
   onButtonClick2?: () => void
@@ -27,7 +28,12 @@ export function ProgressResult(props: ProgressResultProps) {
         {props.title && <div className="text-body-lg font-semibold font-body">{props.title}</div>}
         {props.description && <div className="text-body-sm font-normal">{props.description}</div>}
         {props.buttonDisplay && props.buttonText && (
-          <Button variant="default-outline" size="small" onClick={props.onButtonClick}>
+          <Button
+            variant="default-outline"
+            size="small"
+            className={props.buttonClassName}
+            onClick={props.onButtonClick}
+          >
             {props.buttonText}
           </Button>
         )}
@@ -60,6 +66,7 @@ interface ProgressResultCheckerProps {
   successTitle?: string
   successDescription?: ReactNode
   successButtonText?: string
+  successButtonClassName?: string
   successButtonText2?: string
   successButtonClassName2?: string
   errorTitle: string
@@ -76,6 +83,7 @@ export default function ProgressResultChecker({
   successTitle,
   successDescription,
   successButtonText,
+  successButtonClassName,
   successButtonText2,
   successButtonClassName2,
   navigateSuccess = '/ms',
@@ -106,6 +114,7 @@ export default function ProgressResultChecker({
           title={successTitle}
           description={successDescription}
           buttonText={successButtonText}
+          buttonClassName={successButtonClassName}
           buttonText2={successButtonText2}
           buttonClassName2={successButtonClassName2}
           buttonDisplay={true}
