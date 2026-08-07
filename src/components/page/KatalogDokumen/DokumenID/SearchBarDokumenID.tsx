@@ -1,4 +1,10 @@
-import { SearchIcon, ChevronDownIcon, ChevronUpIcon } from '@govtechmy/myds-react/icon'
+import {
+  SearchIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from '@govtechmy/myds-react/icon'
 import { Input, InputIcon } from '@govtechmy/myds-react/input'
 import { useEffect, useState } from 'react'
 
@@ -13,6 +19,8 @@ interface SearchBarDokumenIDProps {
   isIndexing: boolean
   currentPage: number
   totalPages: number
+  onPreviousPage: () => void
+  onNextPage: () => void
 }
 
 export function SearchBarDokumenID({
@@ -26,6 +34,8 @@ export function SearchBarDokumenID({
   isIndexing,
   currentPage,
   totalPages,
+  onPreviousPage,
+  onNextPage,
 }: SearchBarDokumenIDProps) {
   const trimmedKeyword = searchKeyword.trim()
 
@@ -95,9 +105,29 @@ export function SearchBarDokumenID({
           </Input>
         </div>
         {isPdfLoaded && totalPages > 0 && (
-          <span className="whitespace-nowrap text-sm font-medium text-txt-black-500 sm:text-base">
-            Page : {currentPage}/{totalPages}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              className="flex size-6 items-center justify-center text-txt-black-700 hover:text-txt-black-900 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Halaman sebelum"
+              onClick={onPreviousPage}
+              disabled={currentPage <= 1}
+            >
+              <ChevronLeftIcon className="size-5" />
+            </button>
+            <span className="whitespace-nowrap text-sm font-medium text-txt-black-500 sm:text-base">
+              Page : {currentPage}/{totalPages}
+            </span>
+            <button
+              type="button"
+              className="flex size-6 items-center justify-center text-txt-black-700 hover:text-txt-black-900 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Halaman seterusnya"
+              onClick={onNextPage}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronRightIcon className="size-5" />
+            </button>
+          </div>
         )}
         {/* Spacer */}
         <div className="flex-1" />

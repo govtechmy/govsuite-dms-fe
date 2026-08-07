@@ -36,10 +36,16 @@ export type PdfSearchState = {
   isIndexing: boolean
 }
 
+export type PdfPageNavigationRequest = {
+  page: number
+  token: number
+}
+
 interface PdfJsDocumentViewerProps {
   fileUrl: string
   searchKeyword?: string
   navigationRequest?: PdfSearchNavigationRequest | null
+  pageNavigationRequest?: PdfPageNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
   onPageChange?: (currentPage: number, totalPages: number) => void
@@ -88,6 +94,7 @@ export default function PdfJsDocumentViewer({
   fileUrl,
   searchKeyword = '',
   navigationRequest,
+  pageNavigationRequest,
   onSearchStateChange,
   onDocumentLoad,
   onPageChange,
@@ -104,6 +111,13 @@ export default function PdfJsDocumentViewer({
   // below can retry once the target <mark> actually exists in the DOM.
   const [textLayerRenderTick, setTextLayerRenderTick] = useState(0)
   const handledNavigationTokenRef = useRef<number | null>(null)
+  const handledPageNavigationTokenRef = useRef<number | null>(null)
+  // While a programmatic page-navigation scroll is animating, the
+  // IntersectionObserver below fires with intermediate pages still holding
+  // the highest visibility ratio (e.g. page 6 briefly "wins" again while
+  // scrolling towards page 7). Suppress those intermediate updates so the
+  // page number advances straight to the target instead of flickering.
+  const pendingPageScrollTargetRef = useRef<number | null>(null)
   const previousKeywordRef = useRef('')
   const lastEmittedSearchStateRef = useRef<PdfSearchState | null>(null)
   const lastActiveMatchElementsRef = useRef<HTMLElement[]>([])
@@ -231,6 +245,8 @@ export default function PdfJsDocumentViewer({
 
   useEffect(() => {
     handledNavigationTokenRef.current = null
+    handledPageNavigationTokenRef.current = null
+    pendingPageScrollTargetRef.current = null
     previousKeywordRef.current = ''
     lastEmittedSearchStateRef.current = null
     lastNavigationActionRef.current = null
@@ -300,6 +316,40 @@ export default function PdfJsDocumentViewer({
       return (safeCurrentIndex - 1 + matchesData.totalMatches) % matchesData.totalMatches
     })
   }, [matchesData.totalMatches, navigationRequest])
+
+  useEffect(() => {
+    if (
+      !pageNavigationRequest ||
+      pageNavigationRequest.token === handledPageNavigationTokenRef.current ||
+      numPages === 0
+    ) {
+      return
+    }
+
+    handledPageNavigationTokenRef.current = pageNavigationRequest.token
+
+    const targetPage = Math.max(1, Math.min(pageNavigationRequest.page, numPages))
+    const targetPageElement = pageRefs.current[targetPage]
+
+    if (!targetPageElement) {
+      return
+    }
+
+    pendingPageScrollTargetRef.current = targetPage
+    targetPageElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setCurrentPageNumber(targetPage)
+
+    // Fallback in case the target page never reports the highest
+    // intersection ratio (e.g. it's the last page and can't fill the
+    // viewport), so the suppression doesn't get stuck indefinitely.
+    const releaseTimeoutId = setTimeout(() => {
+      if (pendingPageScrollTargetRef.current === targetPage) {
+        pendingPageScrollTargetRef.current = null
+      }
+    }, 1000)
+
+    return () => clearTimeout(releaseTimeoutId)
+  }, [pageNavigationRequest, numPages])
 
   const isIndexing =
     !hasIndexingTimedOut && (numPages === 0 || Object.keys(pageTextItems).length < numPages)
@@ -481,7 +531,19 @@ export default function PdfJsDocumentViewer({
         })
 
         if (mostVisiblePage > 0) {
-          setCurrentPageNumber(mostVisiblePage)
+          const pendingTarget = pendingPageScrollTargetRef.current
+
+          if (pendingTarget !== null) {
+            // While a programmatic page-navigation scroll is still in
+            // flight, ignore intermediate pages and only commit once the
+            // target page actually becomes the most visible one.
+            if (mostVisiblePage === pendingTarget) {
+              pendingPageScrollTargetRef.current = null
+              setCurrentPageNumber(mostVisiblePage)
+            }
+          } else {
+            setCurrentPageNumber(mostVisiblePage)
+          }
         }
       },
       {

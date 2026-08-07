@@ -1,4 +1,5 @@
 import type {
+  PdfPageNavigationRequest,
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
@@ -43,6 +44,8 @@ export default function DokumenIDPage() {
   const [navigationRequest, setNavigationRequest] = useState<PdfSearchNavigationRequest | null>(
     null
   )
+  const [pageNavigationRequest, setPageNavigationRequest] =
+    useState<PdfPageNavigationRequest | null>(null)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
@@ -51,6 +54,7 @@ export default function DokumenIDPage() {
   const setAvailableUserGroups = useShareDocumentStore((state) => state.setAvailableUserGroups)
   const setCurrentApprovedUsers = useShareDocumentStore((state) => state.setCurrentApprovedUsers)
   const navigationTokenRef = useRef(0)
+  const pageNavigationTokenRef = useRef(0)
   const shareRequestTokenRef = useRef(0)
 
   const queueNavigationRequest = (
@@ -63,6 +67,22 @@ export default function DokumenIDPage() {
       targetMatchIndex,
       token: navigationTokenRef.current,
     })
+  }
+
+  const queuePageNavigationRequest = (targetPage: number) => {
+    pageNavigationTokenRef.current += 1
+    setPageNavigationRequest({
+      page: targetPage,
+      token: pageNavigationTokenRef.current,
+    })
+  }
+
+  const handlePreviousPage = () => {
+    queuePageNavigationRequest(Math.max(1, currentPage - 1))
+  }
+
+  const handleNextPage = () => {
+    queuePageNavigationRequest(Math.min(totalPages, currentPage + 1))
   }
 
   const handleApproveDokumen = async () => {
@@ -282,6 +302,8 @@ export default function DokumenIDPage() {
     })
     setNavigationRequest(null)
     navigationTokenRef.current = 0
+    setPageNavigationRequest(null)
+    pageNavigationTokenRef.current = 0
     setIsPdfLoaded(false)
     setCurrentPage(1)
     setTotalPages(0)
@@ -329,11 +351,14 @@ export default function DokumenIDPage() {
             isIndexing={pdfSearchState.isIndexing}
             currentPage={currentPage}
             totalPages={totalPages}
+            onPreviousPage={handlePreviousPage}
+            onNextPage={handleNextPage}
           />
           <DokumenContentID
             pdfUrl={pdfData.url}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
+            pageNavigationRequest={pageNavigationRequest}
             onSearchStateChange={setPdfSearchState}
             onDocumentLoad={() => setIsPdfLoaded(true)}
             onPageChange={handlePageChange}

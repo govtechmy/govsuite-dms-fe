@@ -1,11 +1,12 @@
 import { Button } from '@govtechmy/myds-react/button'
 import { DownloadIcon } from '@govtechmy/myds-react/icon'
 import PdfJsDocumentViewer, {
+  type PdfPageNavigationRequest,
   type PdfSearchNavigationRequest,
   type PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
 import SearchInPdf from './SearchInPdf'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
 import { downloadFile } from '@/utils/downloadFile'
@@ -43,6 +44,9 @@ export default function PratontonSearchResult({
   const [isReferenceCopied, setIsReferenceCopied] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
+  const [pageNavigationRequest, setPageNavigationRequest] =
+    useState<PdfPageNavigationRequest | null>(null)
+  const pageNavigationTokenRef = useRef(0)
 
   const currentDocumentTitle = documentRecords.find(
     (documentRecord) => documentRecord.documentId === documentInfo?.documentID
@@ -52,6 +56,8 @@ export default function PratontonSearchResult({
     setIsPdfLoaded(false)
     setCurrentPage(1)
     setTotalPages(0)
+    setPageNavigationRequest(null)
+    pageNavigationTokenRef.current = 0
   }, [documentInfo?.documentID])
 
   useEffect(() => {
@@ -80,6 +86,22 @@ export default function PratontonSearchResult({
   const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {
     setCurrentPage(nextCurrentPage)
     setTotalPages(nextTotalPages)
+  }
+
+  const queuePageNavigationRequest = (targetPage: number) => {
+    pageNavigationTokenRef.current += 1
+    setPageNavigationRequest({
+      page: targetPage,
+      token: pageNavigationTokenRef.current,
+    })
+  }
+
+  const handlePreviousPage = () => {
+    queuePageNavigationRequest(Math.max(1, currentPage - 1))
+  }
+
+  const handleNextPage = () => {
+    queuePageNavigationRequest(Math.min(totalPages, currentPage + 1))
   }
 
   const handleDownloadDokumen = () => {
@@ -147,6 +169,8 @@ export default function PratontonSearchResult({
         isIndexing={isIndexing}
         currentPage={currentPage}
         totalPages={totalPages}
+        onPreviousPage={handlePreviousPage}
+        onNextPage={handleNextPage}
       />
       <div className="h-full min-h-0 w-full overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
         <div className="h-full min-h-0 overflow-auto">
@@ -154,6 +178,7 @@ export default function PratontonSearchResult({
             fileUrl={documentInfo?.path || ''}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
+            pageNavigationRequest={pageNavigationRequest}
             onSearchStateChange={onSearchStateChange}
             onDocumentLoad={handleDocumentLoad}
             onPageChange={handlePageChange}
