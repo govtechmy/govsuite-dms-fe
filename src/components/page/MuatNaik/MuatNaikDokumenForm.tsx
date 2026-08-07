@@ -574,6 +574,7 @@ export default function MuatNaikDokumenForm({
                 render={({ field }) => (
                   <DatePicker
                     locale="ms"
+                    formatStr="dd MMMM yyy"
                     placeholder="Pilih Tarikh"
                     value={parseDateValue(field.value || '')}
                     onValueChange={(date) => {
@@ -693,6 +694,7 @@ export default function MuatNaikDokumenForm({
                     return field.type === 'date' ? (
                       <DatePicker
                         locale="ms"
+                        formatStr="dd MMMM yyy"
                         placeholder="Pilih Tarikh"
                         value={parseDateValue(metadataField.value || '')}
                         onValueChange={(date) => {
@@ -740,6 +742,7 @@ export default function MuatNaikDokumenForm({
                     field.type === 'date' ? (
                       <DatePicker
                         locale="ms"
+                        formatStr="dd MMMM yyy"
                         placeholder="Pilih Tarikh"
                         value={parseDateValue(metadataField.value || '')}
                         onValueChange={(date) => {

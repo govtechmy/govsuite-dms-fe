@@ -173,6 +173,7 @@ export default function SelectCarianDokumen({
         <div className="flex flex-wrap items-center gap-1.5">
           <DateRangePicker
             locale="ms"
+            formatStr="dd MMMM yyy"
             placeholder="Pilih Tarikh"
             value={{
               from: dateFrom ? new Date(dateFrom) : undefined,
