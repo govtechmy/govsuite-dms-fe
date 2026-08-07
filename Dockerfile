@@ -31,29 +31,12 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Copy nginx configuration for SPA routing
-RUN echo 'server { \
-    listen 80; \
-    server_name _; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    include /etc/nginx/mime.types; \
-    types { \
-        application/javascript js mjs; \
-    } \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-    # Security headers \
-    add_header X-Frame-Options "SAMEORIGIN" always; \
-    add_header X-Content-Type-Options "nosniff" always; \
-    add_header X-XSS-Protection "1; mode=block" always; \
-    # Compression \
-    gzip on; \
-    gzip_vary on; \
-    gzip_min_length 1024; \
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml+rss; \
-}' > /etc/nginx/conf.d/default.conf
+# Copy both nginx configuration templates. entrypoint.sh picks one at
+# container start based on the PROXY env var: nginx.proxy.conf.template
+# (reverse-proxies /api to BACKEND_INTERNAL_URL, kept off the browser) or
+# nginx.direct.conf.template (static-only, browser calls the backend directly).
+COPY docker/nginx.proxy.conf.template /etc/nginx/templates/nginx.proxy.conf.template
+COPY docker/nginx.direct.conf.template /etc/nginx/templates/nginx.direct.conf.template
 
 # Expose port 80
 EXPOSE 80

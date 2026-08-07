@@ -34,6 +34,14 @@ if [ ! -f "$SCRIPT_DIR/frontend.env" ]; then
   exit 1
 fi
 
+PROXY_VALUE=$(grep -E '^PROXY=' "$SCRIPT_DIR/frontend.env" | tail -n1 | cut -d'=' -f2- | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+if [ "$PROXY_VALUE" = "on" ] && ! grep -qE '^BACKEND_INTERNAL_URL=.+' "$SCRIPT_DIR/frontend.env"; then
+  echo "❌ Error: PROXY=ON but BACKEND_INTERNAL_URL is not set in $SCRIPT_DIR/frontend.env"
+  echo "   The frontend reverse-proxies /api/* to this address (host:port only,"
+  echo "   e.g. http://10.20.51.42:3000). Set it before packaging."
+  exit 1
+fi
+
 echo "📁 Preparing $DEST_DIR..."
 if [ -d "$DEST_DIR" ]; then
   echo "   Existing folder found, clearing it out..."

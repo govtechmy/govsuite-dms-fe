@@ -26,11 +26,29 @@ const loadFrontendEnv = (): void => {
 
 loadFrontendEnv()
 
+// Mirrors the production PROXY toggle (see docker/entrypoint.sh): only proxy
+// /api when PROXY=ON, so local dev matches whichever mode is being tested.
+const isProxyEnabled = (process.env.PROXY ?? '').toLowerCase() === 'on'
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
       '@': new URL('./src', import.meta.url).pathname,
     },
+  },
+  server: {
+    proxy: isProxyEnabled
+      ? {
+          // Mirrors the production nginx `/api` reverse proxy so VITE_API_BASE_URL
+          // can stay a same-origin relative path in dev too. No rewrite: the full
+          // path (including the backend's /api/v1 prefix) is forwarded verbatim,
+          // and DEV_API_PROXY_TARGET is the backend host:port only.
+          '/api': {
+            target: process.env.DEV_API_PROXY_TARGET ?? 'http://localhost:3000',
+            changeOrigin: true,
+          },
+        }
+      : undefined,
   },
 })

@@ -50,6 +50,14 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
+PROXY_VALUE=$(grep -E '^PROXY=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2- | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+if [ "$PROXY_VALUE" = "on" ] && ! grep -qE '^BACKEND_INTERNAL_URL=.+' "$ENV_FILE"; then
+  echo "❌ Error: PROXY=ON but BACKEND_INTERNAL_URL is not set in $ENV_FILE"
+  echo "   The frontend reverse-proxies /api/* to this address (host:port only,"
+  echo "   e.g. http://10.20.51.42:3000). The container will not start without it."
+  exit 1
+fi
+
 if [ ! -f "$COMPOSE_FILE" ]; then
   echo "❌ Error: docker-compose.yml not found at $COMPOSE_FILE"
   exit 1
@@ -93,6 +101,9 @@ done
 if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
   echo "⚠️  Timeout waiting for frontend health check, but container may still be starting"
   echo "   Check status manually with: docker compose -f $COMPOSE_FILE --profile production ps"
+  echo ""
+  echo "Recent container logs:"
+  docker compose -f "$COMPOSE_FILE" --profile production logs --tail=50 frontend
   exit 1
 fi
 
