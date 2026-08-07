@@ -135,49 +135,51 @@ export default function KatalogDokumenPage() {
   }
 
   return (
-    <RightSidePageLayoutWrapper className="flex flex-col gap-6">
-      <h1 className="text-heading-2xs font-semibold font-heading text-txt-black-900">
-        Katalog Dokumen
-      </h1>
-      <div className="flex flex-col gap-3">
-        <SearchBarKatalogDokumen />
-        <SelectCarianDokumen
-          dropdownUnits={dropdownUnits}
-          dropdownJenisDokumen={dropdownJenisDokumen}
-          dropdownYears={dropdownYears}
-          showOnlyWhenSearchQuery
-          resetPageOnFilterChange={false}
-        />
+    <RightSidePageLayoutWrapper className="h-full">
+      <div className="flex h-full flex-col gap-6">
+        <h1 className="text-heading-2xs font-semibold font-heading text-txt-black-900">
+          Katalog Dokumen
+        </h1>
+        <div className="flex flex-col gap-3">
+          <SearchBarKatalogDokumen />
+          <SelectCarianDokumen
+            dropdownUnits={dropdownUnits}
+            dropdownJenisDokumen={dropdownJenisDokumen}
+            dropdownYears={dropdownYears}
+            showOnlyWhenSearchQuery
+            resetPageOnFilterChange={false}
+          />
+        </div>
+        {query ? (
+          <KatalogDisplaySearch
+            documents={catalogItems}
+            isLoading={isLoading}
+            error={error}
+            searchKeyword={query}
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalRecords={searchMeta?.totalItems ?? catalogItems.length}
+            onPageChange={setPageNumber}
+            onPageSizeChange={handlePageSizeChange}
+            onItemClick={(recordId) => navigate(`/${activeLang}/katalog-dokumen/${recordId}`)}
+          />
+        ) : (
+          <>
+            {isLoading && (
+              <div className="flex justify-center items-center py-12">
+                <Spinner size="large" />
+              </div>
+            )}
+            {error && (
+              <Callout variant="danger">
+                <CalloutTitle>Ralat</CalloutTitle>
+                <CalloutContent>{error}</CalloutContent>
+              </Callout>
+            )}
+            {!isLoading && !error && <KatalogDisplay catalogBase={catalogBase} />}
+          </>
+        )}
       </div>
-      {query ? (
-        <KatalogDisplaySearch
-          documents={catalogItems}
-          isLoading={isLoading}
-          error={error}
-          searchKeyword={query}
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalRecords={searchMeta?.totalItems ?? catalogItems.length}
-          onPageChange={setPageNumber}
-          onPageSizeChange={handlePageSizeChange}
-          onItemClick={(recordId) => navigate(`/${activeLang}/katalog-dokumen/${recordId}`)}
-        />
-      ) : (
-        <>
-          {isLoading && (
-            <div className="flex justify-center items-center py-12">
-              <Spinner size="large" />
-            </div>
-          )}
-          {error && (
-            <Callout variant="danger">
-              <CalloutTitle>Ralat</CalloutTitle>
-              <CalloutContent>{error}</CalloutContent>
-            </Callout>
-          )}
-          {!isLoading && !error && <KatalogDisplay catalogBase={catalogBase} />}
-        </>
-      )}
     </RightSidePageLayoutWrapper>
   )
 }
