@@ -35,6 +35,7 @@ import TambahFolderModal from './TambahFolderModal'
 import FolderGrid, { type Folder } from '@/components/shared/FolderGrid'
 import { useAuthStore } from '@/store/AuthStore'
 import { resolveUserRoles } from '@/models/userRoles'
+import extractBackendError from '@/utils/extractBackendError'
 
 interface KatalogDisplayProps {
   catalogBase: CatalogBaseItem[]
@@ -296,17 +297,17 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
     await fetchAndSetUnitContent(unitId, targetId, { page: 1 })
   }
 
-  const handleAddFolder = async (folderName: string): Promise<boolean> => {
+  const handleAddFolder = async (
+    folderName: string
+  ): Promise<{ success: boolean; message?: string }> => {
     const unitId = dialogOpenUnit
-    if (!unitId) return false
+    if (!unitId) return { success: false }
 
     const unit = unitsById[unitId]
-    if (!unit) return false
+    if (!unit) return { success: false }
 
     const currentPath = currentPaths[unitId] ?? []
     const parentId = currentPath.length === 0 ? unit.id : currentPath[currentPath.length - 1].id
-
-    updateUnitContent(unitId, { error: null })
 
     try {
       const createdFolder = await postCreateFolder({
@@ -321,17 +322,18 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
           [unitId]: {
             ...content,
             folders: [...content.folders, createdFolder],
-            error: null,
           },
         }
       })
 
       setDialogOpenUnit(null)
-      return true
+      return { success: true }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create folder'
-      updateUnitContent(unitId, { error: message })
-      return false
+      const backendError = extractBackendError(error)
+      const message =
+        backendError?.message ??
+        (error instanceof Error ? error.message : 'Folder gagal dicipta. Sila cuba lagi.')
+      return { success: false, message }
     }
   }
 
