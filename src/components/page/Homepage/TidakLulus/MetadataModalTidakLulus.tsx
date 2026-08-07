@@ -183,11 +183,11 @@ export default function MetadataModalTidakLulus({
               <ProgressResultChecker
                 progress={progressResubmit}
                 loadingDescription="Dokumen sedang dihantar semula. Sila tunggu sebentar."
-                successTitle="Dokumen Berjaya Dihantar Semula"
-                successDescription="Dokumen telah dihantar semula untuk semakan seterusnya."
-                successButtonText="Tutup"
-                successButtonText2="Edit Dokumen Anda!"
-                successButtonClassName2="bg-bg-white border border-success-700/20 hover:border-success-700/10 text-txt-success shadow-button hover:text-txt-success hover:bg-bg-success-50 disabled:bg-bg-white-disabled disabled:text-txt-success-disabled disabled:border-transparent"
+                successTitle="Dokumen berjaya ditukar status kepada DRAF"
+                successDescription="Dokumen kini berstatus DRAF. Anda boleh terus mengedit dokumen atau menutup tetingkap ini."
+                successButtonText="Edit Dokumen Anda!"
+                successButtonClassName="bg-bg-white border border-success-700/20 hover:border-success-700/10 text-txt-success shadow-button hover:text-txt-success hover:bg-bg-success-50 disabled:bg-bg-white-disabled disabled:text-txt-success-disabled disabled:border-transparent"
+                successButtonText2="Tutup"
                 errorTitle="Dokumen Gagal Dihantar Semula"
                 errorDescription={
                   <div className="flex flex-col gap-2 items-center justify-center">
@@ -199,8 +199,8 @@ export default function MetadataModalTidakLulus({
                   </div>
                 }
                 errorButtonText="Tutup"
-                onSuccessClick={handleCloseProgress}
-                onSuccessClick2={handleEditDokumenClick}
+                onSuccessClick={handleEditDokumenClick}
+                onSuccessClick2={handleCloseProgress}
                 onErrorClick={handleCloseProgress}
               />
             </div>
