@@ -16,8 +16,8 @@ interface MetadataSummaryProps {
 
 const SECTION_TITLE_MAP: Record<string, string> = {
   recordData: 'Profil Dokumen (Repositori)',
-  requiredMetadata: 'Dublin Core (Metadata)',
-  metadata: 'Metadata Tambahan (Repository)',
+  requiredMetadata: 'Metadata',
+  metadata: 'Metadata Tambahan',
 }
 
 const RECORD_DATA_TERM_MAP: Record<string, string> = {

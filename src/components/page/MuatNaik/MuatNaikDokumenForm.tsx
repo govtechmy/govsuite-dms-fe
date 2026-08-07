@@ -658,9 +658,7 @@ export default function MuatNaikDokumenForm({
             draftStatus={draftStatus}
           />
           <div className="flex flex-col gap-3 text-body-md font-medium text-txt-black-700">
-            <div className="text-body-md font-semibold font-body text-txt-black-900">
-              Dublin Core (Metadata)
-            </div>
+            <div className="text-body-md font-semibold font-body text-txt-black-900">Metadata</div>
             {metadataRequired.map((field) => (
               <div key={field.key} className="flex flex-col gap-1.5">
                 <div className="flex">
@@ -726,7 +724,7 @@ export default function MuatNaikDokumenForm({
           <div className="flex flex-col gap-3 text-body-md font-medium text-txt-black-700">
             {metadataAdditional.length > 0 && (
               <div className="text-body-md font-semibold font-body text-txt-black-900">
-                Metadata Tambahan (Repositori)
+                Metadata Tambahan
               </div>
             )}
             {metadataAdditional.map((field) => (
