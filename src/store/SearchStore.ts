@@ -31,7 +31,7 @@ type SearchParamsPayload = {
   pageSize: number
 }
 
-const DEFAULT_SORT = 'latest'
+const DEFAULT_SORT = 'desc'
 const DEFAULT_PAGE_NUMBER = 1
 const DEFAULT_PAGE_SIZE = 10
 

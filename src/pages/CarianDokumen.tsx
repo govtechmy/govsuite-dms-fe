@@ -185,7 +185,7 @@ export default function CarianDokumenPage() {
       unit: searchParams.get('unit') || '',
       dateFrom: searchParams.get('dateFrom') || '',
       dateTo: searchParams.get('dateTo') || '',
-      sort: searchParams.get('sort') || 'latest',
+      sort: searchParams.get('sort') || 'desc',
       pageNumber: Math.max(1, Number(searchParams.get('page')) || 1),
       pageSize: LAZY_BATCH_SIZE,
     })

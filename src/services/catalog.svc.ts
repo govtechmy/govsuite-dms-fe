@@ -288,7 +288,7 @@ export const getSearchRecordCarianDokumen = async ({
   }
 
   if (sort) {
-    params.set('sort', sort)
+    params.set('sortOrder', sort)
   }
 
   if (status) {

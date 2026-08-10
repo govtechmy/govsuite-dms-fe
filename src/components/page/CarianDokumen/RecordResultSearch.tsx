@@ -81,8 +81,8 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
             <SelectValue placeholder="Terkini" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="latest">Terkini</SelectItem>
-            <SelectItem value="oldest">Terdahulu</SelectItem>
+            <SelectItem value="desc">Terkini</SelectItem>
+            <SelectItem value="asc">Terdahulu</SelectItem>
           </SelectContent>
         </Select>
       </div>
