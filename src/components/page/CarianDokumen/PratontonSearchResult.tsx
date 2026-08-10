@@ -196,7 +196,7 @@ export default function PratontonSearchResult({
           {isReferenceCopied ? 'Rujukan Disalin !' : 'Salin Rujukan'}
         </Button>
         <Button size="small" className="gap-1.5" onClick={handleBukaPratonton}>
-          Buka Pratonton
+          Paparan Penuh
         </Button>
       </div>
     </div>

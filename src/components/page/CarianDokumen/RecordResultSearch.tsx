@@ -82,7 +82,7 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="latest">Terkini</SelectItem>
-            <SelectItem value="oldest">Terlama</SelectItem>
+            <SelectItem value="oldest">Terdahulu</SelectItem>
           </SelectContent>
         </Select>
       </div>
