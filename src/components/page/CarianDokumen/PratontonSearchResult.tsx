@@ -9,7 +9,7 @@ import SearchInPdf from './SearchInPdf'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
-import { downloadFile } from '@/utils/downloadFile'
+// import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
   searchKeyword: string
@@ -39,7 +39,7 @@ export default function PratontonSearchResult({
   const navigate = useNavigate()
   const { lang } = useParams()
   const documentInfo = useSearchStore((state) => state.documentInfo)
-  const documentRecords = useSearchStore((state) => state.documentRecords)
+  // const documentRecords = useSearchStore((state) => state.documentRecords)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const [isReferenceCopied, setIsReferenceCopied] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -48,9 +48,9 @@ export default function PratontonSearchResult({
     useState<PdfPageNavigationRequest | null>(null)
   const pageNavigationTokenRef = useRef(0)
 
-  const currentDocumentTitle = documentRecords.find(
-    (documentRecord) => documentRecord.documentId === documentInfo?.documentID
-  )?.title
+  // const currentDocumentTitle = documentRecords.find(
+  //   (documentRecord) => documentRecord.documentId === documentInfo?.documentID
+  // )?.title
 
   useEffect(() => {
     setIsPdfLoaded(false)
@@ -104,17 +104,17 @@ export default function PratontonSearchResult({
     queuePageNavigationRequest(Math.min(totalPages, currentPage + 1))
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDownloadDokumen = () => {
-    if (!documentInfo?.path) {
-      return
-    }
+  // const handleDownloadDokumen = () => {
+  //   if (!documentInfo?.path) {
+  //     return
+  //   }
 
-    downloadFile({
-      url: documentInfo.path,
-      fileName: currentDocumentTitle ?? '',
-      fallback: documentInfo.documentID ? `dokumen-${documentInfo.documentID}` : 'dokumen',
-    })
-  }
+  //   downloadFile({
+  //     url: documentInfo.path,
+  //     fileName: currentDocumentTitle ?? '',
+  //     fallback: documentInfo.documentID ? `dokumen-${documentInfo.documentID}` : 'dokumen',
+  //   })
+  // }
 
   const handleCopyReference = async () => {
     const reference = documentInfo?.referencePath?.trim()
