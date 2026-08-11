@@ -1,5 +1,5 @@
 import { Button } from '@govtechmy/myds-react/button'
-import { DownloadIcon } from '@govtechmy/myds-react/icon'
+// import { DownloadIcon } from '@govtechmy/myds-react/icon'
 import { DateCard } from '@/components/shared/DateCard'
 import { renderStatusTag, renderSecretTag } from '@/utils/RenderTag'
 import MaskHeader from '@/assets/bg-svg/MaskHeader'
@@ -45,7 +45,7 @@ export function HeaderDokumenID({
   metadataDocument,
   onApproveDokumen,
   onNotApproveDokumen,
-  onDownloadDokumen,
+  // onDownloadDokumen,
   onShareDataRefresh,
 }: HeaderDokumenIDProps) {
   const [isTakDiluluskanOpen, setIsTakDiluluskanOpen] = useState(false)
@@ -115,7 +115,7 @@ export function HeaderDokumenID({
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-1">
             <DialogKongsi onShareDataRefresh={onShareDataRefresh} />
-            <Button
+            {/* <Button
               variant="default-outline"
               size="small"
               className="gap-1.5"
@@ -123,7 +123,7 @@ export function HeaderDokumenID({
             >
               <DownloadIcon className="size-4" />
               Muat Turun
-            </Button>
+            </Button> */}
             <DialogMetadataInfo metadataDocument={metadataDocument} />
           </div>
         </div>
