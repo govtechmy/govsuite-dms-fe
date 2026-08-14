@@ -41,7 +41,7 @@ export const PERMISSION_TO_ROUTE_SEGMENT: Record<string, string> = {
   'muatnaik-dokumen': 'muatnaik-dokumen',
   'carian-dokumen': 'carian-kandungan',
   kegemaran: 'kegemaran',
-  pengurusan: 'pengurusan',
+  pengurusan: 'pengurusan-dokumen',
   'log-aktiviti': 'log-aktiviti',
   bantuan: 'bantuan',
 }

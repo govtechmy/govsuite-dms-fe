@@ -17,7 +17,9 @@ import DokumenIDPage from './pages/KatalogDokumen/DokumenID/DokumenID'
 
 import CarianDokumenPage from './pages/CarianDokumen'
 import KegemaranPage from './pages/Kegemaran'
-import PengurusanDokumenPage from './pages/PengurusanDokumen'
+import PengurusanDokumenPage from './pages/Pengurusan/PengurusanDokumen/PengurusanDokumen'
+import PengurusanPenggunaPage from './pages/Pengurusan/PengurusanPengguna/PengurusanPengguna'
+import PengurusanProfilPage from './pages/Pengurusan/PengurusanProfil/PengurusanProfil'
 import LogAktivitiPage from './pages/LogAktiviti'
 import BantuanPage from './pages/Bantuan'
 import MuatNaikDokumenPage from './pages/MuatNaikDokumen/MuatNaikDokumen'
@@ -156,11 +158,29 @@ export default function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          {/* Redirect legacy /pengurusan path to its new default sub-page */}
+          <Route path="pengurusan" element={<Navigate to="pengurusan-dokumen" replace />} />
           <Route
-            path="pengurusan"
+            path="pengurusan-dokumen"
             element={
               <ProtectedRoute routeKey="pengurusan">
                 <PengurusanDokumenPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pengurusan-pengguna"
+            element={
+              <ProtectedRoute routeKey="pengurusan">
+                <PengurusanPenggunaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pengurusan-profil"
+            element={
+              <ProtectedRoute routeKey="pengurusan">
+                <PengurusanProfilPage />
               </ProtectedRoute>
             }
           />

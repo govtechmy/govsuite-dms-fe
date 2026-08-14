@@ -1,7 +1,9 @@
 import {
   ArrowBackIcon,
   ArrowForwardIcon,
+  ChevronDownIcon,
   DocumentFilledIcon,
+  DocumentIcon,
   FolderIcon,
   GridIcon,
   HeartIcon,
@@ -9,15 +11,26 @@ import {
   SearchIcon,
   SettingIcon,
   UploadIcon,
+  UserGroupIcon,
+  UserIcon,
 } from '@govtechmy/myds-react/icon'
-import { Tag } from '@govtechmy/myds-react/tag'
+import { clx } from '@govtechmy/myds-react/utils'
 import React from 'react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ROLE_PERMISSIONS, resolveUserRoles, type UserRole } from '../../models/userRoles'
+import { renderInProgressTag } from '@/utils/RenderTag'
 
 interface SidebarProps {
   onclick?: () => void
+}
+
+interface SubMenuItem {
+  id: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  path: string
+  inProgress?: boolean
 }
 
 interface MenuItem {
@@ -28,6 +41,7 @@ interface MenuItem {
   activeStates: string[]
   roles: string[]
   inProgress?: boolean
+  children?: SubMenuItem[]
 }
 
 const menuItems: Omit<MenuItem, 'roles'>[] = [
@@ -71,9 +85,28 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
     id: 'pengurusan',
     label: 'Pengurusan',
     icon: SettingIcon,
-    path: 'pengurusan',
-    activeStates: ['pengurusan'],
-    inProgress: true,
+    path: 'pengurusan-dokumen',
+    activeStates: ['pengurusan-dokumen', 'pengurusan-pengguna', 'pengurusan-profil'],
+    children: [
+      {
+        id: 'pengurusan-dokumen',
+        label: 'Pengurusan Dokumen',
+        icon: DocumentIcon,
+        path: 'pengurusan-dokumen',
+      },
+      {
+        id: 'pengurusan-pengguna',
+        label: 'Pengurusan Pengguna',
+        icon: UserGroupIcon,
+        path: 'pengurusan-pengguna',
+      },
+      {
+        id: 'pengurusan-profil',
+        label: 'Pengurusan Profil',
+        icon: UserIcon,
+        path: 'pengurusan-profil',
+      },
+    ],
   },
   {
     id: 'log-aktiviti',
@@ -95,6 +128,7 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
 export default function SidebarMyds({ onclick }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [userRoles, setUserRoles] = useState<UserRole[]>(['PUBLIC'])
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
 
   const location = useLocation()
   const navigate = useNavigate()
@@ -109,12 +143,17 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
     setUserRoles(resolveUserRoles(roles))
   }, [])
 
-  const getItemClasses = (active: boolean) => {
-    if (active) {
-      return 'bg-primary-100 text-primary-600 font-medium'
-    }
-    return 'text-txt-black-900 hover:bg-otl-gray-100'
-  }
+  // Keep only the group whose sub-page is the active route expanded, and
+  // collapse every other group whenever the route changes (e.g. navigating
+  // to an unrelated page). Manual toggling via toggleGroup is unaffected
+  // since it doesn't change the route.
+  useEffect(() => {
+    const activeGroup = menuItems.find((item) =>
+      item.children?.some((child) => location.pathname.includes(child.path))
+    )
+
+    setExpandedGroups(activeGroup ? [activeGroup.id] : [])
+  }, [location.pathname])
 
   const isMenuItemVisible = (item: Omit<MenuItem, 'roles'>) => {
     // Check if ANY of the user's roles grants access to this menu item
@@ -151,43 +190,111 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
     return false
   }
 
+  const isSubMenuItemActive = (subItem: SubMenuItem) => {
+    return location.pathname.includes(subItem.path)
+  }
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) =>
+      prev.includes(id) ? prev.filter((groupId) => groupId !== id) : [...prev, id]
+    )
+  }
+
   const handleMenuClick = (item: Omit<MenuItem, 'roles'>) => {
+    // Groups toggle open/closed instead of navigating, unless the sidebar is
+    // collapsed to icons only, in which case there is no room to show
+    // sub-items so we jump straight to the group's default sub-page.
+    if (item.children?.length) {
+      if (isCollapsed) {
+        navigate(`/${lang}/${item.path}`)
+        onclick?.()
+        return
+      }
+      toggleGroup(item.id)
+      return
+    }
+
     const path = item.path ? `/${lang}/${item.path}` : `/${lang}`
     navigate(path)
     onclick?.()
   }
 
+  const handleSubMenuClick = (subItem: SubMenuItem) => {
+    navigate(`/${lang}/${subItem.path}`)
+    onclick?.()
+  }
+
   const renderMenuItem = (item: Omit<MenuItem, 'roles'>) => {
     const IconComponent = item.icon
+    const hasChildren = !!item.children?.length
+    const isExpanded = hasChildren && expandedGroups.includes(item.id)
 
     return (
-      <div
-        key={item.id}
-        className={`cursor-pointer flex items-center py-2 pl-4 rounded-lg ${
-          isCollapsed ? '' : 'mr-6 ml-4'
-        } ${getItemClasses(isMenuItemActive(item))}`}
-        onClick={() => handleMenuClick(item)}
-      >
-        <IconComponent className="size-5 flex-shrink-0" />
-        <span
-          className={`flex min-w-0 items-center gap-2 transition-opacity duration-300 overflow-hidden ${
-            isCollapsed ? 'w-0 opacity-0 ml-0' : 'opacity-100 ml-2'
-          }`}
-        >
-          <span className="truncate">{item.label}</span>
-          {item.inProgress && (
-            <Tag
-              variant="primary"
-              size="small"
-              mode="default"
-              className="h-auto shrink-0 flex-col gap-0 whitespace-normal py-1 text-center leading-none text-[10px]/[12px] p-[4px]"
-            >
-              Akan
-              <br />
-              Datang
-            </Tag>
+      <div key={item.id}>
+        <div
+          className={clx(
+            'cursor-pointer flex items-center py-2 pl-4 rounded-lg',
+            !isCollapsed && 'mr-6',
+            isMenuItemActive(item)
+              ? 'bg-primary-100 text-primary-600 font-medium'
+              : 'text-txt-black-900 hover:bg-otl-gray-100'
           )}
-        </span>
+          onClick={() => handleMenuClick(item)}
+        >
+          <IconComponent className="size-5 flex-shrink-0" />
+          <span
+            className={`flex min-w-0 flex-1 justify-between items-center gap-2 transition-opacity duration-300 overflow-hidden ${
+              isCollapsed ? 'w-0 opacity-0 ml-0' : 'opacity-100 ml-2'
+            }`}
+          >
+            <span className="truncate">{item.label}</span>
+            {item.inProgress && renderInProgressTag()}
+            {hasChildren && !isCollapsed && (
+              <div className="pr-2">
+                <ChevronDownIcon
+                  className={clx(
+                    'size-4 flex-shrink-0 transition-transform duration-200',
+                    isExpanded && 'rotate-180'
+                  )}
+                />
+              </div>
+            )}
+          </span>
+        </div>
+
+        {hasChildren && !isCollapsed && (
+          <div
+            className={clx(
+              'grid transition-all duration-300 ease-in-out',
+              isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            )}
+          >
+            <div className="flex flex-col overflow-hidden">
+              {item.children!.map((subItem) => {
+                const active = isSubMenuItemActive(subItem)
+
+                return (
+                  <div
+                    key={subItem.id}
+                    className={clx(
+                      'relative cursor-pointer flex items-center py-2 pl-8 mr-6 rounded-lg',
+                      'after:absolute after:left-8 after:right-0 after:bottom-0 after:border-b after:border-otl-divider',
+                      active
+                        ? 'text-primary-600 font-medium'
+                        : 'text-txt-black-900 hover:bg-otl-gray-100'
+                    )}
+                    onClick={() => handleSubMenuClick(subItem)}
+                  >
+                    <span className="flex min-w-0 flex-1 items-center gap-2 ml-3">
+                      <span className="truncate">{subItem.label}</span>
+                      {subItem.inProgress && renderInProgressTag()}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -205,7 +312,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
           .map((item) => renderMenuItem(item))}
 
         <div
-          className={`border-b border-otl-divider pt-3 mb-3 w-9/12 mx-auto flex items-center justify-center`}
+          className={`border-b border-otl-divider pt-3 mr-6  flex items-center justify-center`}
         ></div>
 
         {menuItems
