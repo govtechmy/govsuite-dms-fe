@@ -18,6 +18,7 @@ import DokumenIDPage from './pages/KatalogDokumen/DokumenID/DokumenID'
 import CarianDokumenPage from './pages/CarianDokumen'
 import KegemaranPage from './pages/Kegemaran'
 import PengurusanDokumenPage from './pages/Pengurusan/PengurusanDokumen/PengurusanDokumen'
+import PengurusanDokumenIDPage from './pages/Pengurusan/PengurusanDokumen/PengurusanDokumenID/PengurusanDokumenID'
 import PengurusanPenggunaPage from './pages/Pengurusan/PengurusanPengguna/PengurusanPengguna'
 import PengurusanProfilPage from './pages/Pengurusan/PengurusanProfil/PengurusanProfil'
 import LogAktivitiPage from './pages/LogAktiviti'
@@ -166,10 +167,15 @@ export default function AppRoutes() {
             path="pengurusan-dokumen"
             element={
               <ProtectedRoute routeKey="pengurusan-dokumen">
-                <PengurusanDokumenPage />
+                <Outlet />
               </ProtectedRoute>
             }
-          />
+          >
+            {/* /pengurusan-dokumen */}
+            <Route index element={<PengurusanDokumenPage />} />
+            {/* /pengurusan-dokumen/:PengurusanDokumenID */}
+            <Route path=":PengurusanDokumenID" element={<PengurusanDokumenIDPage />} />
+          </Route>
           <Route
             path="pengurusan-pengguna"
             element={

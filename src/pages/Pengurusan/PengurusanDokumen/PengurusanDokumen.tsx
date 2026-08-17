@@ -1,79 +1,70 @@
+import { useEffect, useState } from 'react'
 import HeaderDocuments from '@/components/shared/HeaderDocuments'
 import KatalogUnit from '@/components/shared/KatalogUnit'
-import type { Unit } from '@/components/shared/KatalogUnit'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import { Button } from '@govtechmy/myds-react/button'
+import { useNavigate, useParams } from 'react-router-dom'
+import {
+  getPengurusanUnitsSummary,
+  type PengurusanUnitSummary,
+} from '@/services/pengurusanDokumen.svc'
+import { Spinner } from '@govtechmy/myds-react/spinner'
+import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 
-const units: Unit[] = [
-  {
-    name: 'Unit L',
-    items: [
-      ['Akta / Ordinan', true],
-      ['Carta', true],
-      ['Dokumen Tender / Sebut Harga', true],
-      ['E-mel', true],
-      ['E-mel Muat Naik', false],
-    ],
-  },
-  { name: 'Unit UP', items: [] },
-  {
-    name: 'Unit K',
-    items: [
-      ['Akta / Ordinan', true],
-      ['Carta', true],
-      ['Dokumen Tender / Sebut Harga', true],
-      ['E-mel', true],
-      ['E-mel Muat Naik', false],
-    ],
-  },
-  {
-    name: 'Unit H',
-    items: [
-      ['Akta / Ordinan', true],
-      ['Carta', true],
-    ],
-  },
-  {
-    name: 'Unit M',
-    items: [
-      ['Akta / Ordinan', true],
-      ['Carta', true],
-    ],
-  },
-  {
-    name: 'Unit J',
-    items: [
-      ['Akta / Ordinan', true],
-      ['Carta', true],
-      ['Dokumen Tender / Sebut Harga', true],
-      ['E-mel', true],
-      ['E-mel Muat Naik', false],
-    ],
-  },
-  {
-    name: 'Unit IO',
-    items: [
-      ['Akta / Ordinan', true],
-      ['Carta', true],
-      ['Dokumen Tender / Sebut Harga', true],
-      ['E-mel', true],
-      ['E-mel Muat Naik', false],
-    ],
-  },
-]
+// Placeholder id used until the "Tambah Tetapan" flow generates a real id.
+const NEW_TETAPAN_ID = 'new-tetapan-001'
 
 export default function PengurusanDokumenPage() {
+  const navigate = useNavigate()
+  const { lang = 'ms' } = useParams<{ lang: string }>()
+
+  const [unitsSummary, setUnitsSummary] = useState<PengurusanUnitSummary[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchUnitsSummary = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const data = await getPengurusanUnitsSummary()
+        setUnitsSummary(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Gagal memuatkan senarai unit')
+        console.error('Error fetching pengurusan units summary:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchUnitsSummary()
+  }, [])
+
   return (
     <RightSidePageLayoutWrapper>
       <HeaderDocuments
         title={'Pengurusan Dokumen'}
         buttonChildren={
-          <Button type="button" variant="primary-fill">
+          <Button
+            type="button"
+            variant="primary-fill"
+            onClick={() => navigate(`/${lang}/pengurusan-dokumen/${NEW_TETAPAN_ID}`)}
+          >
             + Tambah Tetapan
           </Button>
         }
       />
-      <KatalogUnit units={units} />
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Spinner size="large" />
+        </div>
+      )}
+      {!isLoading && error && (
+        <Callout variant="danger">
+          <CalloutTitle>Ralat</CalloutTitle>
+          <CalloutContent>{error}</CalloutContent>
+        </Callout>
+      )}
+      {!isLoading && !error && <KatalogUnit units={unitsSummary} />}
     </RightSidePageLayoutWrapper>
   )
 }
