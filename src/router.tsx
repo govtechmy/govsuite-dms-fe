@@ -35,7 +35,9 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
   'muatnaik-dokumen': 'muatnaik-dokumen',
   'carian-dokumen': 'carian-dokumen',
   kegemaran: 'kegemaran',
-  pengurusan: 'pengurusan',
+  'pengurusan-dokumen': 'pengurusan-dokumen',
+  'pengurusan-pengguna': 'pengurusan-pengguna',
+  'pengurusan-profil': 'pengurusan-profil',
   'log-aktiviti': 'log-aktiviti',
   bantuan: 'bantuan',
 }
@@ -163,7 +165,7 @@ export default function AppRoutes() {
           <Route
             path="pengurusan-dokumen"
             element={
-              <ProtectedRoute routeKey="pengurusan">
+              <ProtectedRoute routeKey="pengurusan-dokumen">
                 <PengurusanDokumenPage />
               </ProtectedRoute>
             }
@@ -171,7 +173,7 @@ export default function AppRoutes() {
           <Route
             path="pengurusan-pengguna"
             element={
-              <ProtectedRoute routeKey="pengurusan">
+              <ProtectedRoute routeKey="pengurusan-pengguna">
                 <PengurusanPenggunaPage />
               </ProtectedRoute>
             }
@@ -179,7 +181,7 @@ export default function AppRoutes() {
           <Route
             path="pengurusan-profil"
             element={
-              <ProtectedRoute routeKey="pengurusan">
+              <ProtectedRoute routeKey="pengurusan-profil">
                 <PengurusanProfilPage />
               </ProtectedRoute>
             }

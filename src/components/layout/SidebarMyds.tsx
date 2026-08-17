@@ -155,10 +155,21 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
     setExpandedGroups(activeGroup ? [activeGroup.id] : [])
   }, [location.pathname])
 
+  const hasPermission = (permissionId: string) =>
+    userRoles.some((role) => ROLE_PERMISSIONS[role]?.includes(permissionId) ?? false)
+
   const isMenuItemVisible = (item: Omit<MenuItem, 'roles'>) => {
+    // Groups are permission-less containers; they're visible if the user
+    // has access to at least one of their sub-pages.
+    if (item.children?.length) {
+      return item.children.some((child) => hasPermission(child.id))
+    }
+
     // Check if ANY of the user's roles grants access to this menu item
-    return userRoles.some((role) => ROLE_PERMISSIONS[role]?.includes(item.id) ?? false)
+    return hasPermission(item.id)
   }
+
+  const isSubMenuItemVisible = (subItem: SubMenuItem) => hasPermission(subItem.id)
 
   const isMenuItemActive = (item: Omit<MenuItem, 'roles'>) => {
     const pathName = location.pathname
@@ -206,7 +217,8 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
     // sub-items so we jump straight to the group's default sub-page.
     if (item.children?.length) {
       if (isCollapsed) {
-        navigate(`/${lang}/${item.path}`)
+        const firstVisibleChild = item.children.find((child) => isSubMenuItemVisible(child))
+        navigate(`/${lang}/${firstVisibleChild?.path ?? item.path}`)
         onclick?.()
         return
       }
@@ -270,7 +282,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
             )}
           >
             <div className="flex flex-col overflow-hidden">
-              {item.children!.map((subItem) => {
+              {item.children!.filter(isSubMenuItemVisible).map((subItem) => {
                 const active = isSubMenuItemActive(subItem)
 
                 return (
@@ -312,7 +324,7 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
           .map((item) => renderMenuItem(item))}
 
         <div
-          className={`border-b border-otl-divider pt-3 mr-6  flex items-center justify-center`}
+          className={`border-b border-otl-divider pt-3 mr-6 mb-3 flex items-center justify-center`}
         ></div>
 
         {menuItems
