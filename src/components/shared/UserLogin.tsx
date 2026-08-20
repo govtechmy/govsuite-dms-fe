@@ -1,4 +1,6 @@
+import { getUserRoles } from '@/services/dropdown.svc'
 import getUserInitials from '@/utils/getUserInitials'
+import { useEffect, useState } from 'react'
 
 // ✅ Define types
 interface User {
@@ -19,10 +21,26 @@ interface AuthStorage {
 }
 
 export default function UserLogin() {
+  const [roleNameByCode, setRoleNameByCode] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const roles = await getUserRoles()
+        setRoleNameByCode(Object.fromEntries(roles.map((role) => [role.code, role.name])))
+      } catch (error) {
+        console.error('Error fetching user roles:', error)
+      }
+    }
+
+    fetchRoles()
+  }, [])
+
   const formatUserRoles = (roles?: string[]) => {
     if (!roles || roles.length === 0) return ''
     return roles
       .map((role) => {
+        if (roleNameByCode[role]) return roleNameByCode[role]
         const normalized = role.toLowerCase()
         if (normalized === 'editor') return 'FOCAL PERSON'
         return role.replace(/_/g, ' ')
@@ -54,7 +72,7 @@ export default function UserLogin() {
 
           <div>
             <div>{parsedSession.state.user?.fullName ?? ''}</div>
-            <div className="text-body-xs font-normal text-txt-black-500">
+            <div className="text-body-xs font-normal uppercase text-txt-black-500">
               {formatUserRoles(parsedSession.state.user?.roles)}
             </div>
           </div>

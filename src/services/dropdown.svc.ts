@@ -29,6 +29,14 @@ export interface AccessLevel {
 }
 
 /**
+ * User role option for filter dropdowns (Peranan Pengguna)
+ */
+export interface DropdownUserRole {
+  code: string
+  name: string
+}
+
+/**
  * Profile document option for upload forms (unit-specific)
  */
 export interface ProfileDocument {
@@ -118,6 +126,24 @@ export const getAccessLevels = async (): Promise<AccessLevel[]> => {
     return Array.isArray(payload) ? payload : []
   } catch (error) {
     console.error('Error fetching access levels:', error)
+    throw error
+  }
+}
+
+/**
+ * Get list of user roles for filter dropdowns (Peranan Pengguna)
+ * GET /roles
+ */
+export const getUserRoles = async (): Promise<DropdownUserRole[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/roles`
+
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data
+
+    return Array.isArray(payload) ? payload : []
+  } catch (error) {
+    console.error('Error fetching user roles:', error)
     throw error
   }
 }
