@@ -41,8 +41,6 @@ export default function UserLogin() {
     return roles
       .map((role) => {
         if (roleNameByCode[role]) return roleNameByCode[role]
-        const normalized = role.toLowerCase()
-        if (normalized === 'editor') return 'FOCAL PERSON'
         return role.replace(/_/g, ' ')
       })
       .join(', ')
