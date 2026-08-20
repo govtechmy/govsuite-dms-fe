@@ -50,6 +50,11 @@ interface PenggunaFormState {
   roles: string[]
 }
 
+interface PenggunaErrorState {
+  code: string
+  message: string
+}
+
 // TODO: isExecutive/userAccessLevel are hardcoded — backend hasn't removed these
 // required fields from the /users contract yet. Remove the hardcoded values once BE drops them.
 const HARDCODED_IS_EXECUTIVE = true
@@ -82,7 +87,7 @@ export default function TambahPenggunaModal({
 
   const [open, setOpen] = useState(false)
   const [phase, setPhase] = useState<ModalPhase>('form')
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [error, setError] = useState<PenggunaErrorState | null>(null)
   const [form, setForm] = useState<PenggunaFormState>(() => buildFormState(pengguna))
   const [isDeleteFlow, setIsDeleteFlow] = useState(false)
 
@@ -101,11 +106,11 @@ export default function TambahPenggunaModal({
     if (nextOpen) {
       setForm(buildFormState(pengguna))
       setPhase('form')
-      setErrorMessage(null)
+      setError(null)
       setIsDeleteFlow(false)
     } else {
       setPhase('form')
-      setErrorMessage(null)
+      setError(null)
       setIsDeleteFlow(false)
       setForm(buildFormState(pengguna))
     }
@@ -146,20 +151,23 @@ export default function TambahPenggunaModal({
         ? 'Pengguna gagal dikemaskini.'
         : 'Pengguna gagal ditambah.'
       const backendError = extractBackendError(err)
-      setErrorMessage(backendError?.message ?? fallbackMessage)
+      setError({
+        code: backendError?.code ?? 'REQUEST_FAILED',
+        message: backendError?.message ?? fallbackMessage,
+      })
       setPhase('error')
     }
   }
 
   const handleCubaLagiClick = () => {
-    setErrorMessage(null)
+    setError(null)
     setPhase(isDeleteFlow ? 'confirmDelete' : 'form')
   }
 
   const handleTutupClick = () => {
     setOpen(false)
     setPhase('form')
-    setErrorMessage(null)
+    setError(null)
     setIsDeleteFlow(false)
     setForm(buildFormState(pengguna))
   }
@@ -184,7 +192,10 @@ export default function TambahPenggunaModal({
       onSuccess?.()
     } catch (err) {
       const backendError = extractBackendError(err)
-      setErrorMessage(backendError?.message ?? 'Pengguna gagal dibuang.')
+      setError({
+        code: backendError?.code ?? 'REQUEST_FAILED',
+        message: backendError?.message ?? 'Pengguna gagal dibuang.',
+      })
       setPhase('error')
     }
   }
@@ -390,7 +401,8 @@ export default function TambahPenggunaModal({
                   : 'Gagal Menambah Pengguna'}
             </DialogTitle>
             <DialogDescription>
-              {errorMessage ??
+              {error?.code ?? 'REQUEST_FAILED'} :{' '}
+              {error?.message ??
                 (isDeleteFlow
                   ? 'Pengguna gagal dibuang. Sila cuba lagi.'
                   : isEditMode
