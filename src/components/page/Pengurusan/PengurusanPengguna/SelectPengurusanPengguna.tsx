@@ -5,10 +5,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
+import TambahPenggunaModal from '@/components/page/Pengurusan/PengurusanPengguna/TambahPenggunaModal'
 import type { DropdownUnit, DropdownUserRole } from '@/services/dropdown.svc'
 // import type { AccessLevel } from '@/services/dropdown.svc'
 import { Button } from '@govtechmy/myds-react/button'
-import { PlusIcon, ReloadIcon } from '@govtechmy/myds-react/icon'
+import { ReloadIcon } from '@govtechmy/myds-react/icon'
 import { useSearchParams } from 'react-router-dom'
 
 interface SelectPengurusanPenggunaProps {
@@ -18,6 +19,7 @@ interface SelectPengurusanPenggunaProps {
   // dropdownTahapKeselamatan: AccessLevel[]
   showOnlyWhenSearchQuery?: boolean
   resetPageOnFilterChange?: boolean
+  onSuccess?: () => void
 }
 
 export default function SelectPengurusanPengguna({
@@ -26,6 +28,7 @@ export default function SelectPengurusanPengguna({
   // dropdownTahapKeselamatan,
   showOnlyWhenSearchQuery = false,
   resetPageOnFilterChange = true,
+  onSuccess,
 }: SelectPengurusanPenggunaProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const hasSearchQuery = Boolean(searchParams.get('search')?.trim())
@@ -155,9 +158,11 @@ export default function SelectPengurusanPengguna({
           <ReloadIcon />
           <div>Set Semula</div>
         </Button>
-        <Button>
-          <PlusIcon /> Tambah Pengguna
-        </Button>
+        <TambahPenggunaModal
+          dropdownUnits={dropdownUnits}
+          dropdownTahapAkses={dropdownTahapAkses}
+          onSuccess={onSuccess}
+        />
       </div>
     </div>
   )

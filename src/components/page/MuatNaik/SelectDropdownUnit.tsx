@@ -11,15 +11,25 @@ interface SelectDropdownUnitProps {
   dropdownUnits: DropdownUnit[]
   selectedUnit: string | undefined
   onUnitChange: (unitCode: string) => void
+  size?: 'small' | 'medium' | 'large'
+  disabled?: boolean
 }
 
 export default function SelectDropdownUnit({
   dropdownUnits,
   selectedUnit,
   onUnitChange,
+  size = 'medium',
+  disabled = false,
 }: SelectDropdownUnitProps) {
   return (
-    <Select size="medium" variant="outline" value={selectedUnit || ''} onValueChange={onUnitChange}>
+    <Select
+      size={size}
+      variant="outline"
+      value={selectedUnit || ''}
+      onValueChange={onUnitChange}
+      disabled={disabled}
+    >
       <SelectTrigger className="w-full data-[placeholder]:text-txt-black-500 font-normal">
         <SelectValue placeholder="Pilih Unit" />
       </SelectTrigger>

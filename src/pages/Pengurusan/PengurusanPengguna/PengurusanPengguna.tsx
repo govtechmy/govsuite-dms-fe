@@ -17,7 +17,7 @@ import {
   type PenggunaItem,
 } from '@/services/pengurusanPengguna.svc'
 import extractBackendError from '@/utils/extractBackendError'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 export default function PengurusanPenggunaPage() {
@@ -70,31 +70,31 @@ export default function PengurusanPenggunaPage() {
     fetchDropdownData()
   }, [])
 
-  useEffect(() => {
-    const fetchPenggunaList = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        const data = await getPenggunaList({
-          query,
-          unit,
-          role: tahapAkses,
-          page: pageNumber,
-          limit: pageSize,
-        })
-        setUsers(data.items)
-        setSearchMeta(data.meta)
-      } catch (err) {
-        const backendError = extractBackendError(err)
-        setError(backendError?.message ?? 'Gagal memuatkan senarai pengguna')
-        console.error('Error fetching pengguna list:', err)
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchPenggunaList = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const data = await getPenggunaList({
+        query,
+        unit,
+        role: tahapAkses,
+        page: pageNumber,
+        limit: pageSize,
+      })
+      setUsers(data.items)
+      setSearchMeta(data.meta)
+    } catch (err) {
+      const backendError = extractBackendError(err)
+      setError(backendError?.message ?? 'Gagal memuatkan senarai pengguna')
+      console.error('Error fetching pengguna list:', err)
+    } finally {
+      setIsLoading(false)
     }
-
-    fetchPenggunaList()
   }, [query, unit, tahapAkses, pageNumber, pageSize])
+
+  useEffect(() => {
+    fetchPenggunaList()
+  }, [fetchPenggunaList])
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams)
@@ -122,6 +122,7 @@ export default function PengurusanPenggunaPage() {
             dropdownTahapAkses={dropdownTahapAkses}
             // Tahap Keselamatan lookup endpoint isn't released yet — re-enable once backend is ready.
             // dropdownTahapKeselamatan={dropdownTahapKeselamatan}
+            onSuccess={fetchPenggunaList}
           />
         </div>
 
@@ -129,6 +130,8 @@ export default function PengurusanPenggunaPage() {
           users={users}
           unitNameById={unitNameById}
           roleNameByCode={roleNameByCode}
+          dropdownUnits={dropdownUnits}
+          dropdownTahapAkses={dropdownTahapAkses}
           isLoading={isLoading}
           error={error}
           pageNumber={pageNumber}
@@ -136,6 +139,7 @@ export default function PengurusanPenggunaPage() {
           totalRecords={totalRecords}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
+          onSuccess={fetchPenggunaList}
         />
       </div>
     </RightSidePageLayoutWrapper>

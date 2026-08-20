@@ -36,6 +36,21 @@ export interface GetPenggunaListResponse {
   meta: PenggunaListMeta
 }
 
+export interface PenggunaPayload {
+  fullName: string
+  email: string
+  unitId: string
+  // TODO: isExecutive/userAccessLevel are hardcoded at the call site — backend hasn't
+  // removed these required fields from the /users contract yet. Remove the hardcoded
+  // values (see TambahPenggunaModal.tsx) once BE drops them.
+  isExecutive: boolean
+  roles: string[]
+  userAccessLevel: string[]
+}
+
+export type CreatePenggunaPayload = PenggunaPayload
+export type UpdatePenggunaPayload = PenggunaPayload
+
 /**
  * Get list of pengguna (users) for the Pengurusan Pengguna page.
  * GET /users
@@ -83,6 +98,62 @@ export const getPenggunaList = async (
     }
   } catch (error) {
     console.error('Error fetching pengguna list:', error)
+    throw error
+  }
+}
+
+/**
+ * Create a new pengguna (user) from the "Tambah Pengguna" modal.
+ * POST /users
+ */
+export const createPengguna = async (payload: CreatePenggunaPayload): Promise<PenggunaItem> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/users`
+
+  try {
+    const response = await authAxios.post(url, payload)
+    return response.data?.data ?? response.data
+  } catch (error) {
+    console.error('Error creating pengguna:', error)
+    throw error
+  }
+}
+
+/**
+ * Update an existing pengguna (user) from the "Edit Pengguna" modal.
+ * PUT /users/:id
+ */
+export const updatePengguna = async (
+  id: string,
+  payload: UpdatePenggunaPayload
+): Promise<PenggunaItem> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/users/${id}`
+
+  try {
+    const response = await authAxios.put(url, payload)
+    return response.data?.data ?? response.data
+  } catch (error) {
+    console.error('Error updating pengguna:', error)
+    throw error
+  }
+}
+
+export interface DeletePenggunaResponse {
+  id: string
+  deletedAt: string
+}
+
+/**
+ * Delete an existing pengguna (user) from the "Buang Pengguna" confirmation step.
+ * DELETE /users/:id
+ */
+export const deletePengguna = async (id: string): Promise<DeletePenggunaResponse> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/users/${id}`
+
+  try {
+    const response = await authAxios.delete(url)
+    return response.data?.data ?? response.data
+  } catch (error) {
+    console.error('Error deleting pengguna:', error)
     throw error
   }
 }

@@ -1,9 +1,9 @@
 import PaginationControl from '@/components/shared/PaginationControl'
+import TambahPenggunaModal from '@/components/page/Pengurusan/PengurusanPengguna/TambahPenggunaModal'
+import type { DropdownUnit, DropdownUserRole } from '@/services/dropdown.svc'
 import type { PenggunaItem } from '@/services/pengurusanPengguna.svc'
 // import { renderSecretTag } from '@/utils/RenderTag'
-import { Button } from '@govtechmy/myds-react/button'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
-import { EditIcon } from '@govtechmy/myds-react/icon'
 import {
   Table,
   TableBody,
@@ -20,6 +20,8 @@ interface PengurusanPenggunaDisplaySearchProps {
   users: PenggunaItem[]
   unitNameById: Record<string, string>
   roleNameByCode: Record<string, string>
+  dropdownUnits: DropdownUnit[]
+  dropdownTahapAkses: DropdownUserRole[]
   isLoading: boolean
   error: string | null
   pageNumber: number
@@ -27,6 +29,7 @@ interface PengurusanPenggunaDisplaySearchProps {
   totalRecords: number
   onPageChange: (newPage: number) => void
   onPageSizeChange: (newSize: number) => void
+  onSuccess?: () => void
 }
 
 const TABLE_COLUMN_COUNT = 5
@@ -36,6 +39,8 @@ export default function PengurusanPenggunaDisplaySearch({
   users,
   unitNameById,
   roleNameByCode,
+  dropdownUnits,
+  dropdownTahapAkses,
   isLoading,
   error,
   pageNumber,
@@ -43,6 +48,7 @@ export default function PengurusanPenggunaDisplaySearch({
   totalRecords,
   onPageChange,
   onPageSizeChange,
+  onSuccess,
 }: PengurusanPenggunaDisplaySearchProps) {
   if (error) {
     return (
@@ -93,9 +99,13 @@ export default function PengurusanPenggunaDisplaySearch({
                 </TableCell>
                 {/* <TableCell>{renderSecretTag(user.tahapKeselamatan)}</TableCell> */}
                 <TableCell>
-                  <Button variant={'default-outline'} size={'small'}>
-                    <EditIcon></EditIcon>Edit
-                  </Button>
+                  <TambahPenggunaModal
+                    mode="edit"
+                    pengguna={user}
+                    dropdownUnits={dropdownUnits}
+                    dropdownTahapAkses={dropdownTahapAkses}
+                    onSuccess={onSuccess}
+                  />
                 </TableCell>
               </TableRow>
             ))
