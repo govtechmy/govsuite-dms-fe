@@ -16,7 +16,6 @@ export interface PenggunaItem {
   email: string
   fullName: string
   status: string
-  isExecutive: boolean
   unitId: string
   roles: string[]
   mustChangePassword: boolean
@@ -40,12 +39,9 @@ export interface PenggunaPayload {
   fullName: string
   email: string
   unitId: string
-  // TODO: isExecutive/userAccessLevel are hardcoded at the call site — backend hasn't
-  // removed these required fields from the /users contract yet. Remove the hardcoded
-  // values (see TambahPenggunaModal.tsx) once BE drops them.
-  isExecutive: boolean
   roles: string[]
-  userAccessLevel: string[]
+  // userAccessLevel requirement isn't finalised by backend yet — re-enable once ready.
+  // userAccessLevel: string[]
 }
 
 export type CreatePenggunaPayload = PenggunaPayload

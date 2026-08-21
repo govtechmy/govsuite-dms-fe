@@ -78,6 +78,7 @@ export default function SelectPengurusanPengguna({
 
   const handleReset = () => {
     const params = new URLSearchParams(searchParams)
+    params.delete('search')
     params.delete('unit')
     params.delete('tahapAkses')
     params.delete('tahapKeselamatan')

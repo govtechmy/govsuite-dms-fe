@@ -55,10 +55,8 @@ interface PenggunaErrorState {
   message: string
 }
 
-// TODO: isExecutive/userAccessLevel are hardcoded — backend hasn't removed these
-// required fields from the /users contract yet. Remove the hardcoded values once BE drops them.
-const HARDCODED_IS_EXECUTIVE = true
-const HARDCODED_USER_ACCESS_LEVEL = ['TERBUKA', 'TERHAD', 'RAHSIA']
+// userAccessLevel lookup/requirement isn't finalised by backend yet — re-enable once ready.
+// const HARDCODED_USER_ACCESS_LEVEL = ['TERBUKA', 'TERHAD', 'RAHSIA']
 
 // HQ is excluded from the /units dropdown for security reasons, so a pengguna whose unit
 // is HQ can't have their unit re-selected from the list — lock the field and show HQ as-is.
@@ -135,8 +133,7 @@ export default function TambahPenggunaModal({
         email: form.email.trim(),
         unitId: form.unitId,
         roles: form.roles,
-        isExecutive: HARDCODED_IS_EXECUTIVE,
-        userAccessLevel: HARDCODED_USER_ACCESS_LEVEL,
+        // userAccessLevel: HARDCODED_USER_ACCESS_LEVEL,
       }
 
       if (isEditMode && pengguna) {
