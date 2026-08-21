@@ -1,5 +1,5 @@
 import { getEnv } from '@/config/runtimeEnv'
-import { unauthAxios } from './http'
+import { authAxios, unauthAxios } from './http'
 
 const BASE_URL = getEnv('VITE_API_BASE_URL')
 const AUTH_ENDPOINT = '/auth'
@@ -10,6 +10,18 @@ type AuthUser = {
   email?: string
   fullName?: string
   roles: string[]
+}
+
+export interface CurrentUserProfile {
+  id: string
+  username: string
+  email: string
+  fullName: string
+  status: string
+  lastLoginAt?: string
+  unitId: string
+  roles: string[]
+  mustChangePassword: boolean
 }
 
 type LoginResult = {
@@ -56,5 +68,41 @@ export const refreshToken = async (
   } catch (error) {
     console.error('Refresh token error:', error)
     return null
+  }
+}
+
+/**
+ * Get the logged-in user's own profile for the Pengurusan Profil page.
+ * GET /auth/me
+ */
+export const getCurrentUserProfile = async (): Promise<CurrentUserProfile> => {
+  const url = `${BASE_URL}${AUTH_ENDPOINT}/me`
+  try {
+    const response = await authAxios.get(url)
+    const user = response.data?.data?.user as CurrentUserProfile | undefined
+
+    if (!user) {
+      throw new Error('Invalid response payload: missing user')
+    }
+
+    return user
+  } catch (error) {
+    console.error('Error fetching current user profile:', error)
+    throw error
+  }
+}
+
+/**
+ * Change the logged-in user's own password from the "Set Semula Kata Laluan" form.
+ * POST /auth/change-password
+ */
+export const changePassword = async (newPassword: string): Promise<string> => {
+  const url = `${BASE_URL}${AUTH_ENDPOINT}/change-password`
+  try {
+    const response = await authAxios.post(url, { newPassword })
+    return response.data?.data?.message ?? 'Kata laluan berjaya dikemaskini.'
+  } catch (error) {
+    console.error('Error changing password:', error)
+    throw error
   }
 }

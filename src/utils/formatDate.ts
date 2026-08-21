@@ -156,3 +156,22 @@ export const formatDocumentDateValue = (date: Date): string => {
   const year = date.getFullYear()
   return `${day}-${month}-${year}`
 }
+
+/**
+ * Formats an ISO date-time string for read-only display as "dd/mm/yyyy, HH:mm hrs"
+ * (24-hour clock, local time). Returns '-' when the input is missing or invalid.
+ */
+export const formatDateTimeDisplay = (value?: string): string => {
+  if (!value) return '-'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${day}/${month}/${year}, ${hours}:${minutes} hrs`
+}
