@@ -17,6 +17,7 @@ import {
   type PengurusanUnitSummary,
 } from '@/services/pengurusanDokumen.svc'
 import { formatISODateString } from '@/utils/formatDate'
+import extractBackendError from '@/utils/extractBackendError'
 
 interface UnitTetapanState {
   items: PengurusanTetapanItem[]
@@ -57,7 +58,8 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
       const items = await getPengurusanTetapanByUnit(unitKey)
       updateUnitTetapan(unitKey, { items, isLoading: false, error: null })
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal memuatkan tetapan unit ini'
+      const backendError = extractBackendError(error)
+      const message = backendError?.message ?? 'Gagal memuatkan tetapan unit ini'
       updateUnitTetapan(unitKey, { isLoading: false, error: message })
     }
   }
@@ -138,7 +140,7 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
                       }
                     >
                       <h3 className="text-body-md font-medium text-txt-black-900">
-                        {item.documentProfileValue}
+                        {item.documentProfileName}
                       </h3>
                       <p className="mt-1 text-body-sm text-txt-black-500">
                         Kemaskini terakhir {formatISODateString(item.updatedAt)}

@@ -1,13 +1,9 @@
 /**
  * Service layer for the "Pengurusan Dokumen" (document settings) catalog.
- *
- * NOTE: The backend endpoints for this feature are not available yet.
- * Both functions below return mocked data behind a simulated network delay
- * so loading states can be exercised during development. Once the real
- * endpoints exist, replace the mock bodies with `authAxios.get(...)` calls
- * following the same pattern used in `catalog.svc.ts` / `dropdown.svc.ts` —
- * the function signatures and return shapes should not need to change.
  */
+
+import { authAxios } from './http'
+import { getEnv } from '@/config/runtimeEnv'
 
 /**
  * Summary of an organizational unit's document settings ("Tetapan"),
@@ -25,57 +21,64 @@ export interface PengurusanUnitSummary {
 export interface PengurusanTetapanItem {
   documentProfileId: string
   documentProfileCode: string
-  documentProfileValue: string
+  documentProfileName: string
   updatedAt: string
   isActive: boolean
 }
 
-const MOCK_UNITS_SUMMARY: PengurusanUnitSummary[] = [
-  { key: 'UNIT_K', value: 'Unit K', count: 5 },
-  { key: 'UNIT_M', value: 'Unit M', count: 5 },
-  { key: 'UNIT_L', value: 'Unit L', count: 2 },
-]
-
-const MOCK_PROFILE_NAME_POOL = [
-  'Akta / Ordinan',
-  'Carta',
-  'Dokumen Tender / Sebut Harga',
-  'E-mel',
-  'E-mel Muat Naik',
-  'Minit Mesyuarat',
-  'Surat Rasmi',
-]
-
-const buildMockTetapanItems = (unitKey: string, count: number): PengurusanTetapanItem[] => {
-  return Array.from({ length: count }, (_, index) => {
-    const profileName = MOCK_PROFILE_NAME_POOL[index % MOCK_PROFILE_NAME_POOL.length]
-    const profileCode = profileName
-      .split(' ')[0]
-      .toUpperCase()
-      .replace(/[^A-Z]/g, '')
-
-    return {
-      documentProfileId: `${unitKey}-${profileCode}-${index + 1}`,
-      documentProfileCode: profileCode,
-      documentProfileValue: profileName,
-      updatedAt: new Date(Date.now() - index * 86_400_000).toISOString(),
-      isActive: index % 3 !== 0,
-    }
-  })
+/**
+ * A single toggleable field within a document profile's config
+ * (used for both "Medan Wajib" checklist).
+ */
+export interface PengurusanDokumenMetadataField {
+  key: string
+  title: string
+  type: string
+  required: boolean
+  value: boolean
+  isFixed: boolean
 }
 
-const simulateNetworkDelay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
+/**
+ * Lookup option shape shared by defaultAccessLevel/retentionPeriod.
+ */
+export interface PengurusanDokumenLookupOption {
+  code: string
+  codeName: string
+}
+
+/**
+ * Full document profile config ("Tetapan"), used to prefill the
+ * Tambah/Kemaskini Tetapan form.
+ */
+export interface PengurusanDokumenConfig {
+  definitionGroupId: string
+  unitId: string
+  allowedFormats: string[]
+  maxFileSizeMb: number
+  workflowCode: string
+  documentProfileCode: string
+  documentProfileName: string
+  defaultAccessLevel: PengurusanDokumenLookupOption
+  retentionPeriod: PengurusanDokumenLookupOption
+  isLatest: boolean
+  createdAt: string
+  updatedAt: string
+  metadataFields: PengurusanDokumenMetadataField[]
+}
 
 /**
  * Get the list of units with their document settings ("Tetapan") count,
  * used to render the top-level accordion.
- * TODO: replace with `GET /config/profile-document/units-summary` (or the
- * real endpoint) once the backend is available.
+ * GET /config/unit
  */
 export const getPengurusanUnitsSummary = async (): Promise<PengurusanUnitSummary[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/unit`
   try {
-    await simulateNetworkDelay()
-    return MOCK_UNITS_SUMMARY
+    const response = await authAxios.get(url)
+    const payload = response.data?.data?.items
+
+    return Array.isArray(payload) ? payload : []
   } catch (error) {
     console.error('Error fetching pengurusan units summary:', error)
     throw error
@@ -85,18 +88,64 @@ export const getPengurusanUnitsSummary = async (): Promise<PengurusanUnitSummary
 /**
  * Get the list of document settings ("Tetapan") belonging to a unit,
  * fetched lazily when its accordion item is expanded.
- * TODO: replace with `GET /config/profile-document/{unitKey}` (or the real
- * endpoint) once the backend is available.
+ * GET /config/unit/{unitKey}
  */
 export const getPengurusanTetapanByUnit = async (
   unitKey: string
 ): Promise<PengurusanTetapanItem[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/unit/${unitKey}`
   try {
-    await simulateNetworkDelay()
-    const unit = MOCK_UNITS_SUMMARY.find((item) => item.key === unitKey)
-    return buildMockTetapanItems(unitKey, unit?.count ?? 0)
+    const response = await authAxios.get(url)
+    const payload = response.data?.data
+
+    return Array.isArray(payload) ? payload : []
   } catch (error) {
     console.error(`Error fetching pengurusan tetapan for unit ${unitKey}:`, error)
+    throw error
+  }
+}
+
+/**
+ * Get the full config for a single document profile setting ("Tetapan"),
+ * used to prefill the Tambah/Kemaskini Tetapan form. Pass "draf" as the
+ * id when creating a brand new setting from the "Tambah Tetapan" flow.
+ * GET /config/{documentProfileId}
+ */
+export const getPengurusanDokumenConfig = async (
+  documentProfileId: string
+): Promise<PengurusanDokumenConfig | null> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/${documentProfileId}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data
+
+    if (!payload) {
+      return null
+    }
+
+    return {
+      definitionGroupId: String(payload.definitionGroupId ?? ''),
+      unitId: String(payload.unitId ?? ''),
+      allowedFormats: Array.isArray(payload.allowedFormats) ? payload.allowedFormats : [],
+      maxFileSizeMb: Number(payload.maxFileSizeMb ?? 0),
+      workflowCode: String(payload.workflowCode ?? ''),
+      documentProfileCode: String(payload.documentProfileCode ?? ''),
+      documentProfileName: String(payload.documentProfileName ?? ''),
+      defaultAccessLevel: {
+        code: String(payload.defaultAccessLevel?.code ?? ''),
+        codeName: String(payload.defaultAccessLevel?.codeName ?? ''),
+      },
+      retentionPeriod: {
+        code: String(payload.retentionPeriod?.code ?? ''),
+        codeName: String(payload.retentionPeriod?.codeName ?? ''),
+      },
+      isLatest: Boolean(payload.isLatest),
+      createdAt: String(payload.createdAt ?? ''),
+      updatedAt: String(payload.updatedAt ?? ''),
+      metadataFields: Array.isArray(payload.metadataFields) ? payload.metadataFields : [],
+    }
+  } catch (error) {
+    console.error(`Error fetching pengurusan dokumen config for id ${documentProfileId}:`, error)
     throw error
   }
 }
