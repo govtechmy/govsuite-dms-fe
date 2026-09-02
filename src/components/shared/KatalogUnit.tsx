@@ -5,7 +5,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@govtechmy/myds-react/accordion'
-import { AnnounceBarTag } from '@govtechmy/myds-react/announce-bar'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import folderOpen from '@/assets/png/Folder_open.png'
@@ -18,6 +17,7 @@ import {
 } from '@/services/pengurusanDokumen.svc'
 import { formatISODateString } from '@/utils/formatDate'
 import extractBackendError from '@/utils/extractBackendError'
+import { Tag } from '@govtechmy/myds-react/tag'
 
 interface UnitTetapanState {
   items: PengurusanTetapanItem[]
@@ -145,10 +145,14 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
                       <p className="mt-1 text-body-sm text-txt-black-500">
                         Kemaskini terakhir {formatISODateString(item.updatedAt)}
                       </p>
-                      <div className="mt-4">
-                        <AnnounceBarTag variant={item.isActive ? 'success' : 'default'}>
-                          ● {item.isActive ? 'Aktif' : 'Tidak Aktif'}
-                        </AnnounceBarTag>
+                      <div className="mt-4 flex gap-2">
+                        <Tag
+                          variant={item.configStatus === 'AKTIF' ? 'success' : 'default'}
+                          dot={true}
+                        >
+                          {item.configStatus === 'AKTIF' ? 'Aktif' : 'Tidak Aktif'}
+                        </Tag>
+                        <Tag variant={'primary'}> Versi {item.version}</Tag>
                       </div>
                     </div>
                   ))}

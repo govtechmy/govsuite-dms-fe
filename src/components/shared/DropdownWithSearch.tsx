@@ -11,13 +11,23 @@ import {
   SelectItem,
 } from './SelectMydsFix'
 
+/**
+ * An option can be a plain string (value and label are the same), or an
+ * explicit `{ value, label }` pair when the underlying value (e.g. an id)
+ * needs to differ from what's displayed/searched.
+ */
+export type DropdownWithSearchOption = string | { value: string; label: string }
+
 interface DropdownWithSearchProps {
   placeholder?: string
-  options: string[]
+  options: DropdownWithSearchOption[]
   value: string
   onValueChange: (value: string) => void
   className?: string
 }
+
+const normalizeOption = (option: DropdownWithSearchOption): { value: string; label: string } =>
+  typeof option === 'string' ? { value: option, label: option } : option
 
 export default function DropdownWithSearch({
   placeholder = 'Profile Dokumen',
@@ -28,8 +38,9 @@ export default function DropdownWithSearch({
 }: DropdownWithSearchProps) {
   const [search, setSearch] = useState('')
 
-  const filteredOptions = options.filter((item) =>
-    item.toLowerCase().includes(search.toLowerCase())
+  const normalizedOptions = options.map(normalizeOption)
+  const filteredOptions = normalizedOptions.filter((item) =>
+    item.label.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -61,8 +72,8 @@ export default function DropdownWithSearch({
           </SelectHeader>
 
           {filteredOptions.map((item) => (
-            <SelectItem key={item} value={item}>
-              {item}
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>

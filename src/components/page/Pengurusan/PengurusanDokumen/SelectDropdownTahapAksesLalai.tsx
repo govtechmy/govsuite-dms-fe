@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   Select,
   SelectContent,
@@ -18,6 +19,14 @@ export default function SelectDropdownTahapAksesLalai({
   selectedAccessLevel,
   setSelectedAccessLevel,
 }: SelectDropdownTahapAksesLalaiProps) {
+  // Default to the first option once access levels load, if nothing has
+  // been selected/prefilled yet.
+  useEffect(() => {
+    if (!selectedAccessLevel && accessLevels.length > 0) {
+      setSelectedAccessLevel(accessLevels[0].code)
+    }
+  }, [accessLevels, selectedAccessLevel, setSelectedAccessLevel])
+
   return (
     <Select
       size="medium"
@@ -30,7 +39,7 @@ export default function SelectDropdownTahapAksesLalai({
       </SelectTrigger>
       <SelectContent className="w-full">
         {accessLevels.map((level) => (
-          <SelectItem key={level.id} value={level.codeName}>
+          <SelectItem key={level.id} value={level.code}>
             {level.codeName}
           </SelectItem>
         ))}

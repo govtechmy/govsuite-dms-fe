@@ -10,10 +10,11 @@ import {
 import { Button, type ButtonProps } from '@govtechmy/myds-react/button'
 import { CheckCircleIcon, WarningIcon } from '@govtechmy/myds-react/icon'
 import { Spinner } from '@govtechmy/myds-react/spinner'
+import extractBackendError from '@/utils/extractBackendError'
 
 export type TetapanActionType = 'buang' | 'nyahaktif' | 'simpan' | 'kemaskini'
 
-type ModalPhase = 'confirm' | 'loading' | 'success'
+type ModalPhase = 'confirm' | 'loading' | 'success' | 'error'
 
 const ACTION_SIMULATION_DELAY_MS = 3000
 
@@ -71,14 +72,23 @@ interface TetapanActionModalProps {
   action: TetapanActionType | null
   onClose: () => void
   onSuccess?: (action: TetapanActionType) => void
+  /**
+   * When provided, the loading phase awaits this instead of the fixed
+   * simulation delay, and surfaces a retryable error phase on failure.
+   * Actions without a handler (e.g. still-simulated Buang/Nyahaktif) fall
+   * back to the simulated timeout.
+   */
+  onConfirm?: () => Promise<void>
 }
 
 export default function TetapanActionModal({
   action,
   onClose,
   onSuccess,
+  onConfirm,
 }: TetapanActionModalProps) {
   const [phase, setPhase] = useState<ModalPhase>('confirm')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearPendingTimeout = () => {
@@ -88,9 +98,28 @@ export default function TetapanActionModal({
     }
   }
 
+  const runAction = () => {
+    setPhase('loading')
+    setErrorMessage(null)
+
+    if (onConfirm) {
+      onConfirm()
+        .then(() => setPhase('success'))
+        .catch((err) => {
+          setErrorMessage(extractBackendError(err)?.message ?? 'Tindakan gagal. Sila cuba lagi.')
+          setPhase('error')
+        })
+      return
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setPhase('success')
+    }, ACTION_SIMULATION_DELAY_MS)
+  }
+
   // Initialise the correct phase whenever a new action is opened. Actions
   // that don't require confirmation (Simpan/Kemaskini) skip straight to the
-  // loading simulation.
+  // loading phase.
   useEffect(() => {
     if (!action) return
 
@@ -98,26 +127,25 @@ export default function TetapanActionModal({
     if (config.requireConfirm) {
       setPhase('confirm')
     } else {
-      setPhase('loading')
-      timeoutRef.current = setTimeout(() => {
-        setPhase('success')
-      }, ACTION_SIMULATION_DELAY_MS)
+      runAction()
     }
 
     return clearPendingTimeout
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action])
 
   const resetPhaseAfterClose = () => {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         setPhase('confirm')
+        setErrorMessage(null)
       })
     })
   }
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      // Prevent dismissing the modal while the action simulation is running
+      // Prevent dismissing the modal while the action is running
       if (phase === 'loading') {
         return
       }
@@ -127,10 +155,12 @@ export default function TetapanActionModal({
   }
 
   const handleConfirmClick = () => {
-    setPhase('loading')
-    timeoutRef.current = setTimeout(() => {
-      setPhase('success')
-    }, ACTION_SIMULATION_DELAY_MS)
+    runAction()
+  }
+
+  const handleTutupFromError = () => {
+    onClose()
+    resetPhaseAfterClose()
   }
 
   const handleTutupClick = () => {
@@ -151,7 +181,8 @@ export default function TetapanActionModal({
   return (
     <Dialog open={!!action} onOpenChange={handleOpenChange}>
       <DialogBody
-        className="w-full max-w-[calc(100dvw-36px)] sm:max-w-[400px] [&>button]:p-1 [&>button_svg]:size-3.5"
+        hideClose
+        className="w-full max-w-[calc(100dvw-36px)] sm:max-w-[400px]"
         onDismiss={phase === 'loading' ? undefined : onClose}
       >
         <DialogContent className="py-6">
@@ -204,6 +235,34 @@ export default function TetapanActionModal({
                   onClick={handleTutupClick}
                 >
                   Tutup
+                </Button>
+              </div>
+            </>
+          )}
+
+          {phase === 'error' && (
+            <>
+              <WarningIcon className="text-txt-danger size-[42px]" />
+              <DialogTitle className="pt-[16px]">Tindakan Gagal</DialogTitle>
+              <DialogDescription>
+                {errorMessage ?? 'Tindakan gagal. Sila cuba lagi.'}
+              </DialogDescription>
+              <div className="flex gap-2 pt-6">
+                <Button
+                  size={'large'}
+                  variant="default-outline"
+                  className="w-full items-center justify-center"
+                  onClick={handleTutupFromError}
+                >
+                  Tutup
+                </Button>
+                <Button
+                  size={'large'}
+                  variant="primary-fill"
+                  className="flex-1 w-full items-center justify-center"
+                  onClick={runAction}
+                >
+                  Cuba Lagi
                 </Button>
               </div>
             </>

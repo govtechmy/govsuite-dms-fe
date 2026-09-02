@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   Select,
   SelectContent,
@@ -18,6 +19,14 @@ export default function SelectDropdownTempohSimpanan({
   selectedRetentionPeriod,
   setSelectedRetentionPeriod,
 }: SelectDropdownTempohSimpananProps) {
+  // Default to the first option once retention periods load, if nothing
+  // has been selected/prefilled yet.
+  useEffect(() => {
+    if (!selectedRetentionPeriod && retentionPeriods.length > 0) {
+      setSelectedRetentionPeriod(retentionPeriods[0].code)
+    }
+  }, [retentionPeriods, selectedRetentionPeriod, setSelectedRetentionPeriod])
+
   return (
     <Select
       size="medium"
@@ -30,7 +39,7 @@ export default function SelectDropdownTempohSimpanan({
       </SelectTrigger>
       <SelectContent className="w-full">
         {retentionPeriods.map((period) => (
-          <SelectItem key={period.id} value={period.codeName}>
+          <SelectItem key={period.id} value={period.code}>
             {period.codeName}
           </SelectItem>
         ))}
