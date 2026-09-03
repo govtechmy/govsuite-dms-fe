@@ -328,9 +328,7 @@ export default function PengurusanDokumenIDPage() {
                 ? handleNyahaktifConfirm
                 : activeTetapanAction === 'aktifkan'
                   ? handleAktifkanConfirm
-                  : activeTetapanAction === 'buang'
-                    ? handleBuangConfirm
-                    : undefined
+                  : handleBuangConfirm
         }
         onSuccess={() => {
           // Every action currently returns to the settings list on success -
@@ -540,7 +538,7 @@ export default function PengurusanDokumenIDPage() {
         )}
       </div>
       {!isLoadingConfig && !configError && (isDraf || selectedProfileId) && (
-        <div className={clx('w-fulll flex', isDraf ? 'justify-end' : 'justify-between')}>
+        <div className={clx('w-full flex', isDraf ? 'justify-end' : 'justify-between')}>
           {!isDraf && (
             <Button variant={'danger-outline'} onClick={() => setActiveTetapanAction('buang')}>
               <TrashIcon /> Buang Tetapan

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   Dialog,
   DialogBody,
@@ -15,8 +15,6 @@ import extractBackendError from '@/utils/extractBackendError'
 export type TetapanActionType = 'buang' | 'nyahaktif' | 'aktifkan' | 'simpan' | 'kemaskini'
 
 type ModalPhase = 'confirm' | 'loading' | 'success' | 'error'
-
-const ACTION_SIMULATION_DELAY_MS = 3000
 
 interface TetapanActionConfig {
   requireConfirm: boolean
@@ -83,13 +81,9 @@ interface TetapanActionModalProps {
   action: TetapanActionType | null
   onClose: () => void
   onSuccess?: (action: TetapanActionType) => void
-  /**
-   * When provided, the loading phase awaits this instead of the fixed
-   * simulation delay, and surfaces a retryable error phase on failure.
-   * Actions without a handler fall back to the simulated timeout below
-   * (currently unused, kept as a safe default for any future action).
-   */
-  onConfirm?: () => Promise<void>
+  /** Performs the actual action; the loading phase awaits this and surfaces
+   * a retryable error phase on failure. */
+  onConfirm: () => Promise<void>
 }
 
 export default function TetapanActionModal({
@@ -100,32 +94,17 @@ export default function TetapanActionModal({
 }: TetapanActionModalProps) {
   const [phase, setPhase] = useState<ModalPhase>('confirm')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const clearPendingTimeout = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
-  }
 
   const runAction = () => {
     setPhase('loading')
     setErrorMessage(null)
 
-    if (onConfirm) {
-      onConfirm()
-        .then(() => setPhase('success'))
-        .catch((err) => {
-          setErrorMessage(extractBackendError(err)?.message ?? 'Tindakan gagal. Sila cuba lagi.')
-          setPhase('error')
-        })
-      return
-    }
-
-    timeoutRef.current = setTimeout(() => {
-      setPhase('success')
-    }, ACTION_SIMULATION_DELAY_MS)
+    onConfirm()
+      .then(() => setPhase('success'))
+      .catch((err) => {
+        setErrorMessage(extractBackendError(err)?.message ?? 'Tindakan gagal. Sila cuba lagi.')
+        setPhase('error')
+      })
   }
 
   // Initialise the correct phase whenever a new action is opened. Actions
@@ -140,8 +119,6 @@ export default function TetapanActionModal({
     } else {
       runAction()
     }
-
-    return clearPendingTimeout
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action])
 
