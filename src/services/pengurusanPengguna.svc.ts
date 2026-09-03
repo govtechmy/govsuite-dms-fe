@@ -133,6 +133,29 @@ export const updatePengguna = async (
   }
 }
 
+export interface EmailAvailability {
+  available: boolean
+  message: string
+}
+
+/**
+ * Check whether an email is available for use, called from the "Tambah Pengguna"
+ * modal while the user is typing (debounced) to give live feedback before submit.
+ * GET /users/validate-email?email=...
+ *
+ * Throws on failure (e.g. email already exists as a CONFLICT) — the caller is
+ * responsible for interpreting the error via `extractBackendError`.
+ */
+export const checkEmailAvailability = async (email: string): Promise<EmailAvailability> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/users/validate-email`
+
+  const response = await authAxios.get(url, { params: { email } })
+  const message =
+    typeof response.data?.data === 'string' ? response.data.data : 'Email is available'
+
+  return { available: true, message }
+}
+
 export interface DeletePenggunaResponse {
   id: string
   deletedAt: string
