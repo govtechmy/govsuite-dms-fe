@@ -32,6 +32,9 @@ import {
   getPengurusanTetapanByUnit,
   createPengurusanDokumenConfig,
   updatePengurusanDokumenConfig,
+  deactivatePengurusanDokumenConfig,
+  activatePengurusanDokumenConfig,
+  deletePengurusanDokumenConfig,
   type PengurusanDokumenConfig,
   type PengurusanDokumenMetadataField,
   type PengurusanDokumenFormatField,
@@ -270,6 +273,20 @@ export default function PengurusanDokumenIDPage() {
     })
   }
 
+  const handleNyahaktifConfirm = async () => {
+    await deactivatePengurusanDokumenConfig(PengurusanDokumenID)
+    setConfig((prev) => (prev ? { ...prev, configStatus: 'TIDAK AKTIF' } : prev))
+  }
+
+  const handleAktifkanConfirm = async () => {
+    await activatePengurusanDokumenConfig(PengurusanDokumenID)
+    setConfig((prev) => (prev ? { ...prev, configStatus: 'AKTIF' } : prev))
+  }
+
+  const handleBuangConfirm = async () => {
+    await deletePengurusanDokumenConfig(PengurusanDokumenID)
+  }
+
   const isFormComplete = Boolean(
     selectedUnit &&
     hasSelectedProfile &&
@@ -307,7 +324,13 @@ export default function PengurusanDokumenIDPage() {
             ? handleSimpanConfirm
             : activeTetapanAction === 'kemaskini'
               ? handleKemaskiniConfirm
-              : undefined
+              : activeTetapanAction === 'nyahaktif'
+                ? handleNyahaktifConfirm
+                : activeTetapanAction === 'aktifkan'
+                  ? handleAktifkanConfirm
+                  : activeTetapanAction === 'buang'
+                    ? handleBuangConfirm
+                    : undefined
         }
         onSuccess={() => {
           // Every action currently returns to the settings list on success -
@@ -524,7 +547,15 @@ export default function PengurusanDokumenIDPage() {
             </Button>
           )}
           <div className="flex gap-2">
-            {!isDraf && (
+            {!isDraf && config?.configStatus === 'TIDAK AKTIF' && (
+              <Button
+                variant={'primary-outline'}
+                onClick={() => setActiveTetapanAction('aktifkan')}
+              >
+                Aktifkan Tetapan
+              </Button>
+            )}
+            {!isDraf && config?.configStatus !== 'TIDAK AKTIF' && (
               <Button
                 variant={'primary-outline'}
                 onClick={() => setActiveTetapanAction('nyahaktif')}

@@ -12,7 +12,7 @@ import { CheckCircleIcon, WarningIcon } from '@govtechmy/myds-react/icon'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import extractBackendError from '@/utils/extractBackendError'
 
-export type TetapanActionType = 'buang' | 'nyahaktif' | 'simpan' | 'kemaskini'
+export type TetapanActionType = 'buang' | 'nyahaktif' | 'aktifkan' | 'simpan' | 'kemaskini'
 
 type ModalPhase = 'confirm' | 'loading' | 'success' | 'error'
 
@@ -54,6 +54,17 @@ const ACTION_CONFIG: Record<TetapanActionType, TetapanActionConfig> = {
     successTitle: 'Tetapan Berjaya Dinyahaktifkan',
     successDescription: 'Tetapan ini kini tidak aktif.',
   },
+  aktifkan: {
+    requireConfirm: true,
+    confirmIcon: <WarningIcon className="text-primary-600 size-[42px]" />,
+    confirmTitle: 'Aktifkan Tetapan?',
+    confirmDescription: 'Adakah anda pasti untuk mengaktifkan tetapan ini?',
+    confirmButtonText: 'Aktifkan',
+    confirmButtonVariant: 'primary-fill',
+    loadingDescription: 'Tetapan sedang diaktifkan.',
+    successTitle: 'Tetapan Berjaya Diaktifkan',
+    successDescription: 'Tetapan ini kini aktif.',
+  },
   simpan: {
     requireConfirm: false,
     loadingDescription: 'Tetapan sedang disimpan.',
@@ -75,8 +86,8 @@ interface TetapanActionModalProps {
   /**
    * When provided, the loading phase awaits this instead of the fixed
    * simulation delay, and surfaces a retryable error phase on failure.
-   * Actions without a handler (e.g. still-simulated Buang/Nyahaktif) fall
-   * back to the simulated timeout.
+   * Actions without a handler fall back to the simulated timeout below
+   * (currently unused, kept as a safe default for any future action).
    */
   onConfirm?: () => Promise<void>
 }

@@ -79,6 +79,7 @@ export interface PengurusanDokumenConfig {
   createdAt: string
   updatedAt: string
   metadataFields: PengurusanDokumenMetadataField[]
+  configStatus: string
 }
 
 /**
@@ -243,6 +244,7 @@ const parsePengurusanDokumenConfig = (
     createdAt: String(payload.createdAt ?? ''),
     updatedAt: String(payload.updatedAt ?? ''),
     metadataFields: Array.isArray(payload.metadataFields) ? payload.metadataFields : [],
+    configStatus: String(payload.configStatus ?? 'AKTIF'),
   }
 }
 
@@ -285,6 +287,84 @@ export const getPengurusanDokumenDefaultConfig = async (
       `Error fetching pengurusan dokumen default config for code ${documentProfileCode}:`,
       error
     )
+    throw error
+  }
+}
+
+/**
+ * Deactivate an existing document profile setting ("Tetapan"), used by
+ * the "Nyahaktif Tetapan" flow. Deactivated settings are not used until
+ * reactivated.
+ * PATCH /config/deactivate/{documentProfileId}
+ */
+export const deactivatePengurusanDokumenConfig = async (
+  documentProfileId: string
+): Promise<PengurusanDokumenConfig | null> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/deactivate/${documentProfileId}`
+  try {
+    const response = await authAxios.patch(url)
+    const payload = response.data?.data ?? response.data
+
+    return parsePengurusanDokumenConfig(payload)
+  } catch (error) {
+    console.error(
+      `Error deactivating pengurusan dokumen config for id ${documentProfileId}:`,
+      error
+    )
+    throw error
+  }
+}
+
+/**
+ * Activate an existing document profile setting ("Tetapan"), used by
+ * the "Aktifkan Tetapan" flow.
+ * PATCH /config/{documentProfileId}
+ */
+export const activatePengurusanDokumenConfig = async (
+  documentProfileId: string
+): Promise<PengurusanDokumenConfig | null> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/${documentProfileId}`
+  try {
+    const response = await authAxios.patch(url, { configStatus: 'AKTIF' })
+    const payload = response.data?.data ?? response.data
+
+    return parsePengurusanDokumenConfig(payload)
+  } catch (error) {
+    console.error(`Error activating pengurusan dokumen config for id ${documentProfileId}:`, error)
+    throw error
+  }
+}
+
+export interface DeletePengurusanDokumenConfigResult {
+  message: string
+  definitionGroupId: string
+  documentProfileName: string
+  version: number
+}
+
+/**
+ * Delete an existing document profile setting ("Tetapan"), used by the
+ * "Buang Tetapan" flow.
+ * DELETE /config/{documentProfileId}
+ */
+export const deletePengurusanDokumenConfig = async (
+  documentProfileId: string
+): Promise<DeletePengurusanDokumenConfigResult> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/${documentProfileId}`
+  try {
+    const response = await authAxios.delete(url)
+    const data = response.data?.data ?? response.data
+
+    return {
+      message: String(data?.message ?? ''),
+      definitionGroupId: String(data?.definitionGroupId ?? ''),
+      // Backend response currently has a typo ("decumentProfileName") -
+      // fall back to it defensively in case it gets fixed later.
+      documentProfileName: String(data?.documentProfileName ?? data?.decumentProfileName ?? ''),
+      version: Number(data?.version ?? 0),
+    }
+  } catch (error) {
+    console.error(`Error deleting pengurusan dokumen config for id ${documentProfileId}:`, error)
     throw error
   }
 }
