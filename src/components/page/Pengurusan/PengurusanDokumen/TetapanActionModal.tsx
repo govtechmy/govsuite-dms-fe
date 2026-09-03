@@ -235,11 +235,11 @@ export default function TetapanActionModal({
               <DialogDescription>
                 {errorMessage ?? 'Tindakan gagal. Sila cuba lagi.'}
               </DialogDescription>
-              <div className="flex gap-2 pt-6">
+              <div className="flex flex-row gap-2 pt-6">
                 <Button
                   size={'large'}
                   variant="default-outline"
-                  className="w-full items-center justify-center"
+                  className="items-center justify-center"
                   onClick={handleTutupFromError}
                 >
                   Tutup
@@ -247,7 +247,7 @@ export default function TetapanActionModal({
                 <Button
                   size={'large'}
                   variant="primary-fill"
-                  className="flex-1 w-full items-center justify-center"
+                  className="items-center justify-center"
                   onClick={runAction}
                 >
                   Cuba Lagi

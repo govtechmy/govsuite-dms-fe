@@ -358,9 +358,7 @@ export const deletePengurusanDokumenConfig = async (
     return {
       message: String(data?.message ?? ''),
       definitionGroupId: String(data?.definitionGroupId ?? ''),
-      // Backend response currently has a typo ("decumentProfileName") -
-      // fall back to it defensively in case it gets fixed later.
-      documentProfileName: String(data?.documentProfileName ?? data?.decumentProfileName ?? ''),
+      documentProfileName: String(data?.documentProfileName ?? ''),
       version: Number(data?.version ?? 0),
     }
   } catch (error) {
