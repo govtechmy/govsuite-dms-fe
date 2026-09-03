@@ -1,74 +1,39 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@govtechmy/myds-react/button'
 import { Input } from '@govtechmy/myds-react/input'
-import { CheckCircleIcon, CrossCircleIcon, WarningCircleIcon } from '@govtechmy/myds-react/icon'
 import { Spinner } from '@govtechmy/myds-react/spinner'
-import { clx } from '@govtechmy/myds-react/utils'
 import { useToast } from '@govtechmy/myds-react/hooks'
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@govtechmy/myds-react/dialog'
 import { Eye, EyeOff } from '@/assets/Icons/Eye'
 import { changePassword } from '@/services/auth.svc'
-import { useAuthStore } from '@/store/AuthStore'
 import extractBackendError from '@/utils/extractBackendError'
+import PasswordRequirementsChecklist from '@/components/shared/PasswordRequirementsChecklist'
+import ForcedLogoutDialog from '@/components/shared/ForcedLogoutDialog'
+import { isPasswordPolicyMet } from '@/utils/passwordPolicy'
 
-const PASSWORD_MIN_LENGTH = 12
-// Delay before the forced-logout modal appears after a successful password change.
+// Delay before the forced-logout modal appears after a successful password change,
+// so the user has a moment to read the success toast first.
 const LOGOUT_MODAL_DELAY_MS = 2000
-// Countdown (in seconds) shown on the forced-logout modal before the session ends.
-const LOGOUT_COUNTDOWN_SECONDS = 3
 
-interface PasswordRequirement {
-  key: string
-  label: string
-  test: (value: string) => boolean
+interface ChangePasswordFormProps {
+  heading?: string
+  submitLabel?: string
+  hideHeading?: boolean
 }
 
-const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
-  {
-    key: 'length',
-    label: `Sekurang-kurangnya ${PASSWORD_MIN_LENGTH} aksara`,
-    test: (value) => value.length >= PASSWORD_MIN_LENGTH,
-  },
-  {
-    key: 'uppercase',
-    label: 'Sekurang-kurangnya 1 huruf besar (A-Z)',
-    test: (value) => /[A-Z]/.test(value),
-  },
-  {
-    key: 'lowercase',
-    label: 'Sekurang-kurangnya 1 huruf kecil (a-z)',
-    test: (value) => /[a-z]/.test(value),
-  },
-  {
-    key: 'number',
-    label: 'Sekurang-kurangnya 1 nombor (0-9)',
-    test: (value) => /[0-9]/.test(value),
-  },
-  {
-    key: 'specialChar',
-    label: 'Sekurang-kurangnya 1 aksara khas (cth: ! @ # $ %)',
-    test: (value) => /[^A-Za-z0-9]/.test(value),
-  },
-]
-
-export default function ResetPassword() {
+export default function ChangePasswordForm({
+  heading = 'Set Semula Kata Laluan',
+  submitLabel = 'Kemaskini Kata Laluan',
+  hideHeading = false,
+}: ChangePasswordFormProps) {
   const { toast } = useToast()
-  const navigate = useNavigate()
-  const logout = useAuthStore((state) => state.logout)
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
-  const [logoutCountdown, setLogoutCountdown] = useState(LOGOUT_COUNTDOWN_SECONDS)
   const logoutModalDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Clear the pending forced-logout timer if the component unmounts before it fires.
@@ -80,56 +45,31 @@ export default function ResetPassword() {
     }
   }, [])
 
-  // Once the forced-logout modal is shown, tick the countdown down every second
-  // and log the user out (with no way to cancel) once it reaches zero.
-  useEffect(() => {
-    if (!showLogoutModal) return
-
-    if (logoutCountdown <= 0) {
-      logout()
-      navigate(`/${localStorage.getItem('lang') || 'ms'}/login`)
-      return
-    }
-
-    const tickId = setTimeout(() => {
-      setLogoutCountdown((value) => value - 1)
-    }, 1000)
-
-    return () => clearTimeout(tickId)
-  }, [showLogoutModal, logoutCountdown, logout, navigate])
-
-  const requirementResults = useMemo(
-    () =>
-      PASSWORD_REQUIREMENTS.map((requirement) => ({
-        ...requirement,
-        isMet: requirement.test(newPassword),
-      })),
-    [newPassword]
-  )
-  const isPasswordPolicyMet = requirementResults.every((requirement) => requirement.isMet)
-
   const isConfirmMismatch = confirmPassword.trim() !== '' && confirmPassword !== newPassword
   const isFormValid =
-    isPasswordPolicyMet && confirmPassword.trim() !== '' && newPassword === confirmPassword
+    currentPassword.trim() !== '' &&
+    isPasswordPolicyMet(newPassword) &&
+    confirmPassword.trim() !== '' &&
+    newPassword === confirmPassword
 
-  const handleResetPasswordClick = async () => {
+  const handleSubmit = async () => {
     if (!isFormValid || isSubmitting) return
 
     setIsSubmitting(true)
     try {
-      const message = await changePassword(newPassword)
+      const message = await changePassword(currentPassword, newPassword)
       toast({
         variant: 'success',
         title: 'Kata Laluan Berjaya Dikemaskini',
         description: message,
       })
+      setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
 
       // Session is invalidated by the backend after a password change — force
       // the user out once they've had a moment to see the success toast.
       logoutModalDelayRef.current = setTimeout(() => {
-        setLogoutCountdown(LOGOUT_COUNTDOWN_SECONDS)
         setShowLogoutModal(true)
       }, LOGOUT_MODAL_DELAY_MS)
     } catch (error) {
@@ -148,8 +88,32 @@ export default function ResetPassword() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="font-body font-semibold text-body-md">Set Semula Kata Laluan</div>
+      {!hideHeading && <div className="font-body font-semibold text-body-md">{heading}</div>}
       <div className="flex flex-col gap-6 text-body-md font-medium font-body text-txt-black-700 max-w-[460px]">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex text-body-md">
+            Kata Laluan Semasa <div className="text-txt-danger">*</div>
+          </div>
+          <div className="relative">
+            <Input
+              type={showCurrentPassword ? 'text' : 'password'}
+              placeholder="Masukkan Kata Laluan Semasa"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              className="font-normal"
+            >
+              <button
+                type="button"
+                aria-label={showCurrentPassword ? 'Sembunyikan kata laluan' : 'Papar kata laluan'}
+                onClick={() => setShowCurrentPassword((value) => !value)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-black-400 hover:text-txt-black-700 focus:outline-none"
+                tabIndex={0}
+              >
+                {showCurrentPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </button>
+            </Input>
+          </div>
+        </div>
         <div className="flex flex-col gap-1.5">
           <div className="flex text-body-md">
             Kata Laluan Baru <div className="text-txt-danger">*</div>
@@ -173,24 +137,7 @@ export default function ResetPassword() {
               </button>
             </Input>
           </div>
-          <ul className="flex flex-col gap-1 pt-1">
-            {requirementResults.map((requirement) => (
-              <li
-                key={requirement.key}
-                className={clx(
-                  'flex items-center gap-2 text-body-sm font-normal',
-                  requirement.isMet ? 'text-txt-success' : 'text-txt-black-500'
-                )}
-              >
-                {requirement.isMet ? (
-                  <CheckCircleIcon className="size-4 shrink-0" />
-                ) : (
-                  <CrossCircleIcon className="size-4 shrink-0" />
-                )}
-                {requirement.label}
-              </li>
-            ))}
-          </ul>
+          <PasswordRequirementsChecklist password={newPassword} />
         </div>
         <div className="flex flex-col gap-1.5">
           <div className="flex">
@@ -227,7 +174,7 @@ export default function ResetPassword() {
           variant="primary-fill"
           size={'medium'}
           disabled={!isFormValid || isSubmitting}
-          onClick={handleResetPasswordClick}
+          onClick={handleSubmit}
           className="mt-2"
         >
           {isSubmitting ? (
@@ -236,27 +183,12 @@ export default function ResetPassword() {
               Mengemaskini...
             </>
           ) : (
-            'Kemaskini Kata Laluan'
+            submitLabel
           )}
         </Button>
       </div>
 
-      <Dialog open={showLogoutModal} onOpenChange={() => {}}>
-        <DialogBody
-          hideClose
-          dismissible={false}
-          className="w-full max-w-[calc(100dvw-36px)] sm:max-w-[400px]"
-        >
-          <DialogContent className="flex flex-col items-center py-8 text-center">
-            <WarningCircleIcon className="text-txt-warning size-[42px]" />
-            <DialogTitle className="pt-[16px]">Kata Laluan Berjaya Dikemaskini</DialogTitle>
-            <DialogDescription>
-              Untuk keselamatan akaun anda, anda akan dilog keluar secara automatik dalam{' '}
-              {logoutCountdown} saat. Sila log masuk semula menggunakan kata laluan baharu anda.
-            </DialogDescription>
-          </DialogContent>
-        </DialogBody>
-      </Dialog>
+      <ForcedLogoutDialog open={showLogoutModal} />
     </div>
   )
 }

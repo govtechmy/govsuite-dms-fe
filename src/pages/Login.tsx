@@ -27,7 +27,7 @@ export default function LoginPage() {
       const { token, refreshToken, user } = await login({ username: username, password: password })
       setAuthState(token, refreshToken, user)
       const lang = localStorage.getItem('lang') ?? 'ms'
-      navigate(`/${lang}/`)
+      navigate(user.mustChangePassword ? `/${lang}/tukar-kata-laluan` : `/${lang}/`)
     } catch (error) {
       setIsLoading(false)
       setError('Gagal log masuk. Sila semak ID Pengguna dan Kata Laluan.')
