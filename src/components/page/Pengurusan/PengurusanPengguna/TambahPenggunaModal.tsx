@@ -203,7 +203,6 @@ export default function TambahPenggunaModal({
         await createPengguna(payload)
       }
       setPhase('success')
-      onSuccess?.()
     } catch (err) {
       const fallbackMessage = isEditMode
         ? 'Pengguna gagal dikemaskini.'
@@ -223,6 +222,10 @@ export default function TambahPenggunaModal({
   }
 
   const handleTutupClick = () => {
+    // Only refresh the list once the user dismisses the success dialog — refreshing
+    // immediately on success would flip the table into its loading skeleton and
+    // unmount this still-open dialog (edit mode) before the user gets to see it.
+    const wasSuccess = phase === 'success'
     setOpen(false)
     setPhase('form')
     setError(null)
@@ -230,6 +233,9 @@ export default function TambahPenggunaModal({
     setForm(buildFormState(pengguna))
     setEmailCheckStatus('idle')
     setEmailCheckMessage(null)
+    if (wasSuccess) {
+      onSuccess?.()
+    }
   }
 
   const handleBuangClick = () => {
@@ -249,7 +255,6 @@ export default function TambahPenggunaModal({
     try {
       await deletePengguna(pengguna.id)
       setPhase('success')
-      onSuccess?.()
     } catch (err) {
       const backendError = extractBackendError(err)
       setError({

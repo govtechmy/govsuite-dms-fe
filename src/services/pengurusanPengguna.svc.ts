@@ -176,3 +176,23 @@ export const deletePengguna = async (id: string): Promise<DeletePenggunaResponse
     throw error
   }
 }
+
+export interface ResetPenggunaPasswordResponse {
+  message: string
+}
+
+/**
+ * Reset an existing pengguna's password from the "Reset Kata Laluan" confirmation step.
+ * PATCH /users/reset-password/:id
+ */
+export const resetPenggunaPassword = async (id: string): Promise<ResetPenggunaPasswordResponse> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/users/reset-password/${id}`
+
+  try {
+    const response = await authAxios.patch(url)
+    return response.data?.data ?? response.data
+  } catch (error) {
+    console.error('Error resetting pengguna password:', error)
+    throw error
+  }
+}
