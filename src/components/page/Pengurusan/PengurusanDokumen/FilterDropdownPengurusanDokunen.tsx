@@ -20,12 +20,7 @@ export default function FilterDropdownPengurusanDokumen({
   setSelectedStatus,
 }: FilterDropdownPengurusanDokumenProps) {
   return (
-    <Select
-      size="medium"
-      variant="outline"
-      value={selectedStatus}
-      onValueChange={setSelectedStatus}
-    >
+    <Select size="small" variant="outline" value={selectedStatus} onValueChange={setSelectedStatus}>
       <SelectTrigger className="w-full data-[placeholder]:text-txt-black-500 font-normal">
         <SelectValue placeholder="Status" />
       </SelectTrigger>
