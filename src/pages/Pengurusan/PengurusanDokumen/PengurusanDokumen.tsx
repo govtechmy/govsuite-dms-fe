@@ -11,6 +11,9 @@ import {
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 import extractBackendError from '@/utils/extractBackendError'
+import FilterDropdownPengurusanDokumen, {
+  ALL_CONFIG_STATUS_VALUE,
+} from '@/components/page/Pengurusan/PengurusanDokumen/FilterDropdownPengurusanDokunen'
 
 export default function PengurusanDokumenPage() {
   const navigate = useNavigate()
@@ -19,6 +22,7 @@ export default function PengurusanDokumenPage() {
   const [unitsSummary, setUnitsSummary] = useState<PengurusanUnitSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string>(ALL_CONFIG_STATUS_VALUE)
 
   useEffect(() => {
     const fetchUnitsSummary = async () => {
@@ -52,6 +56,12 @@ export default function PengurusanDokumenPage() {
           </Button>
         }
       />
+      <div className="mb-6 w-full sm:w-56">
+        <FilterDropdownPengurusanDokumen
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+        />
+      </div>
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <Spinner size="large" />
@@ -63,7 +73,16 @@ export default function PengurusanDokumenPage() {
           <CalloutContent>{error}</CalloutContent>
         </Callout>
       )}
-      {!isLoading && !error && <KatalogUnit units={unitsSummary} />}
+      {!isLoading && !error && (
+        <KatalogUnit
+          units={unitsSummary}
+          configStatus={
+            selectedStatus === ALL_CONFIG_STATUS_VALUE
+              ? undefined
+              : (selectedStatus as 'AKTIF' | 'TIDAK_AKTIF')
+          }
+        />
+      )}
     </RightSidePageLayoutWrapper>
   )
 }

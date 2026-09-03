@@ -102,15 +102,19 @@ export const getPengurusanUnitsSummary = async (): Promise<PengurusanUnitSummary
 
 /**
  * Get the list of document settings ("Tetapan") belonging to a unit,
- * fetched lazily when its accordion item is expanded.
- * GET /config/unit/{unitKey}
+ * fetched lazily when its accordion item is expanded. Optionally filtered
+ * by config status ("Aktif"/"Tidak Aktif") via the status filter dropdown.
+ * GET /config/unit/{unitKey}?configStatus={AKTIF|TIDAK_AKTIF}
  */
 export const getPengurusanTetapanByUnit = async (
-  unitKey: string
+  unitKey: string,
+  configStatus?: 'AKTIF' | 'TIDAK_AKTIF'
 ): Promise<PengurusanTetapanItem[]> => {
   const url = `${getEnv('VITE_API_BASE_URL')}/config/unit/${unitKey}`
   try {
-    const response = await authAxios.get(url)
+    const response = await authAxios.get(url, {
+      params: configStatus ? { configStatus } : undefined,
+    })
     const payload = response.data?.data
 
     return Array.isArray(payload) ? payload : []

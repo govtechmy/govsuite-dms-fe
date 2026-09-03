@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Accordion,
   AccordionContent,
@@ -33,13 +33,15 @@ const EMPTY_TETAPAN_STATE: UnitTetapanState = {
 
 interface KatalogUnitProps {
   units: PengurusanUnitSummary[]
+  configStatus?: 'AKTIF' | 'TIDAK_AKTIF'
 }
 
-export default function KatalogUnit({ units }: KatalogUnitProps) {
+export default function KatalogUnit({ units, configStatus }: KatalogUnitProps) {
   const [openUnits, setOpenUnits] = useState<string[]>([])
   const [unitTetapan, setUnitTetapan] = useState<Record<string, UnitTetapanState>>({})
   const navigate = useNavigate()
   const { lang = 'ms' } = useParams<{ lang: string }>()
+  const isFirstRender = useRef(true)
 
   const updateUnitTetapan = (unitKey: string, updates: Partial<UnitTetapanState>) => {
     setUnitTetapan((prev) => ({
@@ -51,11 +53,11 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
     }))
   }
 
-  const fetchUnitTetapan = async (unitKey: string) => {
+  const fetchUnitTetapan = async (unitKey: string, status?: 'AKTIF' | 'TIDAK_AKTIF') => {
     updateUnitTetapan(unitKey, { isLoading: true, error: null })
 
     try {
-      const items = await getPengurusanTetapanByUnit(unitKey)
+      const items = await getPengurusanTetapanByUnit(unitKey, status)
       updateUnitTetapan(unitKey, { items, isLoading: false, error: null })
     } catch (error) {
       const backendError = extractBackendError(error)
@@ -73,10 +75,26 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
     newlyOpened.forEach((unitKey) => {
       const hasLoadedBefore = unitTetapan[unitKey] !== undefined
       if (!hasLoadedBefore) {
-        void fetchUnitTetapan(unitKey)
+        void fetchUnitTetapan(unitKey, configStatus)
       }
     })
   }
+
+  // When the status filter changes, invalidate the cache and re-fetch any
+  // units that are currently expanded so their lists reflect the new filter
+  // immediately; collapsed units simply re-fetch on next expand.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+
+    setUnitTetapan({})
+    openUnits.forEach((unitKey) => {
+      void fetchUnitTetapan(unitKey, configStatus)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when the filter itself changes.
+  }, [configStatus])
 
   return (
     <Accordion
@@ -104,7 +122,7 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
                     {unit.value}
                   </h2>
 
-                  {unit.count > 0 && (
+                  {configStatus === undefined && unit.count > 0 && (
                     <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-[20px] bg-primary-600 font-body px-1 text-body-sm font-medium text-white">
                       {unit.count}
                     </span>
