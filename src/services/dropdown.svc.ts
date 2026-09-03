@@ -34,6 +34,7 @@ export interface AccessLevel {
 export interface DropdownUserRole {
   code: string
   name: string
+  description: string
 }
 
 /**

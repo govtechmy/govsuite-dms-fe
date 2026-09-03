@@ -33,7 +33,6 @@ import {
   updatePengguna,
   type PenggunaItem,
 } from '@/services/pengurusanPengguna.svc'
-import { ROLE_DESCRIPTIONS, type UserRole } from '@/models/userRoles'
 import extractBackendError from '@/utils/extractBackendError'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
@@ -368,31 +367,29 @@ export default function TambahPenggunaModal({
               <div className="flex flex-col gap-2">
                 <div className="text-body-sm font-medium text-txt-black-700">Peranan Pengguna</div>
                 <div className="flex flex-col gap-3">
-                  {dropdownTahapAkses
-                    .filter((role) => role.code !== 'SUPER_ADMIN')
-                    .map((role) => (
-                      <div
-                        key={role.code}
-                        onClick={() => toggleRole(role.code)}
-                        className="flex cursor-pointer items-start gap-2"
-                      >
-                        <Checkbox
-                          checked={form.roles.includes(role.code)}
-                          aria-label={role.name}
-                          className="mt-0.5 shrink-0"
-                        />
-                        <div className="flex flex-col gap-1">
-                          <span className="text-body-sm font-medium text-txt-black-700">
-                            {role.name}
+                  {dropdownTahapAkses.map((role) => (
+                    <div
+                      key={role.code}
+                      onClick={() => toggleRole(role.code)}
+                      className="flex cursor-pointer items-start gap-2"
+                    >
+                      <Checkbox
+                        checked={form.roles.includes(role.code)}
+                        aria-label={role.name}
+                        className="mt-0.5 shrink-0"
+                      />
+                      <div className="flex flex-col gap-1">
+                        <span className="text-body-sm font-medium text-txt-black-700">
+                          {role.name}
+                        </span>
+                        {role.description && (
+                          <span className="text-body-xs font-normal text-txt-black-500">
+                            {role.description}
                           </span>
-                          {ROLE_DESCRIPTIONS[role.code as UserRole] && (
-                            <span className="text-body-xs font-normal text-txt-black-500">
-                              {ROLE_DESCRIPTIONS[role.code as UserRole]}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             </DialogContent>
