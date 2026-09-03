@@ -72,19 +72,19 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   PUBLIC: ['pengurusan-dokumen', 'pengurusan-pengguna', 'pengurusan-profil', 'bantuan'],
 }
 
-/**
- * Human-readable description of what each role can do, shown alongside the
- * role name in role-selection UIs (e.g. "Tambah Pengguna" modal).
- * SUPER_ADMIN and PUBLIC are intentionally omitted — not user-assignable.
- */
-export const ROLE_DESCRIPTIONS: Partial<Record<UserRole, string>> = {
-  PENGGUNA_AKHIR: 'Muat naik dokumen, lakukan carian, muat turun',
-  PELULUS: 'Luluskan dokumen yang dimuat naik, lakukan carian, muat turun',
-  PENTADBIR_SISTEM: 'Urus tetapan dokumen',
-  PENGURUS_REKOD:
-    'Cipta folder, padam dokumen, kemas kini metadata dokumen yang dimuat naik, lakukan carian, muat turun',
-  JURU_AUDIT: 'Untuk Auditor',
-}
+// /**
+//  * Human-readable description of what each role can do, shown alongside the
+//  * role name in role-selection UIs (e.g. "Tambah Pengguna" modal).
+//  * SUPER_ADMIN and PUBLIC are intentionally omitted — not user-assignable.
+//  */
+// export const ROLE_DESCRIPTIONS: Partial<Record<UserRole, string>> = {
+//   PENGGUNA_AKHIR: 'Muat naik dokumen, lakukan carian, muat turun',
+//   PELULUS: 'Luluskan dokumen yang dimuat naik, lakukan carian, muat turun',
+//   PENTADBIR_SISTEM: 'Urus tetapan dokumen',
+//   PENGURUS_REKOD:
+//     'Cipta folder, padam dokumen, kemas kini metadata dokumen yang dimuat naik, lakukan carian, muat turun',
+//   JURU_AUDIT: 'Untuk Auditor',
+// }
 
 export const PERMISSION_TO_ROUTE_SEGMENT: Record<string, string> = {
   'paparan-utama': '',
