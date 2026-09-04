@@ -24,6 +24,7 @@ interface DropdownWithSearchProps {
   value: string
   onValueChange: (value: string) => void
   className?: string
+  disabled?: boolean
 }
 
 const normalizeOption = (option: DropdownWithSearchOption): { value: string; label: string } =>
@@ -35,6 +36,7 @@ export default function DropdownWithSearch({
   value,
   onValueChange,
   className,
+  disabled = false,
 }: DropdownWithSearchProps) {
   const [search, setSearch] = useState('')
 
@@ -53,6 +55,7 @@ export default function DropdownWithSearch({
           setSearch('')
         }}
         value={value}
+        disabled={disabled}
       >
         <SelectTrigger className={`${className ?? ''} data-[placeholder]:text-txt-black-500`}>
           <SelectValue placeholder={placeholder} />

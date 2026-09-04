@@ -387,6 +387,7 @@ export default function PengurusanDokumenIDPage() {
                       dropdownUnits={dropdownUnits}
                       selectedUnit={selectedUnit}
                       onUnitChange={handleUnitChange}
+                      disabled={!isDraf}
                     />
                   </div>
                 </div>
@@ -410,6 +411,7 @@ export default function PengurusanDokumenIDPage() {
                       value={selectedProfileId}
                       onValueChange={setSelectedProfileId}
                       className="w-full font-normal"
+                      disabled={!isDraf}
                     />
                   </div>
                 )}
