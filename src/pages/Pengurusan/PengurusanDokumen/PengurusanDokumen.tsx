@@ -24,12 +24,17 @@ export default function PengurusanDokumenPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<string>(ALL_CONFIG_STATUS_VALUE)
 
+  const configStatus =
+    selectedStatus === ALL_CONFIG_STATUS_VALUE
+      ? undefined
+      : (selectedStatus as 'AKTIF' | 'TIDAK_AKTIF')
+
   useEffect(() => {
     const fetchUnitsSummary = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const data = await getPengurusanUnitsSummary()
+        const data = await getPengurusanUnitsSummary(configStatus)
         setUnitsSummary(data)
       } catch (err) {
         const backendError = extractBackendError(err)
@@ -40,7 +45,7 @@ export default function PengurusanDokumenPage() {
       }
     }
     fetchUnitsSummary()
-  }, [])
+  }, [configStatus])
 
   return (
     <RightSidePageLayoutWrapper>
@@ -73,16 +78,7 @@ export default function PengurusanDokumenPage() {
           <CalloutContent>{error}</CalloutContent>
         </Callout>
       )}
-      {!isLoading && !error && (
-        <KatalogUnit
-          units={unitsSummary}
-          configStatus={
-            selectedStatus === ALL_CONFIG_STATUS_VALUE
-              ? undefined
-              : (selectedStatus as 'AKTIF' | 'TIDAK_AKTIF')
-          }
-        />
-      )}
+      {!isLoading && !error && <KatalogUnit units={unitsSummary} configStatus={configStatus} />}
     </RightSidePageLayoutWrapper>
   )
 }

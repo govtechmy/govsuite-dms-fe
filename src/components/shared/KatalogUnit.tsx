@@ -122,7 +122,7 @@ export default function KatalogUnit({ units, configStatus }: KatalogUnitProps) {
                     {unit.value}
                   </h2>
 
-                  {configStatus === undefined && unit.count > 0 && (
+                  {unit.count > 0 && (
                     <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-[20px] bg-primary-600 font-body px-1 text-body-sm font-medium text-white">
                       {unit.count}
                     </span>

@@ -84,13 +84,19 @@ export interface PengurusanDokumenConfig {
 
 /**
  * Get the list of units with their document settings ("Tetapan") count,
- * used to render the top-level accordion.
- * GET /config/unit
+ * used to render the top-level accordion. Optionally filtered by config
+ * status ("Aktif"/"Tidak Aktif") via the status filter dropdown; the
+ * backend falls back to "Semua Status" when the param is omitted.
+ * GET /config/unit?configStatus={AKTIF|TIDAK_AKTIF}
  */
-export const getPengurusanUnitsSummary = async (): Promise<PengurusanUnitSummary[]> => {
+export const getPengurusanUnitsSummary = async (
+  configStatus?: 'AKTIF' | 'TIDAK_AKTIF'
+): Promise<PengurusanUnitSummary[]> => {
   const url = `${getEnv('VITE_API_BASE_URL')}/config/unit`
   try {
-    const response = await authAxios.get(url)
+    const response = await authAxios.get(url, {
+      params: configStatus ? { configStatus } : undefined,
+    })
     const payload = response.data?.data?.items
 
     return Array.isArray(payload) ? payload : []
