@@ -198,3 +198,27 @@ export const formatDateTimeUpdatedDisplay = (value?: string): string => {
     .format(date)
     .toUpperCase()
 }
+
+export const formatDateTimeUpdatedDisplay2 = (value?: string): string => {
+  // Ensure the string exists and is long enough for an ISO date (YYYY-MM-DDTHH:mm)
+  if (!value || value.length < 16) return '-'
+
+  const year = value.slice(0, 4)
+  const month = value.slice(5, 7)
+  const day = value.slice(8, 10)
+  const minute = value.slice(14, 16)
+
+  let hour = parseInt(value.slice(11, 13), 10)
+
+  if (Number.isNaN(hour)) return '-'
+
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+
+  // Convert 24h to 12h format
+  hour = hour % 12
+  if (hour === 0) hour = 12
+
+  const formattedHour = hour.toString().padStart(2, '0')
+
+  return `${day}/${month}/${year}, ${formattedHour}:${minute} ${ampm}`
+}
