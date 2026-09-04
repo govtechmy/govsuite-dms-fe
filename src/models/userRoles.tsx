@@ -1,75 +1,54 @@
 export type UserRole =
+  | 'PENGURUSAN_TERTINGGI'
   | 'PENGGUNA_AKHIR'
   | 'PELULUS'
   | 'PENTADBIR_SISTEM'
   | 'PENGURUS_REKOD'
   | 'JURU_AUDIT'
-  | 'SUPER_ADMIN'
+  | 'ADMIN'
   | 'PUBLIC'
 
 export const USER_ROLES: UserRole[] = [
+  'PENGURUSAN_TERTINGGI',
   'PENGGUNA_AKHIR',
   'PELULUS',
   'PENTADBIR_SISTEM',
   'PENGURUS_REKOD',
   'JURU_AUDIT',
-  'SUPER_ADMIN',
+  'ADMIN',
   'PUBLIC',
 ]
 
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  PENGURUSAN_TERTINGGI: [
+    'paparan-utama',
+    'katalog-dokumen',
+    'carian-dokumen',
+    'kegemaran',
+    'pengurusan-profil',
+    'bantuan',
+  ],
   PENGGUNA_AKHIR: [
     'paparan-utama',
     'katalog-dokumen',
     'muatnaik-dokumen',
     'carian-dokumen',
     'kegemaran',
-    'pengurusan-dokumen',
-    'pengurusan-pengguna',
     'pengurusan-profil',
     'bantuan',
   ],
-  PELULUS: [
-    'paparan-utama',
-    'pengurusan-dokumen',
-    'pengurusan-pengguna',
-    'pengurusan-profil',
-    'bantuan',
-  ],
+  PELULUS: ['paparan-utama', 'katalog-dokumen', 'pengurusan-profil', 'bantuan'],
   PENTADBIR_SISTEM: [
     'paparan-utama',
-    'katalog-dokumen',
-    'kegemaran',
     'pengurusan-dokumen',
     'pengurusan-pengguna',
     'pengurusan-profil',
     'bantuan',
   ],
-  PENGURUS_REKOD: [
-    'paparan-utama',
-    'katalog-dokumen',
-    'kegemaran',
-    'pengurusan-dokumen',
-    'pengurusan-pengguna',
-    'pengurusan-profil',
-    'bantuan',
-  ],
-  JURU_AUDIT: [
-    'paparan-utama',
-    'pengurusan-dokumen',
-    'pengurusan-pengguna',
-    'pengurusan-profil',
-    'log-aktiviti',
-    'bantuan',
-  ],
-  SUPER_ADMIN: [
-    'paparan-utama',
-    'pengurusan-dokumen',
-    'pengurusan-pengguna',
-    'pengurusan-profil',
-    'bantuan',
-  ],
-  PUBLIC: ['pengurusan-dokumen', 'pengurusan-pengguna', 'pengurusan-profil', 'bantuan'],
+  PENGURUS_REKOD: ['paparan-utama', 'katalog-dokumen', 'kegemaran', 'pengurusan-profil', 'bantuan'],
+  JURU_AUDIT: ['paparan-utama', 'pengurusan-profil', 'log-aktiviti', 'bantuan'],
+  ADMIN: ['paparan-utama', 'pengurusan-pengguna', 'pengurusan-profil', 'bantuan'],
+  PUBLIC: ['bantuan'],
 }
 
 // /**

@@ -173,5 +173,27 @@ export const formatDateTimeDisplay = (value?: string): string => {
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
 
-  return `${day}/${month}/${year}, ${hours}:${minutes} hrs`
+  return `${day}/${month}/${year}, ${hours}:${minutes}`
+}
+
+/**
+ * Formats an ISO date-time string for read-only display as "dd/mm/yyyy, hh:mm AM/PM"
+ * (12-hour clock, UTC time). Returns '-' when the input is missing or invalid.
+ */
+export const formatDateTimeUpdatedDisplay = (value?: string): string => {
+  if (!value) return '-'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const year = date.getUTCFullYear()
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
+
+  const period = date.getUTCHours() >= 12 ? 'PM' : 'AM'
+  const hours12 = date.getUTCHours() % 12 || 12
+  const hours = String(hours12).padStart(2, '0')
+
+  return `${day}/${month}/${year}, ${hours}:${minutes} ${period}`
 }

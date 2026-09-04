@@ -275,7 +275,7 @@ export default function PengurusanDokumenIDPage() {
 
   const handleNyahaktifConfirm = async () => {
     await deactivatePengurusanDokumenConfig(PengurusanDokumenID)
-    setConfig((prev) => (prev ? { ...prev, configStatus: 'TIDAK AKTIF' } : prev))
+    setConfig((prev) => (prev ? { ...prev, configStatus: 'TIDAK_AKTIF' } : prev))
   }
 
   const handleAktifkanConfirm = async () => {
@@ -545,7 +545,7 @@ export default function PengurusanDokumenIDPage() {
             </Button>
           )}
           <div className="flex gap-2">
-            {!isDraf && config?.configStatus === 'TIDAK AKTIF' && (
+            {!isDraf && config?.configStatus === 'TIDAK_AKTIF' && (
               <Button
                 variant={'primary-outline'}
                 onClick={() => setActiveTetapanAction('aktifkan')}
@@ -553,7 +553,7 @@ export default function PengurusanDokumenIDPage() {
                 Aktifkan Tetapan
               </Button>
             )}
-            {!isDraf && config?.configStatus !== 'TIDAK AKTIF' && (
+            {!isDraf && config?.configStatus !== 'TIDAK_AKTIF' && (
               <Button
                 variant={'primary-outline'}
                 onClick={() => setActiveTetapanAction('nyahaktif')}
