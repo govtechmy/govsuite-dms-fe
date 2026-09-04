@@ -186,14 +186,15 @@ export const formatDateTimeUpdatedDisplay = (value?: string): string => {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
 
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-  const year = date.getUTCFullYear()
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
-
-  const period = date.getUTCHours() >= 12 ? 'PM' : 'AM'
-  const hours12 = date.getUTCHours() % 12 || 12
-  const hours = String(hours12).padStart(2, '0')
-
-  return `${day}/${month}/${year}, ${hours}:${minutes} ${period}`
+  // 'en-GB' enforces the DD/MM/YYYY format
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+    .format(date)
+    .toUpperCase()
 }
