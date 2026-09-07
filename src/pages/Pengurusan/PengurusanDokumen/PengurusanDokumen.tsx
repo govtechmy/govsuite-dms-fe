@@ -10,9 +10,10 @@ import {
 } from '@/services/pengurusanDokumen.svc'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
-
-// Placeholder id used until the "Tambah Tetapan" flow generates a real id.
-const NEW_TETAPAN_ID = 'new-tetapan-001'
+import extractBackendError from '@/utils/extractBackendError'
+import FilterDropdownPengurusanDokumen, {
+  ALL_CONFIG_STATUS_VALUE,
+} from '@/components/page/Pengurusan/PengurusanDokumen/FilterDropdownPengurusanDokunen'
 
 export default function PengurusanDokumenPage() {
   const navigate = useNavigate()
@@ -21,23 +22,30 @@ export default function PengurusanDokumenPage() {
   const [unitsSummary, setUnitsSummary] = useState<PengurusanUnitSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string>(ALL_CONFIG_STATUS_VALUE)
+
+  const configStatus =
+    selectedStatus === ALL_CONFIG_STATUS_VALUE
+      ? undefined
+      : (selectedStatus as 'AKTIF' | 'TIDAK_AKTIF')
 
   useEffect(() => {
     const fetchUnitsSummary = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const data = await getPengurusanUnitsSummary()
+        const data = await getPengurusanUnitsSummary(configStatus)
         setUnitsSummary(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Gagal memuatkan senarai unit')
+        const backendError = extractBackendError(err)
+        setError(backendError?.message ?? 'Gagal memuatkan senarai unit')
         console.error('Error fetching pengurusan units summary:', err)
       } finally {
         setIsLoading(false)
       }
     }
     fetchUnitsSummary()
-  }, [])
+  }, [configStatus])
 
   return (
     <RightSidePageLayoutWrapper>
@@ -47,12 +55,18 @@ export default function PengurusanDokumenPage() {
           <Button
             type="button"
             variant="primary-fill"
-            onClick={() => navigate(`/${lang}/pengurusan-dokumen/${NEW_TETAPAN_ID}`)}
+            onClick={() => navigate(`/${lang}/pengurusan-dokumen/draf`)}
           >
             + Tambah Tetapan
           </Button>
         }
       />
+      <div className="mb-6 w-full sm:w-56">
+        <FilterDropdownPengurusanDokumen
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+        />
+      </div>
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <Spinner size="large" />
@@ -64,7 +78,7 @@ export default function PengurusanDokumenPage() {
           <CalloutContent>{error}</CalloutContent>
         </Callout>
       )}
-      {!isLoading && !error && <KatalogUnit units={unitsSummary} />}
+      {!isLoading && !error && <KatalogUnit units={unitsSummary} configStatus={configStatus} />}
     </RightSidePageLayoutWrapper>
   )
 }

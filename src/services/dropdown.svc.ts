@@ -34,6 +34,16 @@ export interface AccessLevel {
 export interface DropdownUserRole {
   code: string
   name: string
+  description: string
+}
+
+/**
+ * Retention period option for document settings (Tempoh Simpanan)
+ */
+export interface RetentionPeriod {
+  id: string
+  code: string
+  codeName: string
 }
 
 /**
@@ -126,6 +136,24 @@ export const getAccessLevels = async (): Promise<AccessLevel[]> => {
     return Array.isArray(payload) ? payload : []
   } catch (error) {
     console.error('Error fetching access levels:', error)
+    throw error
+  }
+}
+
+/**
+ * Get list of retention periods for document settings (Tempoh Simpanan)
+ * GET /lookup/retention-period
+ */
+export const getRetentionPeriods = async (): Promise<RetentionPeriod[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/lookup/retention-period`
+
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data
+
+    return Array.isArray(payload) ? payload : []
+  } catch (error) {
+    console.error('Error fetching retention periods:', error)
     throw error
   }
 }

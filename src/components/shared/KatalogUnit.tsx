@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@govtechmy/myds-react/accordion'
-import { AnnounceBarTag } from '@govtechmy/myds-react/announce-bar'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import folderOpen from '@/assets/png/Folder_open.png'
@@ -17,6 +16,8 @@ import {
   type PengurusanUnitSummary,
 } from '@/services/pengurusanDokumen.svc'
 import { formatISODateString } from '@/utils/formatDate'
+import extractBackendError from '@/utils/extractBackendError'
+import { Tag } from '@govtechmy/myds-react/tag'
 
 interface UnitTetapanState {
   items: PengurusanTetapanItem[]
@@ -32,13 +33,15 @@ const EMPTY_TETAPAN_STATE: UnitTetapanState = {
 
 interface KatalogUnitProps {
   units: PengurusanUnitSummary[]
+  configStatus?: 'AKTIF' | 'TIDAK_AKTIF'
 }
 
-export default function KatalogUnit({ units }: KatalogUnitProps) {
+export default function KatalogUnit({ units, configStatus }: KatalogUnitProps) {
   const [openUnits, setOpenUnits] = useState<string[]>([])
   const [unitTetapan, setUnitTetapan] = useState<Record<string, UnitTetapanState>>({})
   const navigate = useNavigate()
   const { lang = 'ms' } = useParams<{ lang: string }>()
+  const isFirstRender = useRef(true)
 
   const updateUnitTetapan = (unitKey: string, updates: Partial<UnitTetapanState>) => {
     setUnitTetapan((prev) => ({
@@ -50,14 +53,15 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
     }))
   }
 
-  const fetchUnitTetapan = async (unitKey: string) => {
+  const fetchUnitTetapan = async (unitKey: string, status?: 'AKTIF' | 'TIDAK_AKTIF') => {
     updateUnitTetapan(unitKey, { isLoading: true, error: null })
 
     try {
-      const items = await getPengurusanTetapanByUnit(unitKey)
+      const items = await getPengurusanTetapanByUnit(unitKey, status)
       updateUnitTetapan(unitKey, { items, isLoading: false, error: null })
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal memuatkan tetapan unit ini'
+      const backendError = extractBackendError(error)
+      const message = backendError?.message ?? 'Gagal memuatkan tetapan unit ini'
       updateUnitTetapan(unitKey, { isLoading: false, error: message })
     }
   }
@@ -71,10 +75,26 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
     newlyOpened.forEach((unitKey) => {
       const hasLoadedBefore = unitTetapan[unitKey] !== undefined
       if (!hasLoadedBefore) {
-        void fetchUnitTetapan(unitKey)
+        void fetchUnitTetapan(unitKey, configStatus)
       }
     })
   }
+
+  // When the status filter changes, invalidate the cache and re-fetch any
+  // units that are currently expanded so their lists reflect the new filter
+  // immediately; collapsed units simply re-fetch on next expand.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+
+    setUnitTetapan({})
+    openUnits.forEach((unitKey) => {
+      void fetchUnitTetapan(unitKey, configStatus)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when the filter itself changes.
+  }, [configStatus])
 
   return (
     <Accordion
@@ -138,15 +158,19 @@ export default function KatalogUnit({ units }: KatalogUnitProps) {
                       }
                     >
                       <h3 className="text-body-md font-medium text-txt-black-900">
-                        {item.documentProfileValue}
+                        {item.documentProfileName}
                       </h3>
                       <p className="mt-1 text-body-sm text-txt-black-500">
                         Kemaskini terakhir {formatISODateString(item.updatedAt)}
                       </p>
-                      <div className="mt-4">
-                        <AnnounceBarTag variant={item.isActive ? 'success' : 'default'}>
-                          ● {item.isActive ? 'Aktif' : 'Tidak Aktif'}
-                        </AnnounceBarTag>
+                      <div className="mt-4 flex gap-2">
+                        <Tag
+                          variant={item.configStatus === 'AKTIF' ? 'success' : 'default'}
+                          dot={true}
+                        >
+                          {item.configStatus === 'AKTIF' ? 'Aktif' : 'Tidak Aktif'}
+                        </Tag>
+                        <Tag variant={'primary'}> Versi {item.version}</Tag>
                       </div>
                     </div>
                   ))}

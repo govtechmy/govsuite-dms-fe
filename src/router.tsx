@@ -5,6 +5,7 @@ import { getDefaultRouteSegmentForRoles, getPermissionsForRoles } from './models
 import LangWrapper from './LangWrapper'
 import LayoutLogin from './components/layout/LayoutLogin'
 import LoginPage from './pages/Login'
+import ChangeDefaultPasswordPage from './pages/ChangeDefaultPassword'
 import LayoutMain from './components/layout/LayoutMain'
 import HomePage from './pages/Home/Home'
 import PerluKelulusanPage from './pages/Home/PerluKelulusan/PerluKelulusan'
@@ -51,17 +52,26 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
 function ProtectedRoute({
   children,
   routeKey,
+  skipMustChangePasswordCheck,
 }: {
   children: React.ReactElement
   routeKey?: string
+  skipMustChangePasswordCheck?: boolean
 }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const authData = JSON.parse(sessionStorage.getItem('auth-storage') || '{}')
   const rawRoles = (authData?.state?.user?.roles || []) as string[]
   const userPermissions = getPermissionsForRoles(rawRoles)
+  const mustChangePassword = Boolean(authData?.state?.user?.mustChangePassword)
 
   if (!isAuthenticated) {
     return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}/login`} replace />
+  }
+
+  // A user with a default/expired password must change it before accessing
+  // any other part of the app.
+  if (mustChangePassword && !skipMustChangePasswordCheck) {
+    return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}/tukar-kata-laluan`} replace />
   }
 
   // Check route-specific permissions if routeKey is provided
@@ -93,6 +103,14 @@ export default function AppRoutes() {
         {/* Login layout - no main navigation */}
         <Route element={<LayoutLogin />}>
           <Route path="login" element={<LoginPage />} />
+          <Route
+            path="tukar-kata-laluan"
+            element={
+              <ProtectedRoute skipMustChangePasswordCheck>
+                <ChangeDefaultPasswordPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         {/* Main app layout - includes Masthead, Navbar, Footer */}

@@ -1,13 +1,9 @@
 /**
  * Service layer for the "Pengurusan Dokumen" (document settings) catalog.
- *
- * NOTE: The backend endpoints for this feature are not available yet.
- * Both functions below return mocked data behind a simulated network delay
- * so loading states can be exercised during development. Once the real
- * endpoints exist, replace the mock bodies with `authAxios.get(...)` calls
- * following the same pattern used in `catalog.svc.ts` / `dropdown.svc.ts` —
- * the function signatures and return shapes should not need to change.
  */
+
+import { authAxios } from './http'
+import { getEnv } from '@/config/runtimeEnv'
 
 /**
  * Summary of an organizational unit's document settings ("Tetapan"),
@@ -24,58 +20,86 @@ export interface PengurusanUnitSummary {
  */
 export interface PengurusanTetapanItem {
   documentProfileId: string
+  definitionGroupId: string
+  unitId: string
   documentProfileCode: string
-  documentProfileValue: string
+  documentProfileName: string
   updatedAt: string
-  isActive: boolean
+  configStatus: string
+  version: number
 }
 
-const MOCK_UNITS_SUMMARY: PengurusanUnitSummary[] = [
-  { key: 'UNIT_K', value: 'Unit K', count: 5 },
-  { key: 'UNIT_M', value: 'Unit M', count: 5 },
-  { key: 'UNIT_L', value: 'Unit L', count: 2 },
-]
-
-const MOCK_PROFILE_NAME_POOL = [
-  'Akta / Ordinan',
-  'Carta',
-  'Dokumen Tender / Sebut Harga',
-  'E-mel',
-  'E-mel Muat Naik',
-  'Minit Mesyuarat',
-  'Surat Rasmi',
-]
-
-const buildMockTetapanItems = (unitKey: string, count: number): PengurusanTetapanItem[] => {
-  return Array.from({ length: count }, (_, index) => {
-    const profileName = MOCK_PROFILE_NAME_POOL[index % MOCK_PROFILE_NAME_POOL.length]
-    const profileCode = profileName
-      .split(' ')[0]
-      .toUpperCase()
-      .replace(/[^A-Z]/g, '')
-
-    return {
-      documentProfileId: `${unitKey}-${profileCode}-${index + 1}`,
-      documentProfileCode: profileCode,
-      documentProfileValue: profileName,
-      updatedAt: new Date(Date.now() - index * 86_400_000).toISOString(),
-      isActive: index % 3 !== 0,
-    }
-  })
+/**
+ * A single toggleable field within a document profile's config
+ * (used for both "Medan Wajib" checklist).
+ */
+export interface PengurusanDokumenMetadataField {
+  key: string
+  title: string
+  type: string
+  required: boolean
+  value: boolean
+  isFixed: boolean
 }
 
-const simulateNetworkDelay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
+/**
+ * Lookup option shape shared by defaultAccessLevel/retentionPeriod.
+ */
+export interface PengurusanDokumenLookupOption {
+  code: string
+  codeName: string
+}
+
+/**
+ * A single toggleable file format within a document profile's config
+ * (used for the "Validasi Fail" checklist).
+ */
+export interface PengurusanDokumenFormatField {
+  key: string
+  title: string
+  value: boolean
+  isFixed: boolean
+}
+
+/**
+ * Full document profile config ("Tetapan"), used to prefill the
+ * Tambah/Kemaskini Tetapan form.
+ */
+export interface PengurusanDokumenConfig {
+  definitionGroupId: string
+  unitId: string
+  allowedFormats: PengurusanDokumenFormatField[]
+  maxFileSizeMb: number
+  workflowCode: string
+  documentProfileCode: string
+  documentProfileName: string
+  defaultAccessLevel: PengurusanDokumenLookupOption
+  retentionPeriod: PengurusanDokumenLookupOption
+  isLatest: boolean
+  createdAt: string
+  updatedAt: string
+  metadataFields: PengurusanDokumenMetadataField[]
+  configStatus: string
+}
 
 /**
  * Get the list of units with their document settings ("Tetapan") count,
- * used to render the top-level accordion.
- * TODO: replace with `GET /config/profile-document/units-summary` (or the
- * real endpoint) once the backend is available.
+ * used to render the top-level accordion. Optionally filtered by config
+ * status ("Aktif"/"Tidak Aktif") via the status filter dropdown; the
+ * backend falls back to "Semua Status" when the param is omitted.
+ * GET /config/unit?configStatus={AKTIF|TIDAK_AKTIF}
  */
-export const getPengurusanUnitsSummary = async (): Promise<PengurusanUnitSummary[]> => {
+export const getPengurusanUnitsSummary = async (
+  configStatus?: 'AKTIF' | 'TIDAK_AKTIF'
+): Promise<PengurusanUnitSummary[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/unit`
   try {
-    await simulateNetworkDelay()
-    return MOCK_UNITS_SUMMARY
+    const response = await authAxios.get(url, {
+      params: configStatus ? { configStatus } : undefined,
+    })
+    const payload = response.data?.data?.items
+
+    return Array.isArray(payload) ? payload : []
   } catch (error) {
     console.error('Error fetching pengurusan units summary:', error)
     throw error
@@ -84,19 +108,271 @@ export const getPengurusanUnitsSummary = async (): Promise<PengurusanUnitSummary
 
 /**
  * Get the list of document settings ("Tetapan") belonging to a unit,
- * fetched lazily when its accordion item is expanded.
- * TODO: replace with `GET /config/profile-document/{unitKey}` (or the real
- * endpoint) once the backend is available.
+ * fetched lazily when its accordion item is expanded. Optionally filtered
+ * by config status ("Aktif"/"Tidak Aktif") via the status filter dropdown.
+ * GET /config/unit/{unitKey}?configStatus={AKTIF|TIDAK_AKTIF}
  */
 export const getPengurusanTetapanByUnit = async (
-  unitKey: string
+  unitKey: string,
+  configStatus?: 'AKTIF' | 'TIDAK_AKTIF'
 ): Promise<PengurusanTetapanItem[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/unit/${unitKey}`
   try {
-    await simulateNetworkDelay()
-    const unit = MOCK_UNITS_SUMMARY.find((item) => item.key === unitKey)
-    return buildMockTetapanItems(unitKey, unit?.count ?? 0)
+    const response = await authAxios.get(url, {
+      params: configStatus ? { configStatus } : undefined,
+    })
+    const payload = response.data?.data
+
+    return Array.isArray(payload) ? payload : []
   } catch (error) {
     console.error(`Error fetching pengurusan tetapan for unit ${unitKey}:`, error)
+    throw error
+  }
+}
+
+/**
+ * Request body shared by create (POST) and update (PUT) config calls.
+ * `defaultAccessLevel`/`retentionPeriod` are sent as lookup codes (e.g.
+ * "TERBUKA"), not the `{code, codeName}` objects returned by the GET.
+ */
+export interface PengurusanDokumenConfigPayload {
+  workflowCode: string
+  documentProfileCode: string
+  documentProfileName: string
+  defaultAccessLevel: string
+  retentionPeriod: string
+  allowedFormats: PengurusanDokumenFormatField[]
+  maxFileSizeMb: number
+  metadataFields: PengurusanDokumenMetadataField[]
+}
+
+/**
+ * Create payload additionally requires the unit, since a new setting
+ * ("generation") is being created for that unit.
+ */
+export interface CreatePengurusanDokumenConfigPayload extends PengurusanDokumenConfigPayload {
+  unitId: string
+}
+
+export interface CreatePengurusanDokumenConfigResult {
+  message: string
+  definitionGroupId: string
+  existingDefinitionGroupId: string | null
+  documentProfileCode: string
+}
+
+export interface UpdatePengurusanDokumenConfigResult {
+  message: string
+  definitionGroupId: string
+  documentProfileCode: string
+}
+
+/**
+ * Create a new document profile setting ("Tetapan") for a unit, used by
+ * the "Tambah Tetapan" flow.
+ * POST /config/
+ */
+export const createPengurusanDokumenConfig = async (
+  payload: CreatePengurusanDokumenConfigPayload
+): Promise<CreatePengurusanDokumenConfigResult> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/`
+  try {
+    const response = await authAxios.post(url, payload)
+    const data = response.data?.data ?? response.data
+
+    return {
+      message: String(data?.message ?? ''),
+      definitionGroupId: String(data?.definitionGroupId ?? ''),
+      existingDefinitionGroupId:
+        typeof data?.existingDefinitionGroupId === 'string' ? data.existingDefinitionGroupId : null,
+      documentProfileCode: String(data?.documentProfileCode ?? ''),
+    }
+  } catch (error) {
+    console.error('Error creating pengurusan dokumen config:', error)
+    throw error
+  }
+}
+
+/**
+ * Update an existing document profile setting ("Tetapan") in place, used
+ * by the "Kemaskini Tetapan" flow.
+ * PUT /config/{documentProfileId}
+ */
+export const updatePengurusanDokumenConfig = async (
+  documentProfileId: string,
+  payload: PengurusanDokumenConfigPayload
+): Promise<UpdatePengurusanDokumenConfigResult> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/${documentProfileId}`
+  try {
+    const response = await authAxios.put(url, payload)
+    const data = response.data?.data ?? response.data
+
+    return {
+      message: String(data?.message ?? ''),
+      definitionGroupId: String(data?.definitionGroupId ?? ''),
+      documentProfileCode: String(data?.documentProfileCode ?? ''),
+    }
+  } catch (error) {
+    console.error(`Error updating pengurusan dokumen config for id ${documentProfileId}:`, error)
+    throw error
+  }
+}
+
+/**
+ * Shared response parser for both the by-id and default config endpoints,
+ * which return an identical shape.
+ */
+const parsePengurusanDokumenConfig = (
+  payload: Record<string, unknown> | null | undefined
+): PengurusanDokumenConfig | null => {
+  if (!payload) {
+    return null
+  }
+
+  const defaultAccessLevel = payload.defaultAccessLevel as
+    { code?: unknown; codeName?: unknown } | undefined
+  const retentionPeriod = payload.retentionPeriod as
+    { code?: unknown; codeName?: unknown } | undefined
+
+  return {
+    definitionGroupId: String(payload.definitionGroupId ?? ''),
+    unitId: String(payload.unitId ?? ''),
+    allowedFormats: Array.isArray(payload.allowedFormats) ? payload.allowedFormats : [],
+    maxFileSizeMb: Number(payload.maxFileSizeMb ?? 0),
+    workflowCode: String(payload.workflowCode ?? ''),
+    documentProfileCode: String(payload.documentProfileCode ?? ''),
+    documentProfileName: String(payload.documentProfileName ?? ''),
+    defaultAccessLevel: {
+      code: String(defaultAccessLevel?.code ?? ''),
+      codeName: String(defaultAccessLevel?.codeName ?? ''),
+    },
+    retentionPeriod: {
+      code: String(retentionPeriod?.code ?? ''),
+      codeName: String(retentionPeriod?.codeName ?? ''),
+    },
+    isLatest: Boolean(payload.isLatest),
+    createdAt: String(payload.createdAt ?? ''),
+    updatedAt: String(payload.updatedAt ?? ''),
+    metadataFields: Array.isArray(payload.metadataFields) ? payload.metadataFields : [],
+    configStatus: String(payload.configStatus ?? 'AKTIF'),
+  }
+}
+
+/**
+ * Get the full config for a single document profile setting ("Tetapan"),
+ * used to prefill the Kemaskini Tetapan form by its record id.
+ * GET /config/{documentProfileId}
+ */
+export const getPengurusanDokumenConfig = async (
+  documentProfileId: string
+): Promise<PengurusanDokumenConfig | null> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/${documentProfileId}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data
+
+    return parsePengurusanDokumenConfig(payload)
+  } catch (error) {
+    console.error(`Error fetching pengurusan dokumen config for id ${documentProfileId}:`, error)
+    throw error
+  }
+}
+
+/**
+ * Get the default/base config for a document profile code, used to prefill
+ * the Tambah Tetapan form once a Profil Dokumen is selected.
+ * GET /config/default/{documentProfileCode}
+ */
+export const getPengurusanDokumenDefaultConfig = async (
+  documentProfileCode: string
+): Promise<PengurusanDokumenConfig | null> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/default/${documentProfileCode}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data
+
+    return parsePengurusanDokumenConfig(payload)
+  } catch (error) {
+    console.error(
+      `Error fetching pengurusan dokumen default config for code ${documentProfileCode}:`,
+      error
+    )
+    throw error
+  }
+}
+
+/**
+ * Deactivate an existing document profile setting ("Tetapan"), used by
+ * the "Nyahaktif Tetapan" flow. Deactivated settings are not used until
+ * reactivated.
+ * PATCH /config/deactivate/{documentProfileId}
+ */
+export const deactivatePengurusanDokumenConfig = async (
+  documentProfileId: string
+): Promise<PengurusanDokumenConfig | null> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/deactivate/${documentProfileId}`
+  try {
+    const response = await authAxios.patch(url)
+    const payload = response.data?.data ?? response.data
+
+    return parsePengurusanDokumenConfig(payload)
+  } catch (error) {
+    console.error(
+      `Error deactivating pengurusan dokumen config for id ${documentProfileId}:`,
+      error
+    )
+    throw error
+  }
+}
+
+/**
+ * Activate an existing document profile setting ("Tetapan"), used by
+ * the "Aktifkan Tetapan" flow.
+ * PATCH /config/{documentProfileId}
+ */
+export const activatePengurusanDokumenConfig = async (
+  documentProfileId: string
+): Promise<PengurusanDokumenConfig | null> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/${documentProfileId}`
+  try {
+    const response = await authAxios.patch(url, { configStatus: 'AKTIF' })
+    const payload = response.data?.data ?? response.data
+
+    return parsePengurusanDokumenConfig(payload)
+  } catch (error) {
+    console.error(`Error activating pengurusan dokumen config for id ${documentProfileId}:`, error)
+    throw error
+  }
+}
+
+export interface DeletePengurusanDokumenConfigResult {
+  message: string
+  definitionGroupId: string
+  documentProfileName: string
+  version: number
+}
+
+/**
+ * Delete an existing document profile setting ("Tetapan"), used by the
+ * "Buang Tetapan" flow.
+ * DELETE /config/{documentProfileId}
+ */
+export const deletePengurusanDokumenConfig = async (
+  documentProfileId: string
+): Promise<DeletePengurusanDokumenConfigResult> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/config/${documentProfileId}`
+  try {
+    const response = await authAxios.delete(url)
+    const data = response.data?.data ?? response.data
+
+    return {
+      message: String(data?.message ?? ''),
+      definitionGroupId: String(data?.definitionGroupId ?? ''),
+      documentProfileName: String(data?.documentProfileName ?? ''),
+      version: Number(data?.version ?? 0),
+    }
+  } catch (error) {
+    console.error(`Error deleting pengurusan dokumen config for id ${documentProfileId}:`, error)
     throw error
   }
 }

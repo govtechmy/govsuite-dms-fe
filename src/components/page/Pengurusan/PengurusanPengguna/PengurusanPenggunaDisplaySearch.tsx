@@ -1,5 +1,6 @@
 import PaginationControl from '@/components/shared/PaginationControl'
 import TambahPenggunaModal from '@/components/page/Pengurusan/PengurusanPengguna/TambahPenggunaModal'
+import ResetKataLaluanModal from '@/components/page/Pengurusan/PengurusanPengguna/ResetKataLaluanModal'
 import type { DropdownUnit, DropdownUserRole } from '@/services/dropdown.svc'
 import type { PenggunaItem } from '@/services/pengurusanPengguna.svc'
 // import { renderSecretTag } from '@/utils/RenderTag'
@@ -32,7 +33,7 @@ interface PengurusanPenggunaDisplaySearchProps {
   onSuccess?: () => void
 }
 
-const TABLE_COLUMN_COUNT = 5
+const TABLE_COLUMN_COUNT = 6
 const SKELETON_ROW_COUNT = 8
 
 export default function PengurusanPenggunaDisplaySearch({
@@ -69,6 +70,7 @@ export default function PengurusanPenggunaDisplaySearch({
             <TableHead>Unit</TableHead>
             <TableHead>Peranan Pengguna</TableHead>
             <TableHead>Tindakan</TableHead>
+            <TableHead>Reset Kata Laluan</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -107,6 +109,9 @@ export default function PengurusanPenggunaDisplaySearch({
                     onSuccess={onSuccess}
                   />
                 </TableCell>
+                <TableCell>
+                  <ResetKataLaluanModal pengguna={user} onSuccess={onSuccess} />
+                </TableCell>
               </TableRow>
             ))
           ) : (
@@ -118,15 +123,16 @@ export default function PengurusanPenggunaDisplaySearch({
           )}
         </TableBody>
       </Table>
-
-      <PaginationControl
-        pageNumber={pageNumber}
-        pageSize={pageSize}
-        totalRecords={totalRecords}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-        pageSizeOptions={[15, 30, 45, 60]}
-      />
+      <div className="pb-6">
+        <PaginationControl
+          pageNumber={pageNumber}
+          pageSize={pageSize}
+          totalRecords={totalRecords}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          pageSizeOptions={[15, 30, 45, 60]}
+        />
+      </div>
     </div>
   )
 }

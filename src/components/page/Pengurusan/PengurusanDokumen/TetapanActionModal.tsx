@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   Dialog,
   DialogBody,
@@ -10,12 +10,11 @@ import {
 import { Button, type ButtonProps } from '@govtechmy/myds-react/button'
 import { CheckCircleIcon, WarningIcon } from '@govtechmy/myds-react/icon'
 import { Spinner } from '@govtechmy/myds-react/spinner'
+import extractBackendError from '@/utils/extractBackendError'
 
-export type TetapanActionType = 'buang' | 'nyahaktif' | 'simpan' | 'kemaskini'
+export type TetapanActionType = 'buang' | 'nyahaktif' | 'aktifkan' | 'simpan' | 'kemaskini'
 
-type ModalPhase = 'confirm' | 'loading' | 'success'
-
-const ACTION_SIMULATION_DELAY_MS = 3000
+type ModalPhase = 'confirm' | 'loading' | 'success' | 'error'
 
 interface TetapanActionConfig {
   requireConfirm: boolean
@@ -53,6 +52,17 @@ const ACTION_CONFIG: Record<TetapanActionType, TetapanActionConfig> = {
     successTitle: 'Tetapan Berjaya Dinyahaktifkan',
     successDescription: 'Tetapan ini kini tidak aktif.',
   },
+  aktifkan: {
+    requireConfirm: true,
+    confirmIcon: <WarningIcon className="text-primary-600 size-[42px]" />,
+    confirmTitle: 'Aktifkan Tetapan?',
+    confirmDescription: 'Adakah anda pasti untuk mengaktifkan tetapan ini?',
+    confirmButtonText: 'Aktifkan',
+    confirmButtonVariant: 'primary-fill',
+    loadingDescription: 'Tetapan sedang diaktifkan.',
+    successTitle: 'Tetapan Berjaya Diaktifkan',
+    successDescription: 'Tetapan ini kini aktif.',
+  },
   simpan: {
     requireConfirm: false,
     loadingDescription: 'Tetapan sedang disimpan.',
@@ -71,26 +81,35 @@ interface TetapanActionModalProps {
   action: TetapanActionType | null
   onClose: () => void
   onSuccess?: (action: TetapanActionType) => void
+  /** Performs the actual action; the loading phase awaits this and surfaces
+   * a retryable error phase on failure. */
+  onConfirm: () => Promise<void>
 }
 
 export default function TetapanActionModal({
   action,
   onClose,
   onSuccess,
+  onConfirm,
 }: TetapanActionModalProps) {
   const [phase, setPhase] = useState<ModalPhase>('confirm')
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const clearPendingTimeout = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
+  const runAction = () => {
+    setPhase('loading')
+    setErrorMessage(null)
+
+    onConfirm()
+      .then(() => setPhase('success'))
+      .catch((err) => {
+        setErrorMessage(extractBackendError(err)?.message ?? 'Tindakan gagal. Sila cuba lagi.')
+        setPhase('error')
+      })
   }
 
   // Initialise the correct phase whenever a new action is opened. Actions
   // that don't require confirmation (Simpan/Kemaskini) skip straight to the
-  // loading simulation.
+  // loading phase.
   useEffect(() => {
     if (!action) return
 
@@ -98,26 +117,23 @@ export default function TetapanActionModal({
     if (config.requireConfirm) {
       setPhase('confirm')
     } else {
-      setPhase('loading')
-      timeoutRef.current = setTimeout(() => {
-        setPhase('success')
-      }, ACTION_SIMULATION_DELAY_MS)
+      runAction()
     }
-
-    return clearPendingTimeout
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action])
 
   const resetPhaseAfterClose = () => {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         setPhase('confirm')
+        setErrorMessage(null)
       })
     })
   }
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      // Prevent dismissing the modal while the action simulation is running
+      // Prevent dismissing the modal while the action is running
       if (phase === 'loading') {
         return
       }
@@ -127,10 +143,12 @@ export default function TetapanActionModal({
   }
 
   const handleConfirmClick = () => {
-    setPhase('loading')
-    timeoutRef.current = setTimeout(() => {
-      setPhase('success')
-    }, ACTION_SIMULATION_DELAY_MS)
+    runAction()
+  }
+
+  const handleTutupFromError = () => {
+    onClose()
+    resetPhaseAfterClose()
   }
 
   const handleTutupClick = () => {
@@ -151,7 +169,8 @@ export default function TetapanActionModal({
   return (
     <Dialog open={!!action} onOpenChange={handleOpenChange}>
       <DialogBody
-        className="w-full max-w-[calc(100dvw-36px)] sm:max-w-[400px] [&>button]:p-1 [&>button_svg]:size-3.5"
+        hideClose
+        className="w-full max-w-[calc(100dvw-36px)] sm:max-w-[400px]"
         onDismiss={phase === 'loading' ? undefined : onClose}
       >
         <DialogContent className="py-6">
@@ -204,6 +223,34 @@ export default function TetapanActionModal({
                   onClick={handleTutupClick}
                 >
                   Tutup
+                </Button>
+              </div>
+            </>
+          )}
+
+          {phase === 'error' && (
+            <>
+              <WarningIcon className="text-txt-danger size-[42px]" />
+              <DialogTitle className="pt-[16px]">Tindakan Gagal</DialogTitle>
+              <DialogDescription>
+                {errorMessage ?? 'Tindakan gagal. Sila cuba lagi.'}
+              </DialogDescription>
+              <div className="flex flex-row gap-2 pt-6">
+                <Button
+                  size={'large'}
+                  variant="default-outline"
+                  className="items-center justify-center"
+                  onClick={handleTutupFromError}
+                >
+                  Tutup
+                </Button>
+                <Button
+                  size={'large'}
+                  variant="primary-fill"
+                  className="items-center justify-center"
+                  onClick={runAction}
+                >
+                  Cuba Lagi
                 </Button>
               </div>
             </>

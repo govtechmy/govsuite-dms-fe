@@ -12,7 +12,7 @@ import { Tag } from '@govtechmy/myds-react/tag'
 import type { CurrentUserProfile } from '@/services/auth.svc'
 import { resolveUserRoles } from '@/models/userRoles'
 import normalizeWord from '@/utils/NormalizeWord'
-import { formatDateTimeDisplay } from '@/utils/formatDate'
+import { formatDateTimeUpdatedDisplay } from '@/utils/formatDate'
 
 interface PengurusanProfilSummaryCardProps {
   profile: CurrentUserProfile | null
@@ -43,7 +43,7 @@ function getProfileSummaryRows(profile: CurrentUserProfile | null): ProfileSumma
         </div>
       ),
     },
-    { term: 'Log Masuk Terakhir', detail: formatDateTimeDisplay(profile?.lastLoginAt) },
+    { term: 'Log Masuk Terakhir', detail: formatDateTimeUpdatedDisplay(profile?.lastLoginAt) },
   ]
 }
 

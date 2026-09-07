@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { z } from 'zod'
 import {
   Dialog,
   DialogBody,
@@ -11,11 +12,13 @@ import {
   DialogTrigger,
 } from '@govtechmy/myds-react/dialog'
 import { Button } from '@govtechmy/myds-react/button'
-import { Input } from '@govtechmy/myds-react/input'
+import { Input, InputIcon } from '@govtechmy/myds-react/input'
 import { Checkbox } from '@govtechmy/myds-react/checkbox'
 import { Spinner } from '@govtechmy/myds-react/spinner'
+import { clx } from '@govtechmy/myds-react/utils'
 import {
   CheckCircleIcon,
+  CrossCircleIcon,
   EditIcon,
   PlusIcon,
   TrashIcon,
@@ -24,13 +27,14 @@ import {
 import SelectDropdownUnit from '@/components/page/MuatNaik/SelectDropdownUnit'
 import type { DropdownUnit, DropdownUserRole } from '@/services/dropdown.svc'
 import {
+  checkEmailAvailability,
   createPengguna,
   deletePengguna,
   updatePengguna,
   type PenggunaItem,
 } from '@/services/pengurusanPengguna.svc'
-import { ROLE_DESCRIPTIONS, type UserRole } from '@/models/userRoles'
 import extractBackendError from '@/utils/extractBackendError'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
 type ModalPhase = 'form' | 'confirmDelete' | 'loading' | 'success' | 'error'
 type ModalMode = 'create' | 'edit'
@@ -55,8 +59,11 @@ interface PenggunaErrorState {
   message: string
 }
 
-// userAccessLevel lookup/requirement isn't finalised by backend yet — re-enable once ready.
-// const HARDCODED_USER_ACCESS_LEVEL = ['TERBUKA', 'TERHAD', 'RAHSIA']
+type EmailCheckStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'taken' | 'error'
+
+// Delay before the email-availability check fires after the user stops typing.
+const EMAIL_CHECK_DEBOUNCE_MS = 500
+const emailFormatSchema = z.string().trim().email()
 
 // HQ is excluded from the /units dropdown for security reasons, so a pengguna whose unit
 // is HQ can't have their unit re-selected from the list — lock the field and show HQ as-is.
@@ -88,12 +95,62 @@ export default function TambahPenggunaModal({
   const [error, setError] = useState<PenggunaErrorState | null>(null)
   const [form, setForm] = useState<PenggunaFormState>(() => buildFormState(pengguna))
   const [isDeleteFlow, setIsDeleteFlow] = useState(false)
+  const [emailCheckStatus, setEmailCheckStatus] = useState<EmailCheckStatus>('idle')
+  const [emailCheckMessage, setEmailCheckMessage] = useState<string | null>(null)
+
+  const initialEmail = pengguna?.email ?? ''
+  const debouncedEmail = useDebouncedValue(form.email.trim(), EMAIL_CHECK_DEBOUNCE_MS)
+
+  useEffect(() => {
+    if (!open) return
+
+    if (!debouncedEmail || (isEditMode && debouncedEmail === initialEmail)) {
+      setEmailCheckStatus('idle')
+      setEmailCheckMessage(null)
+      return
+    }
+
+    if (!emailFormatSchema.safeParse(debouncedEmail).success) {
+      setEmailCheckStatus('invalid')
+      setEmailCheckMessage(null)
+      return
+    }
+
+    let cancelled = false
+    setEmailCheckStatus('checking')
+    setEmailCheckMessage(null)
+
+    checkEmailAvailability(debouncedEmail)
+      .then((result) => {
+        if (cancelled) return
+        setEmailCheckStatus('available')
+        setEmailCheckMessage(result.message)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        const backendError = extractBackendError(err)
+        if (backendError?.code === 'CONFLICT') {
+          setEmailCheckStatus('taken')
+          setEmailCheckMessage(backendError.message)
+        } else {
+          setEmailCheckStatus('error')
+          setEmailCheckMessage(null)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedEmail, open, isEditMode, initialEmail])
 
   const isFormValid =
     form.fullName.trim() !== '' &&
     form.email.trim() !== '' &&
     form.unitId !== '' &&
-    form.roles.length > 0
+    form.roles.length > 0 &&
+    emailCheckStatus !== 'checking' &&
+    emailCheckStatus !== 'taken' &&
+    emailCheckStatus !== 'invalid'
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen && phase === 'loading') {
@@ -106,11 +163,15 @@ export default function TambahPenggunaModal({
       setPhase('form')
       setError(null)
       setIsDeleteFlow(false)
+      setEmailCheckStatus('idle')
+      setEmailCheckMessage(null)
     } else {
       setPhase('form')
       setError(null)
       setIsDeleteFlow(false)
       setForm(buildFormState(pengguna))
+      setEmailCheckStatus('idle')
+      setEmailCheckMessage(null)
     }
   }
 
@@ -142,7 +203,6 @@ export default function TambahPenggunaModal({
         await createPengguna(payload)
       }
       setPhase('success')
-      onSuccess?.()
     } catch (err) {
       const fallbackMessage = isEditMode
         ? 'Pengguna gagal dikemaskini.'
@@ -162,11 +222,20 @@ export default function TambahPenggunaModal({
   }
 
   const handleTutupClick = () => {
+    // Only refresh the list once the user dismisses the success dialog — refreshing
+    // immediately on success would flip the table into its loading skeleton and
+    // unmount this still-open dialog (edit mode) before the user gets to see it.
+    const wasSuccess = phase === 'success'
     setOpen(false)
     setPhase('form')
     setError(null)
     setIsDeleteFlow(false)
     setForm(buildFormState(pengguna))
+    setEmailCheckStatus('idle')
+    setEmailCheckMessage(null)
+    if (wasSuccess) {
+      onSuccess?.()
+    }
   }
 
   const handleBuangClick = () => {
@@ -186,7 +255,6 @@ export default function TambahPenggunaModal({
     try {
       await deletePengguna(pengguna.id)
       setPhase('success')
-      onSuccess?.()
     } catch (err) {
       const backendError = extractBackendError(err)
       setError({
@@ -241,7 +309,53 @@ export default function TambahPenggunaModal({
                   placeholder="Masukkan alamat email"
                   value={form.email}
                   onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                />
+                  className={clx(
+                    emailCheckStatus === 'available' && 'border-otl-success-300',
+                    (emailCheckStatus === 'taken' || emailCheckStatus === 'invalid') &&
+                      'border-otl-danger-300'
+                  )}
+                >
+                  {emailCheckStatus === 'checking' && (
+                    <InputIcon position="right">
+                      <Spinner size="small" />
+                    </InputIcon>
+                  )}
+                  {emailCheckStatus === 'available' && (
+                    <InputIcon position="right">
+                      <CheckCircleIcon className="text-txt-success" />
+                    </InputIcon>
+                  )}
+                  {(emailCheckStatus === 'taken' || emailCheckStatus === 'invalid') && (
+                    <InputIcon position="right">
+                      <CrossCircleIcon className="text-txt-danger" />
+                    </InputIcon>
+                  )}
+                </Input>
+                {emailCheckStatus === 'invalid' && (
+                  <span className="text-body-xs font-normal text-txt-danger">
+                    Format email tidak sah.
+                  </span>
+                )}
+                {emailCheckStatus === 'checking' && (
+                  <span className="text-body-xs font-normal text-txt-black-500">
+                    Menyemak ketersediaan email...
+                  </span>
+                )}
+                {emailCheckStatus === 'available' && (
+                  <span className="text-body-xs font-normal text-txt-success">
+                    Email tersedia untuk digunakan.
+                  </span>
+                )}
+                {emailCheckStatus === 'taken' && (
+                  <span className="text-body-xs font-normal text-txt-danger">
+                    {emailCheckMessage ?? 'Email telah digunakan oleh pengguna lain.'}
+                  </span>
+                )}
+                {emailCheckStatus === 'error' && (
+                  <span className="text-body-xs font-normal text-txt-black-500">
+                    Tidak dapat menyemak ketersediaan email buat masa ini.
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -258,31 +372,29 @@ export default function TambahPenggunaModal({
               <div className="flex flex-col gap-2">
                 <div className="text-body-sm font-medium text-txt-black-700">Peranan Pengguna</div>
                 <div className="flex flex-col gap-3">
-                  {dropdownTahapAkses
-                    .filter((role) => role.code !== 'SUPER_ADMIN')
-                    .map((role) => (
-                      <div
-                        key={role.code}
-                        onClick={() => toggleRole(role.code)}
-                        className="flex cursor-pointer items-start gap-2"
-                      >
-                        <Checkbox
-                          checked={form.roles.includes(role.code)}
-                          aria-label={role.name}
-                          className="mt-0.5 shrink-0"
-                        />
-                        <div className="flex flex-col gap-1">
-                          <span className="text-body-sm font-medium text-txt-black-700">
-                            {role.name}
+                  {dropdownTahapAkses.map((role) => (
+                    <div
+                      key={role.code}
+                      onClick={() => toggleRole(role.code)}
+                      className="flex cursor-pointer items-start gap-2"
+                    >
+                      <Checkbox
+                        checked={form.roles.includes(role.code)}
+                        aria-label={role.name}
+                        className="mt-0.5 shrink-0"
+                      />
+                      <div className="flex flex-col gap-1">
+                        <span className="text-body-sm font-medium text-txt-black-700">
+                          {role.name}
+                        </span>
+                        {role.description && (
+                          <span className="text-body-xs font-normal text-txt-black-500">
+                            {role.description}
                           </span>
-                          {ROLE_DESCRIPTIONS[role.code as UserRole] && (
-                            <span className="text-body-xs font-normal text-txt-black-500">
-                              {ROLE_DESCRIPTIONS[role.code as UserRole]}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             </DialogContent>

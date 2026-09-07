@@ -173,5 +173,28 @@ export const formatDateTimeDisplay = (value?: string): string => {
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
 
-  return `${day}/${month}/${year}, ${hours}:${minutes} hrs`
+  return `${day}/${month}/${year}, ${hours}:${minutes}`
+}
+
+/**
+ * Formats an ISO date-time string for read-only display as "dd/mm/yyyy, hh:mm AM/PM"
+ * (12-hour clock, UTC time). Returns '-' when the input is missing or invalid.
+ */
+export const formatDateTimeUpdatedDisplay = (value?: string): string => {
+  if (!value) return '-'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  // 'en-GB' enforces the DD/MM/YYYY format
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+    .format(date)
+    .toUpperCase()
 }

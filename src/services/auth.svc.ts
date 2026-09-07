@@ -10,6 +10,7 @@ type AuthUser = {
   email?: string
   fullName?: string
   roles: string[]
+  mustChangePassword: boolean
 }
 
 export interface CurrentUserProfile {
@@ -93,13 +94,17 @@ export const getCurrentUserProfile = async (): Promise<CurrentUserProfile> => {
 }
 
 /**
- * Change the logged-in user's own password from the "Set Semula Kata Laluan" form.
+ * Change the logged-in user's own password from the "Set Semula Kata Laluan" form,
+ * or from the mandatory first-login "Tukar Kata Laluan Lalai" flow.
  * POST /auth/change-password
  */
-export const changePassword = async (newPassword: string): Promise<string> => {
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string
+): Promise<string> => {
   const url = `${BASE_URL}${AUTH_ENDPOINT}/change-password`
   try {
-    const response = await authAxios.post(url, { newPassword })
+    const response = await authAxios.post(url, { currentPassword, newPassword })
     return response.data?.data?.message ?? 'Kata laluan berjaya dikemaskini.'
   } catch (error) {
     console.error('Error changing password:', error)
