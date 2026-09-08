@@ -1,3 +1,4 @@
+import { SystemAction } from '@/services/logAktiviti.svc'
 import { Button } from '@govtechmy/myds-react/button'
 import {
   ArrowIncomingIcon,
@@ -15,11 +16,11 @@ import {
 import type { ReactNode } from 'react'
 
 interface LogAktivitiIconManagerProps {
-  jenis: string
+  action: SystemAction
 }
 
-const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
-  'Buka Dokumen': (
+const LOG_AKTIVITI_ICON_MAP: Partial<Record<SystemAction, ReactNode>> = {
+  [SystemAction.ACCESS_DOCUMENT]: (
     <Button
       variant="primary-fill"
       className="border border-otl-primary-200 size-8 flex items-center justify-center rounded-sm"
@@ -27,7 +28,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <DocumentFilledIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Tambah Akaun': (
+  [SystemAction.CREATE_USER]: (
     <Button
       variant="unset"
       className="bg-success-600 border border-otl-success-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -35,7 +36,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <UserIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Buang Akaun': (
+  [SystemAction.DELETE_USER]: (
     <Button
       variant="danger-fill"
       className="border border-otl-danger-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -43,7 +44,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <UserIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Log Masuk': (
+  [SystemAction.LOG_IN]: (
     <Button
       variant="unset"
       className="bg-success-600 border border-otl-success-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -51,7 +52,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <ArrowIncomingIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Log Keluar': (
+  [SystemAction.LOG_OUT]: (
     <Button
       variant="danger-fill"
       className="border border-otl-danger-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -59,7 +60,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <LogoutIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Cipta Dokumen': (
+  [SystemAction.CREATE_DOCUMENT]: (
     <Button
       variant="primary-fill"
       className="border border-otl-primary-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -67,7 +68,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <FolderPlusIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Muat Naik Dokumen': (
+  [SystemAction.UPLOAD_DOCUMENT]: (
     <Button
       variant="unset"
       className="bg-warning-600 border border-otl-warning-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -75,7 +76,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <UploadIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Kemaskini Dokumen': (
+  [SystemAction.UPDATE_DOCUMENT]: (
     <Button
       variant="primary-fill"
       className="border border-otl-primary-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -83,7 +84,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <EditIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Muat Turun Dokumen': (
+  [SystemAction.DOWNLOAD_DOCUMENT]: (
     <Button
       variant="primary-fill"
       className="border border-otl-primary-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -91,7 +92,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <DownloadIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Meluluskan Dokumen': (
+  [SystemAction.APPROVE_DOCUMENT]: (
     <Button
       variant="unset"
       className="bg-success-600 border border-otl-success-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -99,7 +100,7 @@ const LOG_AKTIVITI_ICON_MAP: Record<string, ReactNode> = {
       <CheckCircleIcon className="shrink-0 size-4" />
     </Button>
   ),
-  'Tidak Meluluskan Dokumen': (
+  [SystemAction.DISAPPROVE_DOCUMENT]: (
     <Button
       variant="danger-fill"
       className="border border-otl-danger-200 text-txt-white size-8 flex items-center justify-center rounded-sm"
@@ -115,6 +116,6 @@ const DEFAULT_LOG_AKTIVITI_ICON: ReactNode = (
   </Button>
 )
 
-export default function LogAktivitiIconManager({ jenis }: LogAktivitiIconManagerProps) {
-  return LOG_AKTIVITI_ICON_MAP[jenis] ?? DEFAULT_LOG_AKTIVITI_ICON
+export default function LogAktivitiIconManager({ action }: LogAktivitiIconManagerProps) {
+  return LOG_AKTIVITI_ICON_MAP[action] ?? DEFAULT_LOG_AKTIVITI_ICON
 }

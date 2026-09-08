@@ -1,173 +1,60 @@
 import PaginationControl from '@/components/shared/PaginationControl'
+import type { LogAktivitiItem } from '@/services/logAktiviti.svc'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
+import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Fragment } from 'react'
 import LogAktivitiIconManager from './LogAktivitiIconManager'
 
-interface LogItem {
-  id: string
-  nama: string
-  email: string
-  aksi: string
-  sasaran?: string
-  sasaranEmel?: string
-  tarikh: string
-  selangMasa: string
-  jenis: string
-}
-
-const mockLogs: LogItem[] = [
-  {
-    id: '1',
-    nama: 'Mohd Muzakkir Zamani Bin Fairuzzaki',
-    email: 'muzakkir@digital.gov.my',
-    aksi: 'telah membuka dokumen',
-    sasaran: 'Minit Mesyuarat JKPPN (Januari 2026)',
-    tarikh: '04/01/2026 09:00 AM',
-    selangMasa: '1 minit lalu',
-    jenis: 'Buka Dokumen',
-  },
-  {
-    id: '2',
-    nama: 'Wong Chi Han',
-    email: 'wongch@digital.gov.my',
-    aksi: 'telah log masuk.',
-    tarikh: '04/01/2026 08:00 AM',
-    selangMasa: '1 jam lalu',
-    jenis: 'Log Masuk',
-  },
-  {
-    id: '3',
-    nama: 'Wong Chi Han',
-    email: 'wongch@digital.gov.my',
-    aksi: 'telah log keluar.',
-    tarikh: '03/01/2026 06:00 PM',
-    selangMasa: '8 jam lalu',
-    jenis: 'Log Keluar',
-  },
-  {
-    id: '4',
-    nama: 'Muhammad Aidan Aris Bin Saiful Bukhary',
-    email: 'm.aidan@digital.gov.my',
-    aksi: 'telah membuang akaun pengguna',
-    sasaran: 'Muhammad Saiful Bin Bahri',
-    sasaranEmel: 'm.saiful@digital.gov.my',
-    tarikh: '03/01/2026 05:00 PM',
-    selangMasa: '9 jam lalu',
-    jenis: 'Buang Akaun',
-  },
-  {
-    id: '5',
-    nama: 'Mohd Muzakkir Zamani Bin Fairuzzaki',
-    email: 'muzakkir@digital.gov.my',
-    aksi: 'telah meluluskan dokumen',
-    sasaran: 'Minit Mesyuarat JKPPN (Januari 2026)',
-    tarikh: '02/01/2026 04:45 PM',
-    selangMasa: '1 hari lalu',
-    jenis: 'Meluluskan Dokumen',
-  },
-  {
-    id: '6',
-    nama: 'Mohd Muzakkir Zamani Bin Fairuzzaki',
-    email: 'muzakkir@digital.gov.my',
-    aksi: 'telah memuat naik dokumen',
-    sasaran: 'Minit Mesyuarat JKPPN (Januari 2026)',
-    tarikh: '02/01/2026 04:45 PM',
-    selangMasa: '1 hari lalu',
-    jenis: 'Muat Naik Dokumen',
-  },
-  {
-    id: '7',
-    nama: 'Mohd Muzakkir Zamani Bin Fairuzzaki',
-    email: 'muzakkir@digital.gov.my',
-    aksi: 'telah tidak meluluskan dokumen',
-    sasaran: 'Minit Mesyuarat JPICT (Disember 2024)',
-    tarikh: '02/01/2026 04:45 PM',
-    selangMasa: '1 hari lalu',
-    jenis: 'Tidak Meluluskan Dokumen',
-  },
-  {
-    id: '8',
-    nama: 'Muhammad Aidan Aris Bin Saiful Bukhary',
-    email: 'm.aidan@digital.gov.my',
-    aksi: 'telah menambah akaun pengguna',
-    sasaran: 'Suhairi Bin Ibrahim',
-    sasaranEmel: 'suha@digital.gov.my',
-    tarikh: '02/01/2026 04:45 PM',
-    selangMasa: '1 hari lalu',
-    jenis: 'Tambah Akaun',
-  },
-  {
-    id: '9',
-    nama: 'Mohd Muzakkir Zamani Bin Fairuzzaki',
-    email: 'muzakkir@digital.gov.my',
-    aksi: 'telah meluluskan dokumen',
-    sasaran: 'Minit Mesyuarat JKPPN (Januari 2026)',
-    tarikh: '02/01/2026 04:45 PM',
-    selangMasa: '1 hari lalu',
-    jenis: 'Meluluskan Dokumen',
-  },
-  {
-    id: '10',
-    nama: 'Mohd Muzakkir Zamani Bin Fairuzzaki',
-    email: 'muzakkir@digital.gov.my',
-    aksi: 'telah memuat naik dokumen',
-    sasaran: 'Minit Mesyuarat JKPPN (Januari 2026)',
-    tarikh: '02/01/2026 04:45 PM',
-    selangMasa: '1 hari lalu',
-    jenis: 'Muat Naik Dokumen',
-  },
-  {
-    id: '11',
-    nama: 'Mohd Muzakkir Zamani Bin Fairuzzaki',
-    email: 'muzakkir@digital.gov.my',
-    aksi: 'telah tidak meluluskan dokumen',
-    sasaran: 'Minit Mesyuarat JKPPN (Januari 2026)',
-    tarikh: '02/01/2026 04:45 PM',
-    selangMasa: '1 hari lalu',
-    jenis: 'Tidak Meluluskan Dokumen',
-  },
-  {
-    id: '12',
-    nama: 'Muhammad Aidan Aris Bin Saiful Bukhary',
-    email: 'm.aidan@digital.gov.my',
-    aksi: 'telah menambah akaun pengguna',
-    sasaran: 'Suhairi Bin Ibrahim',
-    sasaranEmel: 'suha@digital.gov.my',
-    tarikh: '02/01/2026 04:45 PM',
-    selangMasa: '1 hari lalu',
-    jenis: 'Tambah Akaun',
-  },
-]
-
 interface LogDisplaySearchProps {
+  logs: LogAktivitiItem[]
+  isLoading: boolean
+  error: string | null
   pageNumber: number
   pageSize: number
+  totalRecords: number
   onPageChange: (newPage: number) => void
   onPageSizeChange: (newSize: number) => void
 }
 
 export default function LogDisplaySearch({
+  logs,
+  isLoading,
+  error,
   pageNumber,
   pageSize,
+  totalRecords,
   onPageChange,
   onPageSizeChange,
 }: LogDisplaySearchProps) {
-  const totalRecords = mockLogs.length
-  const startIndex = (pageNumber - 1) * pageSize
-  const paginatedLogs = mockLogs.slice(startIndex, startIndex + pageSize)
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Spinner size="large" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Callout variant="danger">
+        <CalloutTitle>Ralat</CalloutTitle>
+        <CalloutContent>{error}</CalloutContent>
+      </Callout>
+    )
+  }
 
   return (
     <div className="flex h-full flex-col justify-between">
       <div>
-        {paginatedLogs.length > 0 ? (
+        {logs.length > 0 ? (
           <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
-            {paginatedLogs.map((log, index) => {
-              const isLast = index === paginatedLogs.length - 1
+            {logs.map((log, index) => {
+              const isLast = index === logs.length - 1
 
               return (
                 <Fragment key={log.id}>
                   <div className="flex items-center">
-                    <LogAktivitiIconManager jenis={log.jenis} />
+                    <LogAktivitiIconManager action={log.action} />
                   </div>
                   <div className="flex-1 w-full">
                     <div className="text-sm">
