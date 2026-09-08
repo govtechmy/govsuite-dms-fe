@@ -67,8 +67,8 @@ main() {
 
   # Step 1: Validate the version argument and preconditions before touching
   # any branch. Fail fast and loudly rather than partway through a merge.
-  [[ -n "$version" && "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
-    || error "Usage: ./release.sh vX.Y.Z (e.g. ./release.sh v0.0.1)"
+  [[ -n "$version" && "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] \
+    || error "Usage: ./release.sh vX.Y.Z or vX.Y.Z-PRERELEASE (e.g. ./release.sh v0.0.1 or ./release.sh v0.0.2-a)"
 
   local current_branch
   current_branch=$(git branch --show-current)
