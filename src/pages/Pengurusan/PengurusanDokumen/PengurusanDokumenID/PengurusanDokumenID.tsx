@@ -520,7 +520,7 @@ export default function PengurusanDokumenIDPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1.5 mb-6">
                       <div className="flex text-body-md font-medium font-body text-txt-black-700">
                         Saiz Maksimum (MB)
                       </div>

@@ -1,7 +1,7 @@
 import MainHeading from '@/components/layout/MainHeading'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
-import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarKatalogDokumen'
 import PengurusanPenggunaDisplaySearch from '@/components/page/Pengurusan/PengurusanPengguna/PengurusanPenggunaDisplaySearch'
+import SearchBarPengurusanPengguna from '@/components/page/Pengurusan/PengurusanPengguna/SearchBarPengurusanPengguna'
 import SelectPengurusanPengguna from '@/components/page/Pengurusan/PengurusanPengguna/SelectPengurusanPengguna'
 import {
   getDropdownUnits,
@@ -116,7 +116,7 @@ export default function PengurusanPenggunaPage() {
       <div className="flex h-full flex-col gap-6">
         <MainHeading>Pengurusan Pengguna</MainHeading>
         <div className="flex flex-col gap-3">
-          <SearchBarKatalogDokumen />
+          <SearchBarPengurusanPengguna />
           <SelectPengurusanPengguna
             dropdownUnits={dropdownUnits}
             dropdownTahapAkses={dropdownTahapAkses}
