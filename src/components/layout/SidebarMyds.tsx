@@ -19,7 +19,6 @@ import React from 'react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ROLE_PERMISSIONS, resolveUserRoles, type UserRole } from '../../models/userRoles'
-import { renderInProgressTag } from '@/utils/RenderTag'
 
 interface SidebarProps {
   onclick?: () => void
@@ -30,7 +29,6 @@ interface SubMenuItem {
   label: string
   icon: React.ComponentType<{ className?: string }>
   path: string
-  inProgress?: boolean
 }
 
 interface MenuItem {
@@ -40,7 +38,6 @@ interface MenuItem {
   path: string
   activeStates: string[]
   roles: string[]
-  inProgress?: boolean
   children?: SubMenuItem[]
 }
 
@@ -79,7 +76,6 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
     icon: HeartIcon,
     path: 'kegemaran',
     activeStates: ['kegemaran'],
-    inProgress: true,
   },
   {
     id: 'pengurusan',
@@ -114,7 +110,6 @@ const menuItems: Omit<MenuItem, 'roles'>[] = [
     icon: DocumentFilledIcon,
     path: 'log-aktiviti',
     activeStates: ['log-aktiviti'],
-    inProgress: true,
   },
   {
     id: 'bantuan',
@@ -260,7 +255,6 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
             }`}
           >
             <span className="truncate">{item.label}</span>
-            {item.inProgress && renderInProgressTag()}
             {hasChildren && !isCollapsed && (
               <div className="pr-2">
                 <ChevronDownIcon
@@ -299,7 +293,6 @@ export default function SidebarMyds({ onclick }: SidebarProps) {
                   >
                     <span className="flex min-w-0 flex-1 items-center gap-2 ml-3">
                       <span className="truncate">{subItem.label}</span>
-                      {subItem.inProgress && renderInProgressTag()}
                     </span>
                   </div>
                 )
