@@ -11,6 +11,7 @@ import DialogMetadataInfo from './DialogMetadataInfo'
 import DialogKongsi from './DialogKongsi'
 import { useAuthStore } from '@/store/AuthStore'
 import { resolveUserRoles } from '@/models/userRoles'
+import { HeartIcon } from '@govtechmy/myds-react/icon'
 
 // rework metadata info once finalized
 interface HeaderDokumenIDProps {
@@ -125,6 +126,9 @@ export function HeaderDokumenID({
               Muat Turun
             </Button> */}
             <DialogMetadataInfo metadataDocument={metadataDocument} />
+            <Button variant={'default-outline'} className="px-2">
+              <HeartIcon />
+            </Button>
           </div>
         </div>
       </div>

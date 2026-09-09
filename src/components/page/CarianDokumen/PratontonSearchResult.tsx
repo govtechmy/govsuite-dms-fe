@@ -9,6 +9,7 @@ import SearchInPdf from './SearchInPdf'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
+import { HeartIcon } from '@govtechmy/myds-react/icon'
 // import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
@@ -157,6 +158,9 @@ export default function PratontonSearchResult({
           <DownloadIcon className="size-4" />
           Muat Turun
         </Button> */}
+        <Button variant={'default-outline'} className="px-2">
+          <HeartIcon />
+        </Button>
       </div>
       <SearchInPdf
         searchKeyword={searchKeyword}
