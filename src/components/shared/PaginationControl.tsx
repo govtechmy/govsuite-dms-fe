@@ -19,7 +19,7 @@ export default function PaginationControl({
   pageSizeOptions = [10, 20, 30, 40, 50],
 }: PaginationControlProps) {
   return (
-    <div className="flex lg:justify-between max-lg:flex-col pt-3 max-lg:gap-6">
+    <div className="flex lg:justify-between max-lg:flex-col py-6 max-lg:gap-6">
       {/* Rows per page selector */}
       <div className="flex gap-2 items-center max-lg:justify-center pr-2">
         <div className="text-body-sm text-txt-black-500">Baris setiap halaman</div>
