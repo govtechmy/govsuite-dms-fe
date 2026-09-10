@@ -49,7 +49,8 @@ export default function PengurusanDokumenIDPage() {
   const isDraf = PengurusanDokumenID === 'draf'
 
   const currentUser = useAuthStore((state) => state.user)
-  const isPentadbirSistem = resolveUserRoles(currentUser?.roles).includes('PENTADBIR_SISTEM')
+  // ADMIN sees every unit; every other role is locked to their own unit.
+  const isAdmin = resolveUserRoles(currentUser?.roles).includes('ADMIN')
 
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   // Tambah flow: global document profile catalog (not unit-scoped).
@@ -201,14 +202,15 @@ export default function PengurusanDokumenIDPage() {
     [dropdownTetapanByUnit, selectedProfileId]
   )
 
-  // Tambah flow only - a PENTADBIR_SISTEM user manages tetapan for their own
-  // unit only, so the Unit dropdown is scoped down to just that unit.
+  // Tambah flow only - non-ADMIN users manage tetapan for their own unit
+  // only, so the Unit dropdown is scoped down to just that unit. ADMIN sees
+  // every unit regardless of what other roles they also hold.
   const unitOptionsForDropdown = useMemo(() => {
-    if (isDraf && isPentadbirSistem && currentUser?.unitId) {
+    if (isDraf && !isAdmin && currentUser?.unitId) {
       return dropdownUnits.filter((unit) => unit.code === currentUser.unitId)
     }
     return dropdownUnits
-  }, [dropdownUnits, isDraf, isPentadbirSistem, currentUser?.unitId])
+  }, [dropdownUnits, isDraf, isAdmin, currentUser?.unitId])
 
   const hasSelectedProfile = isDraf ? Boolean(selectedProfileId) : Boolean(selectedProfileDocument)
 

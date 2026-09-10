@@ -93,12 +93,14 @@ export default function TambahPenggunaModal({
       : dropdownUnits
 
   const currentUser = useAuthStore((state) => state.user)
-  const isPentadbirSistem = resolveUserRoles(currentUser?.roles).includes('PENTADBIR_SISTEM')
+  // ADMIN sees every unit; every other role is locked to their own unit.
+  const isAdmin = resolveUserRoles(currentUser?.roles).includes('ADMIN')
 
-  // Tambah flow only - a PENTADBIR_SISTEM user manages pengguna for their own
-  // unit only, so the Unit dropdown is scoped down to just that unit.
+  // Tambah flow only - non-ADMIN users manage pengguna for their own unit
+  // only, so the Unit dropdown is scoped down to just that unit. ADMIN sees
+  // every unit regardless of what other roles they also hold.
   const unitOptions =
-    !isEditMode && isPentadbirSistem && currentUser?.unitId
+    !isEditMode && !isAdmin && currentUser?.unitId
       ? baseUnitOptions.filter((unit) => unit.code === currentUser.unitId)
       : baseUnitOptions
 
