@@ -19,6 +19,7 @@ export interface PenggunaItem {
   unitId: string
   roles: string[]
   mustChangePassword: boolean
+  disabledResetPassword?: boolean
   lastLoginAt?: string
 }
 
