@@ -35,6 +35,8 @@ import {
 } from '@/services/pengurusanPengguna.svc'
 import extractBackendError from '@/utils/extractBackendError'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useAuthStore } from '@/store/AuthStore'
+import { resolveUserRoles } from '@/models/userRoles'
 
 type ModalPhase = 'form' | 'confirmDelete' | 'loading' | 'success' | 'error'
 type ModalMode = 'create' | 'edit'
@@ -85,10 +87,20 @@ export default function TambahPenggunaModal({
 }: TambahPenggunaModalProps) {
   const isEditMode = mode === 'edit'
   const isHqUnit = isEditMode && pengguna?.unitId === HQ_UNIT_CODE
-  const unitOptions =
+  const baseUnitOptions =
     isHqUnit && !dropdownUnits.some((unit) => unit.code === HQ_UNIT_CODE)
       ? [...dropdownUnits, { code: HQ_UNIT_CODE, codeName: HQ_UNIT_CODE }]
       : dropdownUnits
+
+  const currentUser = useAuthStore((state) => state.user)
+  const isPentadbirSistem = resolveUserRoles(currentUser?.roles).includes('PENTADBIR_SISTEM')
+
+  // Tambah flow only - a PENTADBIR_SISTEM user manages pengguna for their own
+  // unit only, so the Unit dropdown is scoped down to just that unit.
+  const unitOptions =
+    !isEditMode && isPentadbirSistem && currentUser?.unitId
+      ? baseUnitOptions.filter((unit) => unit.code === currentUser.unitId)
+      : baseUnitOptions
 
   const [open, setOpen] = useState(false)
   const [phase, setPhase] = useState<ModalPhase>('form')
