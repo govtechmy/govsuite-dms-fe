@@ -1,7 +1,7 @@
 {
   "name": "govsuite-dms-frontend",
   "private": true,
-  "version": "0.0.2-a",
+  "version": "0.0.2-b",
   "type": "module",
   "scripts": {
     "predev": "pnpm run sync:pdf-worker",
