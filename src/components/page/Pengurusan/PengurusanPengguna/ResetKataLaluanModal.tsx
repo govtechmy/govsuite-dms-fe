@@ -86,11 +86,7 @@ export default function ResetKataLaluanModal({ pengguna, onSuccess }: ResetKataL
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger>
-        <Button
-          variant="danger-outline"
-          size="small"
-          disabled={pengguna.disabledResetPassword}
-        >
+        <Button variant="danger-outline" size="small" disabled={pengguna.disabledResetPassword}>
           <LockIcon />
           Reset
         </Button>
