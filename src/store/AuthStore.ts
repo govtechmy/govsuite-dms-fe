@@ -22,6 +22,7 @@ type User = {
   username: string
   email?: string
   fullName?: string
+  unitId?: string
   roles: string[]
   mustChangePassword?: boolean
   // Add other user fields as needed

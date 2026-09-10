@@ -41,10 +41,15 @@ import {
   type PengurusanTetapanItem,
 } from '@/services/pengurusanDokumen.svc'
 import extractBackendError from '@/utils/extractBackendError'
+import { useAuthStore } from '@/store/AuthStore'
+import { resolveUserRoles } from '@/models/userRoles'
 
 export default function PengurusanDokumenIDPage() {
   const { PengurusanDokumenID = 'draf' } = useParams<{ PengurusanDokumenID: string }>()
   const isDraf = PengurusanDokumenID === 'draf'
+
+  const currentUser = useAuthStore((state) => state.user)
+  const isPentadbirSistem = resolveUserRoles(currentUser?.roles).includes('PENTADBIR_SISTEM')
 
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   // Tambah flow: global document profile catalog (not unit-scoped).
@@ -195,6 +200,15 @@ export default function PengurusanDokumenIDPage() {
     () => dropdownTetapanByUnit.find((item) => item.documentProfileId === selectedProfileId),
     [dropdownTetapanByUnit, selectedProfileId]
   )
+
+  // Tambah flow only - a PENTADBIR_SISTEM user manages tetapan for their own
+  // unit only, so the Unit dropdown is scoped down to just that unit.
+  const unitOptionsForDropdown = useMemo(() => {
+    if (isDraf && isPentadbirSistem && currentUser?.unitId) {
+      return dropdownUnits.filter((unit) => unit.code === currentUser.unitId)
+    }
+    return dropdownUnits
+  }, [dropdownUnits, isDraf, isPentadbirSistem, currentUser?.unitId])
 
   const hasSelectedProfile = isDraf ? Boolean(selectedProfileId) : Boolean(selectedProfileDocument)
 
@@ -384,7 +398,7 @@ export default function PengurusanDokumenIDPage() {
                   </div>
                   <div className="max-w-[450px]">
                     <SelectDropdownUnit
-                      dropdownUnits={dropdownUnits}
+                      dropdownUnits={unitOptionsForDropdown}
                       selectedUnit={selectedUnit}
                       onUnitChange={handleUnitChange}
                       disabled={!isDraf}
