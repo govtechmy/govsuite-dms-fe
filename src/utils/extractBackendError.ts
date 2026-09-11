@@ -11,23 +11,34 @@ const extractBackendError = (error: unknown): BackendError | null => {
     return null
   }
 
-  const { data } = error.response
+  const { data, status } = error.response
 
-  if (!isObject(data) || !('error' in data) || !isObject(data.error)) {
+  if (!isObject(data)) {
     return null
   }
 
-  const code = typeof data.error.code === 'string' ? data.error.code : null
-  const message = typeof data.error.message === 'string' ? data.error.message : null
+  // Standard app error shape: { success: false, error: { code, message } }.
+  if ('error' in data && isObject(data.error)) {
+    const code = typeof data.error.code === 'string' ? data.error.code : null
+    const message = typeof data.error.message === 'string' ? data.error.message : null
 
-  if (!code && !message) {
-    return null
+    if (code || message) {
+      return {
+        code: code ?? 'REQUEST_FAILED',
+        message: message ?? 'Permintaan gagal diproses.',
+      }
+    }
   }
 
-  return {
-    code: code ?? 'REQUEST_FAILED',
-    message: message ?? 'Permintaan gagal diproses.',
+  // Fallback shape used by middleware (e.g. rate limiting): { success: false, message }.
+  if (typeof data.message === 'string') {
+    return {
+      code: status === 429 ? 'TOO_MANY_REQUESTS' : 'REQUEST_FAILED',
+      message: data.message,
+    }
   }
+
+  return null
 }
 
 export default extractBackendError

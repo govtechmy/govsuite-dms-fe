@@ -29,10 +29,13 @@ interface HeaderDokumenIDProps {
   documentProfile?: string
   documentProfileCode?: string
   metadataDocument?: MetadataDocument | null
+  isFavorite?: boolean
+  isFavoriteLoading?: boolean
   onApproveDokumen: () => void
   onNotApproveDokumen: (reason: string) => void
   onDownloadDokumen: (recordTitle: string) => void
   onShareDataRefresh?: () => Promise<void>
+  onToggleFavorite?: () => void
 }
 
 export function HeaderDokumenID({
@@ -44,10 +47,13 @@ export function HeaderDokumenID({
   documentProfileCode,
   unit,
   metadataDocument,
+  isFavorite = false,
+  isFavoriteLoading = false,
   onApproveDokumen,
   onNotApproveDokumen,
   // onDownloadDokumen,
   onShareDataRefresh,
+  onToggleFavorite,
 }: HeaderDokumenIDProps) {
   const [isTakDiluluskanOpen, setIsTakDiluluskanOpen] = useState(false)
 
@@ -126,8 +132,15 @@ export function HeaderDokumenID({
               Muat Turun
             </Button> */}
             <DialogMetadataInfo metadataDocument={metadataDocument} />
-            <Button variant={'default-outline'} className="px-2">
-              <HeartIcon />
+            <Button
+              variant={'default-outline'}
+              className={isFavorite ? 'px-2 text-txt-danger border-otl-danger-300' : 'px-2'}
+              onClick={onToggleFavorite}
+              disabled={isFavoriteLoading || !onToggleFavorite}
+              aria-pressed={isFavorite}
+              aria-label={isFavorite ? 'Buang dari kegemaran' : 'Tambah ke kegemaran'}
+            >
+              <HeartIcon fill={isFavorite ? 'currentColor' : 'none'} />
             </Button>
           </div>
         </div>

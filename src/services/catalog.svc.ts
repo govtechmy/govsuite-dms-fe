@@ -244,6 +244,108 @@ export const getSearchKatalogItems = async ({
   }
 }
 
+export const getFavoriteKatalogItems = async ({
+  query,
+  unit,
+  jenisDokumen,
+  dateFrom,
+  dateTo,
+  status,
+  page = 1,
+  limit = 15,
+  year,
+  sortBy,
+  sortOrder,
+}: {
+  query?: string
+  unit?: string
+  jenisDokumen?: string
+  dateFrom?: string
+  dateTo?: string
+  status?: string
+  page?: number
+  limit?: number
+  year?: string
+  sortBy?: string
+  sortOrder?: string
+}): Promise<CatalogSearchResponse> => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  })
+
+  if (query) {
+    params.set('search', query)
+  }
+
+  if (unit) {
+    params.set('unit', unit)
+  }
+
+  if (jenisDokumen) {
+    params.set('documentProfile', jenisDokumen)
+  }
+
+  if (dateFrom) {
+    params.set('dateFrom', dateFrom)
+  }
+
+  if (dateTo) {
+    params.set('dateTo', dateTo)
+  }
+
+  if (status) {
+    params.set('status', status)
+  }
+
+  if (year) {
+    params.set('year', year)
+  }
+
+  if (sortBy) {
+    params.set('sortBy', sortBy)
+  }
+
+  if (sortOrder) {
+    params.set('sortOrder', sortOrder)
+  }
+
+  const url = `${getEnv('VITE_API_BASE_URL')}/favorite?${params.toString()}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data ?? {}
+    const items = Array.isArray(payload?.items) ? payload.items : []
+    const apiMeta = payload?.meta ?? {}
+    const currentPage = Number(apiMeta.currentPage ?? page)
+    const pageSize = Number(apiMeta.pageSize ?? limit)
+    const totalItems = Number(apiMeta.totalItems ?? payload?.totalItems ?? items.length)
+    const totalPages = Number(
+      apiMeta.totalPages ??
+        payload?.totalPages ??
+        Math.max(1, Math.ceil(totalItems / Math.max(1, pageSize)))
+    )
+
+    return {
+      items,
+      meta: {
+        ...DEFAULT_CATALOG_LIST_META,
+        ...apiMeta,
+        currentPage,
+        pageSize,
+        totalItems,
+        totalPages,
+        hasNextPage:
+          typeof apiMeta.hasNextPage === 'boolean' ? apiMeta.hasNextPage : currentPage < totalPages,
+        hasPreviousPage:
+          typeof apiMeta.hasPreviousPage === 'boolean' ? apiMeta.hasPreviousPage : currentPage > 1,
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching favorite catalog items : ', error)
+    throw error
+  }
+}
+
 export const getSearchRecordCarianDokumen = async ({
   query,
   unit,

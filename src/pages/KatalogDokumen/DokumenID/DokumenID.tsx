@@ -9,6 +9,8 @@ import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/S
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { AutoToast } from '@govtechmy/myds-react/toast'
+import { useToast } from '@govtechmy/myds-react/hooks'
 import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
 import normalizeWord from '@/utils/NormalizeWord'
 import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
@@ -21,9 +23,11 @@ import { downloadFile } from '@/utils/downloadFile'
 import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval.svc'
 import extractBackendError from '@/utils/extractBackendError'
 import { useShareDocumentStore } from '@/store/ShareDocumentStore'
+import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
+  const { toast } = useToast()
   const [progressApprove, setProgressApprove] = useState<ProgressState>(null)
   const [progressDisapprove, setProgressDisapprove] = useState<ProgressState>(null)
   const [dokumenFetchState, setDokumenFetchState] = useState<ProgressState>(null)
@@ -49,6 +53,8 @@ export default function DokumenIDPage() {
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
 
   const setAvailableUsers = useShareDocumentStore((state) => state.setAvailableUsers)
   const setAvailableUserGroups = useShareDocumentStore((state) => state.setAvailableUserGroups)
@@ -159,6 +165,28 @@ export default function DokumenIDPage() {
       fallback: `dokumen-${DokumenID}`,
       fileExtension: pdfData.meta?.fileExtension,
     })
+  }
+
+  const handleToggleFavorite = async () => {
+    if (!DokumenID || isFavoriteLoading) return
+
+    setIsFavoriteLoading(true)
+    try {
+      const result = await postToggleFavorite(DokumenID)
+      setIsFavorite(result.action === 'added')
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      const backendError = extractBackendError(error)
+      toast({
+        variant: 'error',
+        title: 'Kegemaran Gagal Dikemaskini',
+        description: `${backendError?.code ?? 'REQUEST_FAILED'} : ${
+          backendError?.message ?? 'Sila cuba lagi.'
+        }`,
+      })
+    } finally {
+      setIsFavoriteLoading(false)
+    }
   }
 
   const handleRefetchShareData = async () => {
@@ -285,11 +313,26 @@ export default function DokumenIDPage() {
       }
     }
 
+    const fetchFavoriteStatus = async () => {
+      try {
+        if (!DokumenID) {
+          setIsFavorite(false)
+          return
+        }
+        const data = await getFavoriteStatus(DokumenID)
+        setIsFavorite(data.favorite)
+      } catch (error) {
+        setIsFavorite(false)
+        console.error('Error fetching favorite status:', error)
+      }
+    }
+
     fetchAvailableUsers()
     fetchAvailableUserGroups()
     fetchCurrentApprovedUsers()
     fetchPDFData()
     fetchMetadata()
+    fetchFavoriteStatus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [DokumenID])
 
@@ -334,10 +377,13 @@ export default function DokumenIDPage() {
                 pdfData.document?.documentProfileCode || 'Kategori tidak dijumpai'
               )}
               unit={normalizeWord(pdfData.document?.unit || 'Unit tidak dijumpai')}
+              isFavorite={isFavorite}
+              isFavoriteLoading={isFavoriteLoading}
               onApproveDokumen={handleApproveDokumen}
               onNotApproveDokumen={handleNotApproveDokumen}
               onDownloadDokumen={handleDownloadDokumen}
               onShareDataRefresh={handleRefetchShareData}
+              onToggleFavorite={handleToggleFavorite}
             />
           )}
           <SearchBarDokumenID
@@ -456,6 +502,8 @@ export default function DokumenIDPage() {
           />
         </div>
       )}
+
+      <AutoToast />
     </>
   )
 }

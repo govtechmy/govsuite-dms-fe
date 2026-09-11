@@ -4,7 +4,7 @@ import KatalogDisplaySearch from '@/components/page/KatalogDokumen/KatalogDispla
 import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarKatalogDokumen'
 import SelectCarianDokumen from '@/components/shared/SelectCarianDokumen'
 import {
-  getSearchKatalogItems,
+  getFavoriteKatalogItems,
   type CatalogDocumentItem,
   type CatalogListMeta,
 } from '@/services/catalog.svc'
@@ -69,8 +69,7 @@ export default function KegemaranPage() {
       try {
         setIsLoading(true)
         setError(null)
-        // TODO: filter by favourite documents once the backend exposes a status/param for it.
-        const data = await getSearchKatalogItems({
+        const data = await getFavoriteKatalogItems({
           query,
           unit,
           jenisDokumen,
