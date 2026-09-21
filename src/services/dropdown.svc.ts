@@ -38,6 +38,14 @@ export interface DropdownUserRole {
 }
 
 /**
+ * Audit log category option for the Log Aktiviti "Kategori" filter
+ */
+export interface DropdownLogCategory {
+  code: string
+  codeName: string
+}
+
+/**
  * Retention period option for document settings (Tempoh Simpanan)
  */
 export interface RetentionPeriod {
@@ -172,6 +180,24 @@ export const getUserRoles = async (): Promise<DropdownUserRole[]> => {
     return Array.isArray(payload) ? payload : []
   } catch (error) {
     console.error('Error fetching user roles:', error)
+    throw error
+  }
+}
+
+/**
+ * Get list of audit log categories for the Log Aktiviti "Kategori" filter
+ * GET /lookup/categories
+ */
+export const getLogCategories = async (): Promise<DropdownLogCategory[]> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/lookup/categories`
+
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data
+
+    return Array.isArray(payload) ? payload : []
+  } catch (error) {
+    console.error('Error fetching log categories:', error)
     throw error
   }
 }

@@ -5,39 +5,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
-import type { DropdownJenisDokumen } from '@/services/dropdown.svc'
+import type { DropdownLogCategory } from '@/services/dropdown.svc'
 import { Button } from '@govtechmy/myds-react/button'
 import { DateRangePicker } from '@govtechmy/myds-react/daterange-picker'
 import { DownloadIcon, ReloadIcon } from '@govtechmy/myds-react/icon'
 import { useSearchParams } from 'react-router-dom'
 
 interface SelectCarianDokumenProps {
-  dropdownJenisDokumen: DropdownJenisDokumen[]
+  dropdownCategories?: DropdownLogCategory[]
   dropdownYears?: string[]
   showOnlyWhenSearchQuery?: boolean
   resetPageOnFilterChange?: boolean
+  onDownload?: () => void
+  isDownloading?: boolean
 }
 
 export default function SelectLogAktiviti({
-  dropdownJenisDokumen,
+  dropdownCategories = [],
   dropdownYears = [],
   showOnlyWhenSearchQuery = false,
   resetPageOnFilterChange = true,
+  onDownload,
+  isDownloading = false,
 }: SelectCarianDokumenProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const hasSearchQuery = Boolean(searchParams.get('search')?.trim())
 
-  const selectedJenisDokumen = searchParams.get('jenisDokumen') || ''
+  const selectedCategory = searchParams.get('category') || ''
   const selectedYear = searchParams.get('year') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
 
-  const handleJenisDokumenChange = (value: string) => {
+  const handleCategoryChange = (value: string) => {
     const params = new URLSearchParams(searchParams)
     if (value && value !== 'semua') {
-      params.set('jenisDokumen', value)
+      params.set('category', value)
     } else {
-      params.delete('jenisDokumen')
+      params.delete('category')
     }
     if (resetPageOnFilterChange) {
       params.set('page', '1')
@@ -78,7 +82,7 @@ export default function SelectLogAktiviti({
 
   const handleReset = () => {
     const params = new URLSearchParams(searchParams)
-    params.delete('jenisDokumen')
+    params.delete('category')
     params.delete('unit')
     params.delete('year')
     params.delete('dateFrom')
@@ -117,24 +121,26 @@ export default function SelectLogAktiviti({
           </Select>
         )}
 
-        <Select
-          size={'small'}
-          variant="outline"
-          value={selectedJenisDokumen}
-          onValueChange={handleJenisDokumenChange}
-        >
-          <SelectTrigger>
-            <SelectValue label="Jenis" placeholder="Semua" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="semua">Semua</SelectItem>
-            {dropdownJenisDokumen.map((jenisDokumenValue) => (
-              <SelectItem key={jenisDokumenValue.id} value={jenisDokumenValue.code}>
-                {jenisDokumenValue.codeName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {dropdownCategories.length > 0 && (
+          <Select
+            size={'small'}
+            variant="outline"
+            value={selectedCategory}
+            onValueChange={handleCategoryChange}
+          >
+            <SelectTrigger>
+              <SelectValue label="Jenis" placeholder="Semua" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="semua">Semua</SelectItem>
+              {dropdownCategories.map((categoryValue) => (
+                <SelectItem key={categoryValue.code} value={categoryValue.code}>
+                  {categoryValue.codeName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <div className="flex flex-wrap items-center gap-1.5">
           <DateRangePicker
@@ -162,9 +168,9 @@ export default function SelectLogAktiviti({
           <div>Set Semula</div>
         </Button>
       </div>
-      <Button size={'small'}>
+      <Button size={'small'} onClick={onDownload} disabled={isDownloading}>
         <DownloadIcon />
-        Muat Turun Log
+        {isDownloading ? 'Memuat Turun...' : 'Muat Turun Log'}
       </Button>
     </div>
   )

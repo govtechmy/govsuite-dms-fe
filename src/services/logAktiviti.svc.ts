@@ -1,23 +1,12 @@
 import { authAxios } from './http'
 import { getEnv } from '@/config/runtimeEnv'
+import axios from 'axios'
 
 /**
- * Audit log categories returned by the backend.
+ * Audit log category codes, sourced from GET /lookup/categories (see dropdown.svc.ts).
  * Drives the `category` filter on GET /audit-logs.
  */
-export const LOG_CATEGORY = {
-  DOCUMENT_LIFECYCLE: 'DOCUMENT_LIFECYCLE',
-  RECORD_LIFECYCLE: 'RECORD_LIFECYCLE',
-  ACCESS_SECURITY: 'ACCESS_SECURITY',
-  SHARING_DISTRIBUTION: 'SHARING_DISTRIBUTION',
-  SEARCH_DISCOVERY: 'SEARCH_DISCOVERY',
-  FOLDER_LIFECYCLE: 'FOLDER_LIFECYCLE',
-  DASHBOARD_ACTIVITIES: 'DASHBOARD_ACTIVITIES',
-  UNIT_MANAGEMENT: 'UNIT_MANAGEMENT',
-  ROLE_MANAGEMENT: 'ROLE_MANAGEMENT',
-} as const
-
-export type LogCategory = (typeof LOG_CATEGORY)[keyof typeof LOG_CATEGORY]
+export type LogCategory = string
 
 /**
  * Audit log actions returned by the backend.
@@ -63,10 +52,10 @@ export const LOG_ACTION = {
   UPDATE_RECORD_PERMISSION: 'UPDATE_RECORD_PERMISSION',
   DELETE_RECORD_PERMISSION: 'DELETE_RECORD_PERMISSION',
   SEARCH_RECORD: 'SEARCH_RECORD',
-  EXECUTIVE_SUMMARY: 'DASHBOARD_SUMMARY',
-  MEETING_CATEGORY: 'MEETING_CATEGORY',
-  LATEST_ACTIVITIES: 'LATEST_ACTIVITIES',
-  PROFILE_TREND: 'PROFILE_TREND',
+  EXECUTIVE_SUMMARY: 'EXECUTIVE_SUMMARY_DASHBOARD',
+  MEETING_CATEGORY: 'MEETING_CATEGORY_DASHBOARD',
+  LATEST_ACTIVITIES: 'LATEST_ACTIVITIES_DASHBOARD',
+  PROFILE_TREND: 'PROFILE_TREND_DASHBOARD',
   CREATE_UNIT: 'CREATE_UNIT',
   UPDATE_UNIT: 'UPDATE_UNIT',
   DELETE_UNIT: 'DELETE_UNIT',
@@ -169,6 +158,80 @@ export const getLogAktivitiList = async (
     }
   } catch (error) {
     console.error('Error fetching log aktiviti list:', error)
+    throw error
+  }
+}
+
+export interface DownloadAuditLogsParams {
+  search?: string
+  category?: LogCategory
+  action?: LogAction
+  dateFrom?: string
+  dateTo?: string
+}
+
+export interface DownloadAuditLogsResult {
+  blob: Blob
+  fileName: string
+}
+
+const DEFAULT_AUDIT_LOG_FILE_NAME = 'audit-logs.csv'
+
+const extractFileNameFromContentDisposition = (contentDisposition?: string): string | null => {
+  const match = contentDisposition ? /filename="?([^";]+)"?/i.exec(contentDisposition) : null
+  return match?.[1] ?? null
+}
+
+/**
+ * Download activity log records matching the given filters as a CSV file.
+ * GET /audit-logs/download
+ *
+ * Backend always exports the full filtered result set (page/limit are ignored
+ * server-side) and returns `text/csv` with the filename set via
+ * `Content-Disposition`, currently a fixed "audit-logs.csv".
+ */
+export const downloadAuditLogs = async (
+  params: DownloadAuditLogsParams = {}
+): Promise<DownloadAuditLogsResult> => {
+  const { search, category, action, dateFrom, dateTo } = params
+
+  const searchParams = new URLSearchParams()
+  if (search) searchParams.set('search', search)
+  if (category) searchParams.set('category', category)
+  if (action) searchParams.set('action', action)
+  if (dateFrom) searchParams.set('dateFrom', dateFrom)
+  if (dateTo) searchParams.set('dateTo', dateTo)
+
+  const query = searchParams.toString()
+  const url = `${getEnv('VITE_API_BASE_URL')}/audit-logs/download${query ? `?${query}` : ''}`
+
+  try {
+    const response = await authAxios.get(url, {
+      responseType: 'blob',
+    })
+
+    return {
+      blob: response.data,
+      fileName:
+        extractFileNameFromContentDisposition(response.headers?.['content-disposition']) ??
+        DEFAULT_AUDIT_LOG_FILE_NAME,
+    }
+  } catch (error) {
+    // `responseType: 'blob'` also blob-ifies JSON error bodies, which would
+    // otherwise be unreadable by extractBackendError. Parse it back to JSON.
+    if (
+      axios.isAxiosError(error) &&
+      error.response?.data instanceof Blob &&
+      error.response.data.type.includes('json')
+    ) {
+      try {
+        error.response.data = JSON.parse(await error.response.data.text())
+      } catch {
+        // Body wasn't valid JSON after all; fall through with the original error.
+      }
+    }
+
+    console.error('Error downloading audit logs:', error)
     throw error
   }
 }
