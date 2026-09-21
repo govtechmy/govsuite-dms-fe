@@ -16,6 +16,9 @@ export default function LogAktiviti() {
   const [searchParams, setSearchParams] = useSearchParams()
   const pageNumber = Math.max(1, Number(searchParams.get('page')) || 1)
   const pageSize = Math.max(1, Number(searchParams.get('limit')) || 15)
+  const search = searchParams.get('search') || undefined
+  const dateFrom = searchParams.get('dateFrom') || undefined
+  const dateTo = searchParams.get('dateTo') || undefined
 
   const [logs, setLogs] = useState<LogAktivitiItem[]>([])
   const [meta, setMeta] = useState<GetLogAktivitiListResponse['meta'] | null>(null)
@@ -26,7 +29,13 @@ export default function LogAktiviti() {
     try {
       setIsLoading(true)
       setError(null)
-      const data = await getLogAktivitiList({ page: pageNumber, limit: pageSize })
+      const data = await getLogAktivitiList({
+        search,
+        dateFrom,
+        dateTo,
+        page: pageNumber,
+        limit: pageSize,
+      })
       setLogs(data.items)
       setMeta(data.meta)
     } catch (err) {
@@ -36,7 +45,7 @@ export default function LogAktiviti() {
     } finally {
       setIsLoading(false)
     }
-  }, [pageNumber, pageSize])
+  }, [search, dateFrom, dateTo, pageNumber, pageSize])
 
   useEffect(() => {
     fetchLogAktivitiList()
@@ -58,7 +67,7 @@ export default function LogAktiviti() {
   const totalRecords = meta?.totalItems ?? logs.length
 
   return (
-    <RightSidePageLayoutWrapper className="h-full">
+    <RightSidePageLayoutWrapper className="h-full pb-0 mb-0">
       <div className="flex h-full flex-col gap-6">
         <MainHeading>Log Aktiviti</MainHeading>
         <div className="flex flex-col gap-3">

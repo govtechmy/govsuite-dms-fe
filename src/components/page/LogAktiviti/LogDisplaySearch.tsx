@@ -1,5 +1,6 @@
 import PaginationControl from '@/components/shared/PaginationControl'
 import type { LogAktivitiItem } from '@/services/logAktiviti.svc'
+import { formatDateTimeUpdatedDisplay } from '@/utils/formatDate'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Fragment } from 'react'
@@ -44,8 +45,8 @@ export default function LogDisplaySearch({
   }
 
   return (
-    <div className="flex h-full flex-col justify-between">
-      <div>
+    <div className="flex h-full min-h-0 flex-1 flex-col justify-between gap-4">
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         {logs.length > 0 ? (
           <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
             {logs.map((log, index) => {
@@ -58,23 +59,13 @@ export default function LogDisplaySearch({
                   </div>
                   <div className="flex-1 w-full">
                     <div className="text-sm">
-                      <span className="font-semibold text-txt-black-900">{log.nama}</span>{' '}
-                      <span className="text-txt-black-400 font-normal">({log.email})</span>{' '}
-                      <span className="text-txt-black-600">{log.aksi}</span>{' '}
-                      {log.sasaran && (
-                        <span className="font-semibold text-txt-black-900">
-                          {log.sasaran}
-                          {log.sasaranEmel && (
-                            <span className="font-normal text-txt-black-400">
-                              {' '}
-                              ({log.sasaranEmel})
-                            </span>
-                          )}
-                        </span>
-                      )}
+                      <span className="font-semibold text-txt-black-900">
+                        {log.actorUserFullName}
+                      </span>{' '}
+                      <span className="text-txt-black-400 font-normal">({log.actorUsername})</span>{' '}
+                      <span className="text-txt-black-600">{log.description}</span>
                       <div className="flex items-center gap-1.5 text-xs text-txt-black-400 font-normal">
-                        <span>{log.tarikh}</span>
-                        <span>({log.selangMasa})</span>
+                        <span>{formatDateTimeUpdatedDisplay(log.createdAt)}</span>
                       </div>
                     </div>
                   </div>
