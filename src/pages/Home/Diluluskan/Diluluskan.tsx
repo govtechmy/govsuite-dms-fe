@@ -16,7 +16,9 @@ import {
 } from '@/services/dropdown.svc'
 import { getRingkasanEksekutif } from '@/services/infoHomepage.svc'
 import { buildYearRange } from '@/utils/buildYearRange'
-import { ArrowBackIcon } from '@govtechmy/myds-react/icon'
+import { Button } from '@govtechmy/myds-react/button'
+import { ArrowBackIcon, GridIcon, ListIcon } from '@govtechmy/myds-react/icon'
+import { clx } from '@govtechmy/myds-react/utils'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -40,6 +42,7 @@ export default function DiluluskanPage() {
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
   const [dropdownYears, setDropdownYears] = useState<string[]>([])
+  const [design, setDesign] = useState<'list' | 'grid'>('list')
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -130,10 +133,31 @@ export default function DiluluskanPage() {
             dropdownJenisDokumen={dropdownJenisDokumen}
             dropdownYears={dropdownYears}
           />
+          <div className="flex items-center justify-end gap-2 pt-3">
+            <Button
+              className={clx('rounded-2xl')}
+              variant={design === 'list' ? 'primary-fill' : 'default-outline'}
+              aria-pressed={design === 'list'}
+              onClick={() => setDesign('list')}
+            >
+              <ListIcon />
+              Senarai
+            </Button>
+            <Button
+              className={clx('rounded-2xl')}
+              variant={design === 'grid' ? 'primary-fill' : 'default-outline'}
+              aria-pressed={design === 'grid'}
+              onClick={() => setDesign('grid')}
+            >
+              <GridIcon />
+              Grid
+            </Button>
+          </div>
         </div>
 
         <KatalogDisplaySearch
           hasilCarianDisplay={false}
+          design={design}
           documents={catalogItems}
           isLoading={isLoading}
           error={error}

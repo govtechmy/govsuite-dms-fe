@@ -70,14 +70,14 @@ export default function KatalogDisplaySearch({
   }
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="flex flex-1 flex-col gap-6">
       {hasilCarianDisplay && (
         <p className="text-body-sm font-medium text-txt-black-500">
           {totalRecords} hasil carian untuk "{searchKeyword}"
         </p>
       )}
 
-      <div className="h-full">
+      <div className="flex-1">
         {documents.length > 0 ? (
           design === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

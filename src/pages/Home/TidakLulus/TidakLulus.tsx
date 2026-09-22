@@ -17,7 +17,9 @@ import {
 } from '@/services/dropdown.svc'
 import { getRingkasanEksekutif } from '@/services/infoHomepage.svc'
 import { buildYearRange } from '@/utils/buildYearRange'
-import { ArrowBackIcon } from '@govtechmy/myds-react/icon'
+import { Button } from '@govtechmy/myds-react/button'
+import { ArrowBackIcon, GridIcon, ListIcon } from '@govtechmy/myds-react/icon'
+import { clx } from '@govtechmy/myds-react/utils'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -44,6 +46,7 @@ export default function TidakLulusPage() {
   const [dropdownYears, setDropdownYears] = useState<string[]>([])
   const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<CatalogDocumentItem | null>(null)
+  const [design, setDesign] = useState<'list' | 'grid'>('list')
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -137,6 +140,26 @@ export default function TidakLulusPage() {
             dropdownJenisDokumen={dropdownJenisDokumen}
             dropdownYears={dropdownYears}
           />
+          <div className="flex items-center justify-end gap-2 pt-3">
+            <Button
+              className={clx('rounded-2xl')}
+              variant={design === 'list' ? 'primary-fill' : 'default-outline'}
+              aria-pressed={design === 'list'}
+              onClick={() => setDesign('list')}
+            >
+              <ListIcon />
+              Senarai
+            </Button>
+            <Button
+              className={clx('rounded-2xl')}
+              variant={design === 'grid' ? 'primary-fill' : 'default-outline'}
+              aria-pressed={design === 'grid'}
+              onClick={() => setDesign('grid')}
+            >
+              <GridIcon />
+              Grid
+            </Button>
+          </div>
         </div>
 
         <MetadataModalTidakLulus
@@ -147,6 +170,7 @@ export default function TidakLulusPage() {
 
         <KatalogDisplaySearch
           hasilCarianDisplay={false}
+          design={design}
           documents={catalogItems}
           isLoading={isLoading}
           error={error}
