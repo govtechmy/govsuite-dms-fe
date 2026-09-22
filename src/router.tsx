@@ -74,6 +74,15 @@ function ProtectedRoute({
     return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}/tukar-kata-laluan`} replace />
   }
 
+  // Once the mandatory password change is done, the change-password page is
+  // no longer relevant — send the user back into the app instead of letting
+  // them revisit it via a stale URL or browser history.
+  if (skipMustChangePasswordCheck && !mustChangePassword) {
+    const defaultSegment = getDefaultRouteSegmentForRoles(rawRoles)
+    const redirectPath = defaultSegment ? `/${defaultSegment}` : '/'
+    return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}${redirectPath}`} replace />
+  }
+
   // Check route-specific permissions if routeKey is provided
   if (routeKey) {
     const requiredPermission = ROUTE_PERMISSIONS[String(routeKey)]
@@ -85,6 +94,31 @@ function ProtectedRoute({
         return <Navigate to={`/${localStorage.getItem('lang') || 'ms'}${redirectPath}`} replace />
       }
     }
+  }
+
+  return children
+}
+
+/**
+ * GuestRoute wrapper component.
+ * Prevents already-authenticated users from accessing guest-only pages
+ * (e.g. login) by redirecting them into the app.
+ */
+function GuestRoute({ children }: { children: React.ReactElement }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const authData = JSON.parse(sessionStorage.getItem('auth-storage') || '{}')
+  const rawRoles = (authData?.state?.user?.roles || []) as string[]
+  const mustChangePassword = Boolean(authData?.state?.user?.mustChangePassword)
+  const lang = localStorage.getItem('lang') || 'ms'
+
+  if (isAuthenticated) {
+    if (mustChangePassword) {
+      return <Navigate to={`/${lang}/tukar-kata-laluan`} replace />
+    }
+
+    const defaultSegment = getDefaultRouteSegmentForRoles(rawRoles)
+    const redirectPath = defaultSegment ? `/${defaultSegment}` : '/'
+    return <Navigate to={`/${lang}${redirectPath}`} replace />
   }
 
   return children
@@ -102,7 +136,14 @@ export default function AppRoutes() {
       <Route path=":lang" element={<LangWrapper />}>
         {/* Login layout - no main navigation */}
         <Route element={<LayoutLogin />}>
-          <Route path="login" element={<LoginPage />} />
+          <Route
+            path="login"
+            element={
+              <GuestRoute>
+                <LoginPage />
+              </GuestRoute>
+            }
+          />
           <Route
             path="tukar-kata-laluan"
             element={
