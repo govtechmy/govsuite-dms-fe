@@ -77,6 +77,7 @@ export interface LogAktivitiItem {
   category: LogCategory
   action: LogAction
   description: string
+  resources?: string
 }
 
 export interface LogAktivitiListMeta {

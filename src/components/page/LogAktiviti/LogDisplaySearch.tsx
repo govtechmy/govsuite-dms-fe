@@ -64,6 +64,9 @@ export default function LogDisplaySearch({
                       </span>{' '}
                       <span className="text-txt-black-400 font-normal">({log.actorUsername})</span>{' '}
                       <span className="text-txt-black-600">{log.description}</span>
+                      {log.resources && (
+                        <span className="text-txt-black-600 font-bold"> : {log.resources}</span>
+                      )}
                       <div className="flex items-center gap-1.5 text-xs text-txt-black-400 font-normal">
                         <span>{formatDateTimeUpdatedDisplay(log.createdAt)}</span>
                       </div>
