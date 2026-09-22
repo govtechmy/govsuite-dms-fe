@@ -18,10 +18,18 @@ export interface MetadataItem {
   value: string
 }
 
+export interface MetadataHistoryItem {
+  status: string
+  date: string
+  name: string
+  comment: string
+}
+
 export interface MetadataDocument {
   recordData: MetadataRecordData
   requiredMetadata: MetadataItem[]
   metadata: MetadataItem[]
+  recordHistory?: MetadataHistoryItem[]
 }
 
 export const getMetadata = async ({
@@ -42,6 +50,7 @@ export const getMetadata = async ({
       recordData: payload.recordData ?? {},
       requiredMetadata: payload.requiredMetadata ?? [],
       metadata: payload.metadata ?? [],
+      recordHistory: payload.recordHistory ?? [],
     }
   } catch (error) {
     console.error('Error fetching Metadata : ', error)

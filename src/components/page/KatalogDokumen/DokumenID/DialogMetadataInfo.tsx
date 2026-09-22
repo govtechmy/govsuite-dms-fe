@@ -13,6 +13,7 @@ import {
 } from '@govtechmy/myds-react/dialog'
 import MetadataSummary from '@/components/shared/MetadataSummary'
 import type { MetadataDocument } from '@/services/metadata.svc'
+import RecordHistoryList from './RecordHistoryList'
 
 interface DialogMetadataInfoProps {
   metadataDocument?: MetadataDocument | null
@@ -35,6 +36,9 @@ export default function DialogMetadataInfo({ metadataDocument }: DialogMetadataI
           <DialogDescription className="hidden">Dialog content goes here.</DialogDescription>
           <div className="flex flex-col gap-6">
             <MetadataSummary metadata={metadataDocument} />
+            {metadataDocument?.recordHistory && metadataDocument.recordHistory.length > 0 && (
+              <RecordHistoryList history={metadataDocument.recordHistory} />
+            )}
           </div>
         </DialogContent>
         <DialogFooter>
