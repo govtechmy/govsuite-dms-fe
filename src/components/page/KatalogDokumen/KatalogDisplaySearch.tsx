@@ -3,6 +3,7 @@ import PaginationControl from '@/components/shared/PaginationControl'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 import normalizeWord from '@/utils/NormalizeWord'
+import KatalogDisplaySearchList from './KatalogDisplaySearchList'
 
 export interface KatalogSearchResultItem {
   type: string
@@ -20,8 +21,11 @@ export interface KatalogSearchResultItem {
   documentProfileCode?: string
 }
 
+export type KatalogDisplaySearchDesign = 'list' | 'grid'
+
 interface KatalogDisplaySearchProps {
   hasilCarianDisplay?: boolean
+  design?: KatalogDisplaySearchDesign
   documents: KatalogSearchResultItem[]
   isLoading: boolean
   error: string | null
@@ -36,6 +40,7 @@ interface KatalogDisplaySearchProps {
 
 export default function KatalogDisplaySearch({
   hasilCarianDisplay = true,
+  design = 'list',
   documents,
   isLoading,
   error,
@@ -74,22 +79,26 @@ export default function KatalogDisplaySearch({
 
       <div className="h-full">
         {documents.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {documents.map((doc, index) => {
-              return (
-                <Excerpts
-                  key={`${index}`}
-                  date={doc.recordDate || ''}
-                  secretTag={doc.accessLevel || 'Not Set'}
-                  statusTag={doc.status || 'Not Set'}
-                  title={doc.recordTitle || 'Tiada Tajuk Rekod'}
-                  type={normalizeWord(doc.documentProfile) || 'Tiada Profil'}
-                  unit={normalizeWord(doc.unit) || 'Tiada Nama Unit'}
-                  onClick={() => onItemClick(doc.recordId || 'TiadaRekod', doc)}
-                />
-              )
-            })}
-          </div>
+          design === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {documents.map((doc, index) => {
+                return (
+                  <Excerpts
+                    key={`${index}`}
+                    date={doc.recordDate || ''}
+                    secretTag={doc.accessLevel || 'Not Set'}
+                    statusTag={doc.status || 'Not Set'}
+                    title={doc.recordTitle || 'Tiada Tajuk Rekod'}
+                    type={normalizeWord(doc.documentProfile) || 'Tiada Profil'}
+                    unit={normalizeWord(doc.unit) || 'Tiada Nama Unit'}
+                    onClick={() => onItemClick(doc.recordId || 'TiadaRekod', doc)}
+                  />
+                )
+              })}
+            </div>
+          ) : (
+            <KatalogDisplaySearchList documents={documents} onItemClick={onItemClick} />
+          )
         ) : (
           <Callout variant="info">
             <CalloutTitle>Tiada Hasil</CalloutTitle>

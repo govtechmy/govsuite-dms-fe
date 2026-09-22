@@ -9,6 +9,7 @@ export interface Folder {
   hasChildren: boolean
   value?: number
   children?: Folder[]
+  createdAt?: string
 }
 
 interface FolderGridProps {

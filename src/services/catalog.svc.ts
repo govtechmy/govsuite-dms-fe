@@ -19,6 +19,7 @@ export interface CatalogFolderItem {
   fullPath: string
   level: number
   hasChildren: boolean
+  createdAt?: string
 }
 
 export interface CatalogDocumentItem {

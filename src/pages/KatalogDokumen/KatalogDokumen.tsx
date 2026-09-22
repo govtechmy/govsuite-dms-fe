@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import RightSidePageLayoutWrapper from '@/components/layout/RightSidePageLayout'
 import KatalogDisplay from '@/components/page/KatalogDokumen/KatalogDisplay'
-import KatalogDisplaySearch from '@/components/page/KatalogDokumen/KatalogDisplaySearch'
+import KatalogDisplaySearch, {
+  type KatalogDisplaySearchDesign,
+} from '@/components/page/KatalogDokumen/KatalogDisplaySearch'
 import SearchBarKatalogDokumen from '@/components/page/KatalogDokumen/SearchBarKatalogDokumen'
 import SelectCarianDokumen from '@/components/shared/SelectCarianDokumen'
 import {
@@ -22,6 +24,9 @@ import { getRingkasanEksekutif } from '@/services/infoHomepage.svc'
 import { buildYearRange } from '@/utils/buildYearRange'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
+import { Button } from '@govtechmy/myds-react/button'
+import { clx } from '@govtechmy/myds-react/utils'
+import { GridIcon, ListIcon } from '@govtechmy/myds-react/icon'
 
 export default function KatalogDokumenPage() {
   const navigate = useNavigate()
@@ -35,6 +40,7 @@ export default function KatalogDokumenPage() {
   const [pageNumber, setPageNumber] = useState(1)
   const [pageSize, setPageSize] = useState(15)
   const [searchMeta, setSearchMeta] = useState<CatalogListMeta | null>(null)
+  const [design, setDesign] = useState<KatalogDisplaySearchDesign>('list')
   const [dropdownUnits, setDropdownUnits] = useState<DropdownUnit[]>([])
   const [dropdownJenisDokumen, setDropdownJenisDokumen] = useState<DropdownJenisDokumen[]>([])
   const [dropdownYears, setDropdownYears] = useState<string[]>([])
@@ -149,9 +155,30 @@ export default function KatalogDokumenPage() {
             showOnlyWhenSearchQuery
             resetPageOnFilterChange={false}
           />
+          <div className="flex items-center justify-end gap-2 pt-3">
+            <Button
+              className={clx('rounded-2xl')}
+              variant={design === 'list' ? 'primary-fill' : 'default-outline'}
+              aria-pressed={design === 'list'}
+              onClick={() => setDesign('list')}
+            >
+              <ListIcon />
+              Senarai
+            </Button>
+            <Button
+              className={clx('rounded-2xl')}
+              variant={design === 'grid' ? 'primary-fill' : 'default-outline'}
+              aria-pressed={design === 'grid'}
+              onClick={() => setDesign('grid')}
+            >
+              <GridIcon />
+              Grid
+            </Button>
+          </div>
         </div>
         {query ? (
           <KatalogDisplaySearch
+            design={design}
             documents={catalogItems}
             isLoading={isLoading}
             error={error}
@@ -176,7 +203,7 @@ export default function KatalogDokumenPage() {
                 <CalloutContent>{error}</CalloutContent>
               </Callout>
             )}
-            {!isLoading && !error && <KatalogDisplay catalogBase={catalogBase} />}
+            {!isLoading && !error && <KatalogDisplay catalogBase={catalogBase} design={design} />}
           </>
         )}
       </div>

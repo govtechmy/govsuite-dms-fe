@@ -34,12 +34,16 @@ import Excerpts from '@/components/shared/Excerpts'
 import { clx } from '@govtechmy/myds-react/utils'
 import TambahFolderModal from './TambahFolderModal'
 import FolderGrid, { type Folder } from '@/components/shared/FolderGrid'
+import FolderList from '@/components/shared/FolderList'
 import { useAuthStore } from '@/store/AuthStore'
 import { resolveUserRoles } from '@/models/userRoles'
 import extractBackendError from '@/utils/extractBackendError'
+import KatalogDisplayList from './KatalogDisplayList'
+import type { KatalogDisplaySearchDesign } from './KatalogDisplaySearch'
 
 interface KatalogDisplayProps {
   catalogBase: CatalogBaseItem[]
+  design?: KatalogDisplaySearchDesign
 }
 
 interface PathNode {
@@ -80,7 +84,7 @@ const DEFAULT_REQUEST_STATE: UnitRequestState = {
   limit: LAZY_BATCH_SIZE,
 }
 
-export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
+export default function KatalogDisplay({ catalogBase, design = 'list' }: KatalogDisplayProps) {
   const navigate = useNavigate()
   const { lang } = useParams<{ lang: string }>()
   const { setFolderSelection } = useFolderLocationStore()
@@ -417,6 +421,7 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
           path: folder.fullPath,
           type: 'folder',
           hasChildren: folder.hasChildren,
+          createdAt: folder.createdAt,
         }))
 
         const existingFolderNames = currentFolders.map((folder) => folder.name)
@@ -567,14 +572,28 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                   </Callout>
                 ) : (
                   <>
-                    <div
-                      className="h-[150px] overflow-y-auto pr-1"
-                      onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
-                      role="region"
-                      aria-label="Senarai folder"
-                      tabIndex={0}
-                    >
-                      <FolderGrid
+                    {design === 'grid' ? (
+                      <div
+                        className="h-[150px] overflow-y-auto pr-1"
+                        onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
+                        role="region"
+                        aria-label="Senarai folder"
+                        tabIndex={0}
+                      >
+                        <FolderGrid
+                          folders={currentFolders}
+                          loadingFolders={loadingFolders}
+                          unitName={unit.id}
+                          onFolderClick={(folder) => {
+                            void handleFolderClick(unit.id, folder)
+                          }}
+                          emptyMessage={
+                            currentFolders.length === 0 ? 'Tiada folder ditemui' : undefined
+                          }
+                        />
+                      </div>
+                    ) : (
+                      <FolderList
                         folders={currentFolders}
                         loadingFolders={loadingFolders}
                         unitName={unit.id}
@@ -584,33 +603,50 @@ export default function KatalogDisplay({ catalogBase }: KatalogDisplayProps) {
                         emptyMessage={
                           currentFolders.length === 0 ? 'Tiada folder ditemui' : undefined
                         }
+                        onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
                       />
-                    </div>
+                    )}
 
                     {unitState.documents.length > 0 && (
                       <div className="pt-6 border-t border-otl-gray-200">
-                        <div
-                          className="h-[270px] overflow-y-auto pr-1"
-                          role="region"
-                          aria-label="Senarai folder"
-                          tabIndex={0}
-                          onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
-                        >
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                            {unitState.documents.map((doc) => (
-                              <Excerpts
-                                key={`${doc.id}`}
-                                date={doc.recordDate || ''}
-                                secretTag={doc.accessLevel}
-                                statusTag={doc.status}
-                                title={doc.recordTitle || 'Tiada Tajuk Rekod'}
-                                type={doc.documentProfile || 'Tiada Profil'}
-                                unit={unit.name || 'Tiada Nama Unit'}
-                                onClick={() => navigate(`/${lang}/katalog-dokumen/${doc.recordId}`)}
-                              />
-                            ))}
+                        {design === 'grid' ? (
+                          <div
+                            className="h-[270px] overflow-y-auto pr-1"
+                            role="region"
+                            aria-label="Senarai folder"
+                            tabIndex={0}
+                            onScroll={(event) => handleLazyLoadScroll(event, unit.id, hasMoreItems)}
+                          >
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                              {unitState.documents.map((doc) => (
+                                <Excerpts
+                                  key={`${doc.id}`}
+                                  date={doc.recordDate || ''}
+                                  secretTag={doc.accessLevel}
+                                  statusTag={doc.status}
+                                  title={doc.recordTitle || 'Tiada Tajuk Rekod'}
+                                  type={doc.documentProfile || 'Tiada Profil'}
+                                  unit={unit.name || 'Tiada Nama Unit'}
+                                  onClick={() =>
+                                    navigate(`/${lang}/katalog-dokumen/${doc.recordId}`)
+                                  }
+                                />
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="pb-6">
+                            <KatalogDisplayList
+                              documents={unitState.documents}
+                              onItemClick={(recordId) =>
+                                navigate(`/${lang}/katalog-dokumen/${recordId}`)
+                              }
+                              onScroll={(event) =>
+                                handleLazyLoadScroll(event, unit.id, hasMoreItems)
+                              }
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </>
