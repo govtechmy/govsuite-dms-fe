@@ -105,14 +105,14 @@ export default function UploadDocument({
         {uploadState === 3 && selectedFile && (
           <div className="border border-otl-gray-200 max-w-[217px] rounded-lg flex items-center justify-start p-2 gap-2 mt-4">
             {getFileIcon(selectedFile)}
-            <div className="text-start w-full">
+            <div className="text-start w-full min-w-0">
               <div className="flex gap-1">
-                <div className="max-w-[85px] truncate">
+                <div className="flex-1 min-w-0 truncate">
                   {displayFileName ? displayFileName : selectedFile?.body?.fileName}
                 </div>
                 <div>{selectedFile?.name?.split('.').pop()}</div>
               </div>
-              <div className="text-[#71717A] text-xs">
+              <div className="text-txt-black-500 text-xs">
                 {selectedFile && selectedFile?.body?.fileSize !== undefined
                   ? formatFileSize(Number(selectedFile.body.fileSize))
                   : ''}
@@ -140,7 +140,7 @@ export default function UploadDocument({
         {draftStatus && lastUploadedFile && (
           <>
             <div className="text-body-sm font-semibold text-txt-black-900 mt-4">Fail Sedia Ada</div>
-            <div className="border border-otl-gray-200 rounded-lg flex items-center justify-start p-2 gap-2 mt-4 bg-otl-gray-200 opacity-60">
+            <div className="border border-otl-gray-200 max-w-[217px] rounded-lg flex items-center justify-start p-2 gap-2 mt-4 bg-otl-gray-200 opacity-60">
               {getFileIcon({
                 name: lastUploadedFile.name || '',
                 type: lastUploadedFile.type || '',
@@ -152,17 +152,17 @@ export default function UploadDocument({
                   fileExtension: lastUploadedFile.extension || '',
                 },
               })}
-              <div className="text-start w-full">
+              <div className="text-start w-full min-w-0">
                 {selectedFile && (
                   <Tag mode="pill" size="small" variant="default">
                     Digantikan
                   </Tag>
                 )}
                 <div className="flex gap-1">
-                  <div className="truncate">{lastUploadedFile.name}</div>
+                  <div className="flex-1 min-w-0 truncate">{lastUploadedFile.name}</div>
                   <div>{lastUploadedFile.extension ? `.${lastUploadedFile.extension}` : ''}</div>
                 </div>
-                <div className="text-[#71717A] text-xs">
+                <div className="text-txt-black-500 text-xs">
                   {formatFileSize(Math.round(lastUploadedFile.sizeMb * 1024 * 1024))}
                 </div>
               </div>
