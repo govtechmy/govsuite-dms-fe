@@ -10,6 +10,7 @@ import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.s
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
+import { AutoToast } from '@govtechmy/myds-react/toast'
 
 export interface DocumentRecord {
   documentId: string
@@ -277,6 +278,7 @@ export default function CarianDokumenPage() {
           <DisplaySearchResults onLazyLoad={triggerAppendLoad} />
         </div>
       )}
+      <AutoToast />
     </div>
   )
 }

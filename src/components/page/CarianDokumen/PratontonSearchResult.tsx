@@ -10,6 +10,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
 import { HeartIcon } from '@govtechmy/myds-react/icon'
+import { useToast } from '@govtechmy/myds-react/hooks'
+import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
+import extractBackendError from '@/utils/extractBackendError'
 // import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
@@ -39,6 +42,7 @@ export default function PratontonSearchResult({
 }: PratontonSearchResultProps) {
   const navigate = useNavigate()
   const { lang } = useParams()
+  const { toast } = useToast()
   const documentInfo = useSearchStore((state) => state.documentInfo)
   // const documentRecords = useSearchStore((state) => state.documentRecords)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
@@ -48,6 +52,8 @@ export default function PratontonSearchResult({
   const [pageNavigationRequest, setPageNavigationRequest] =
     useState<PdfPageNavigationRequest | null>(null)
   const pageNavigationTokenRef = useRef(0)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
 
   // const currentDocumentTitle = documentRecords.find(
   //   (documentRecord) => documentRecord.documentId === documentInfo?.documentID
@@ -59,6 +65,24 @@ export default function PratontonSearchResult({
     setTotalPages(0)
     setPageNavigationRequest(null)
     pageNavigationTokenRef.current = 0
+  }, [documentInfo?.documentID])
+
+  useEffect(() => {
+    const fetchFavoriteStatus = async () => {
+      try {
+        if (!documentInfo?.documentID) {
+          setIsFavorite(false)
+          return
+        }
+        const data = await getFavoriteStatus(documentInfo.documentID)
+        setIsFavorite(data.favorite)
+      } catch (error) {
+        setIsFavorite(false)
+        console.error('Error fetching favorite status:', error)
+      }
+    }
+
+    fetchFavoriteStatus()
   }, [documentInfo?.documentID])
 
   useEffect(() => {
@@ -117,6 +141,28 @@ export default function PratontonSearchResult({
   //   })
   // }
 
+  const handleToggleFavorite = async () => {
+    if (!documentInfo?.documentID || isFavoriteLoading) return
+
+    setIsFavoriteLoading(true)
+    try {
+      const result = await postToggleFavorite(documentInfo.documentID)
+      setIsFavorite(result.action === 'added')
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      const backendError = extractBackendError(error)
+      toast({
+        variant: 'error',
+        title: 'Kegemaran Gagal Dikemaskini',
+        description: `${backendError?.code ?? 'REQUEST_FAILED'} : ${
+          backendError?.message ?? 'Sila cuba lagi.'
+        }`,
+      })
+    } finally {
+      setIsFavoriteLoading(false)
+    }
+  }
+
   const handleCopyReference = async () => {
     const reference = documentInfo?.referencePath?.trim()
     if (!reference) {
@@ -158,8 +204,15 @@ export default function PratontonSearchResult({
           <DownloadIcon className="size-4" />
           Muat Turun
         </Button> */}
-        <Button variant={'default-outline'} className="px-2">
-          <HeartIcon />
+        <Button
+          variant={'default-outline'}
+          className={isFavorite ? 'px-2 text-txt-danger border-otl-danger-300' : 'px-2'}
+          onClick={handleToggleFavorite}
+          disabled={isFavoriteLoading || !documentInfo?.documentID}
+          aria-pressed={isFavorite}
+          aria-label={isFavorite ? 'Buang dari kegemaran' : 'Tambah ke kegemaran'}
+        >
+          <HeartIcon fill={isFavorite ? 'currentColor' : 'none'} />
         </Button>
       </div>
       <SearchInPdf
