@@ -15,6 +15,7 @@ import DropdownWithSearch from '@/components/shared/DropdownWithSearch'
 import SelectDropdownMyds from '@/components/shared/SelectDropdownMyds'
 import UploadDocument from '@/components/shared/UploadDocument'
 import { TextArea } from '@govtechmy/myds-react/textarea'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@govtechmy/myds-react/tooltip'
 import type { AccessLevel, DropdownUnit, ProfileDocument } from '@/services/dropdown.svc'
 import SelectDropdownUnit from './SelectDropdownUnit'
 import type { MetadataField } from '@/services/upload.svc'
@@ -541,9 +542,12 @@ export default function MuatNaikDokumenForm({
           <ModalLokasiFolder selectedPath={folderSelection.path} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <div className="flex">
-            Muat Naik ke Folder Unit <div className="text-txt-danger">*</div>
-          </div>
+          <Tooltip>
+            <TooltipTrigger className="flex">
+              Pilih Profil dokumen bagi unit <div className="text-txt-danger">*</div>
+            </TooltipTrigger>
+            <TooltipContent>Dokumen akan diluluskan oleh Pelulus Unit ini</TooltipContent>
+          </Tooltip>
           <SelectDropdownUnit
             dropdownUnits={dropdownUnits}
             selectedUnit={selectedUnit}
