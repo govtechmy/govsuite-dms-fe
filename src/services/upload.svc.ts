@@ -2,6 +2,7 @@ import axios from 'axios'
 import { getEnv } from '@/config/runtimeEnv'
 import { authAxios } from './http'
 import extractBackendError from '@/utils/extractBackendError'
+import normalizeAllowedFormats from '@/utils/normalizeAllowedFormats'
 
 // Fallback when profile config has no maxFileSizeMb
 export const DEFAULT_MAX_FILE_SIZE_MB = 25
@@ -120,35 +121,6 @@ export interface DownloadUrlResponse {
     documentProfile?: string
   }
   recordMetadata?: Record<string, unknown>
-}
-
-/**
- * Normalize allowedFormats into lowercase extensions without dot (e.g. ['pdf', 'docx']).
- * Accepts either plain strings or { key, title, value } objects (only enabled ones are kept).
- */
-const normalizeAllowedFormats = (formats: unknown): string[] => {
-  if (!Array.isArray(formats)) {
-    return []
-  }
-
-  const extensions = formats
-    .map((item) => {
-      if (typeof item === 'string') {
-        return item
-      }
-      if (item && typeof item === 'object') {
-        const format = item as { key?: unknown; title?: unknown; value?: unknown }
-        if (format.value === false) {
-          return ''
-        }
-        return String(format.key ?? format.title ?? '')
-      }
-      return ''
-    })
-    .map((value) => value.trim().toLowerCase().replace(/^\./, ''))
-    .filter(Boolean)
-
-  return Array.from(new Set(extensions))
 }
 
 /**
