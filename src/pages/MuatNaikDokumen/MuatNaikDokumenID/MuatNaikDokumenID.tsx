@@ -65,6 +65,7 @@ export default function MuatNaikDokumenIDPage() {
   const [retentionPeriod, setRetentionPeriod] = useState<string>('')
   const [allowedFormats, setAllowedFormats] = useState<string[]>([])
   const [maxFileSizeMb, setMaxFileSizeMb] = useState<number>(0)
+  const [isFileConstraintsLoading, setIsFileConstraintsLoading] = useState<boolean>(false)
   const [presignedResponse, setPresignedResponse] = useState<PresignUploadResponse | null>(null)
   const [mongoDbRecordId, setMongoDbRecordId] = useState<string>('')
   const [uploadPercentage, setUploadPercentage] = useState<number>(0)
@@ -581,23 +582,35 @@ export default function MuatNaikDokumenIDPage() {
   useEffect(() => {
     if (!selectedProfileId) return
 
+    // Ignore responses from a previously selected profile that resolve late
+    let cancelled = false
+    setIsFileConstraintsLoading(true)
+
     const fetchProfileDocumentConfig = async () => {
       try {
         const unitsData = await getProfileDocumentConfig(selectedProfileId)
+        if (cancelled) return
         setRetentionPeriod(unitsData?.retentionPeriod || '')
         setMetadataRequired(unitsData?.requiredMetadata || [])
         setMetadataAdditional(unitsData?.additionalMetadata || [])
         setAllowedFormats(unitsData?.allowedFormats || [])
         setMaxFileSizeMb(unitsData?.maxFileSizeMb || 0)
       } catch (err) {
+        if (cancelled) return
         console.error('Error fetching profile document config:', err)
         setAllowedFormats([])
         setMaxFileSizeMb(0)
         setMetadataRequired([])
         setMetadataAdditional([])
+      } finally {
+        if (!cancelled) setIsFileConstraintsLoading(false)
       }
     }
     fetchProfileDocumentConfig()
+
+    return () => {
+      cancelled = true
+    }
   }, [selectedProfileId])
 
   //useEffect to handle Prefilled data
@@ -631,6 +644,7 @@ export default function MuatNaikDokumenIDPage() {
   const resetFileConstraints = () => {
     setAllowedFormats([])
     setMaxFileSizeMb(0)
+    setIsFileConstraintsLoading(false)
   }
 
   const handleUnitChange = (unitCode: string) => {
@@ -679,6 +693,7 @@ export default function MuatNaikDokumenIDPage() {
               dropdownJenisDokumen={dropdownJenisDokumen}
               acceptedFileTypes={acceptedFileTypes}
               maxFileSizeMb={effectiveMaxFileSizeMb}
+              isFileConstraintsLoading={isFileConstraintsLoading}
               accessLevelArray={accessLevelArray}
               selectedProfile={selectedProfile}
               setSelectedProfile={handleProfileChange}

@@ -14,6 +14,7 @@ import MainHeading from '@/components/layout/MainHeading'
 import DropdownWithSearch from '@/components/shared/DropdownWithSearch'
 import SelectDropdownMyds from '@/components/shared/SelectDropdownMyds'
 import UploadDocument from '@/components/shared/UploadDocument'
+import validateUploadFile from '@/utils/validateUploadFile'
 import { TextArea } from '@govtechmy/myds-react/textarea'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@govtechmy/myds-react/tooltip'
 import type { AccessLevel, DropdownUnit, ProfileDocument } from '@/services/dropdown.svc'
@@ -60,6 +61,8 @@ interface MuatNaikDokumenFormProps {
   accessLevelArray: AccessLevel[]
   acceptedFileTypes: string
   maxFileSizeMb: number
+  /** True while the selected profile's allowedFormats / maxFileSizeMb are being fetched */
+  isFileConstraintsLoading?: boolean
   selectedProfile: string
   setSelectedProfile: (value: string) => void
   onPreview: (info: DocPreviewInfo) => void
@@ -92,6 +95,7 @@ export default function MuatNaikDokumenForm({
   accessLevelArray,
   acceptedFileTypes,
   maxFileSizeMb,
+  isFileConstraintsLoading = false,
   selectedProfile,
   setSelectedProfile,
   onPreview,
@@ -340,13 +344,24 @@ export default function MuatNaikDokumenForm({
     setValue,
   ])
 
+  // Re-check an already uploaded file when the profile's file rules change (e.g. profile switch)
+  useEffect(() => {
+    if (isFileConstraintsLoading || uploadState !== 3 || !selectedFile) {
+      return
+    }
+
+    const validationError = validateUploadFile(selectedFile, acceptedFileTypes, maxFileSizeMb)
+    if (validationError) {
+      setUploadState(4)
+      setUploadErrorMessage(validationError)
+      setPreviewDocumentInfoData(null)
+      setSelectedFile(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-validate when the rules change, not on upload
+  }, [acceptedFileTypes, maxFileSizeMb, isFileConstraintsLoading])
+
   const handleFileUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    const allowedExtensions = acceptedFileTypes
-      .split(',')
-      .map((value) => value.trim().toLowerCase().replace(/^\./, ''))
-      .filter(Boolean)
-    const fileExtension = file?.name?.split('.').pop()?.toLowerCase() ?? ''
 
     const rejectFile = (message: string) => {
       setUploadState(4)
@@ -357,14 +372,9 @@ export default function MuatNaikDokumenForm({
     }
 
     if (file) {
-      if (!allowedExtensions.includes(fileExtension)) {
-        const formatsLabel = allowedExtensions.map((ext) => ext.toUpperCase()).join(', ')
-        rejectFile(`Format fail tidak disokong. Sila muat naik fail ${formatsLabel}.`)
-        return
-      }
-
-      if (file.size > maxFileSizeMb * 1024 * 1024) {
-        rejectFile(`Saiz fail melebihi had maksima ${maxFileSizeMb}MB.`)
+      const validationError = validateUploadFile(file, acceptedFileTypes, maxFileSizeMb)
+      if (validationError) {
+        rejectFile(validationError)
         return
       }
 
@@ -407,7 +417,7 @@ export default function MuatNaikDokumenForm({
   }
 
   const handleDisabledButton = () => {
-    return uploadState === 2 || !selectedProfile
+    return uploadState === 2 || !selectedProfile || isFileConstraintsLoading
   }
 
   const handleSaveDraftClick = async () => {

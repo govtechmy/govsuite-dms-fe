@@ -6,6 +6,7 @@ import { Button, ButtonIcon } from '@govtechmy/myds-react/button'
 import { CrossIcon, UploadIcon } from '@govtechmy/myds-react/icon'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { Tag } from '@govtechmy/myds-react/tag'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@govtechmy/myds-react/tooltip'
 import { useRef } from 'react'
 
 interface UploadDocumentProps {
@@ -71,9 +72,17 @@ export default function UploadDocument({
           <div className="font-body font-medium text-body-md text-txt-black-900">
             Muat Naik Dokumen
           </div>
-          <div className="font-body font-normal text-body-sm text-txt-black-500">
-            Jenis Fail: {fileTypeLabel}
-          </div>
+          <Tooltip>
+            <TooltipTrigger className="flex font-body font-normal text-body-sm text-txt-black-500">
+              Jenis Fail: {fileTypeLabel}
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[280px]">
+              Jenis fail disemak berdasarkan sambungan nama fail. Fail tanpa sambungan yang betul
+              akan ditolak walaupun kandungannya sah, contohnya dokumen PDF yang namanya tidak
+              berakhir dengan .pdf. Sila pastikan nama fail mempunyai sambungan yang betul sebelum
+              dimuat naik.
+            </TooltipContent>
+          </Tooltip>
           <div className="font-body font-normal text-body-sm text-txt-black-500">
             Saiz Maksima: {maxFileSizeMb ?? DEFAULT_MAX_FILE_SIZE_MB}MB
           </div>
