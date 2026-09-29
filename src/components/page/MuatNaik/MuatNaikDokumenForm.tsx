@@ -59,6 +59,7 @@ interface MuatNaikDokumenFormProps {
   dropdownJenisDokumen: ProfileDocument[]
   accessLevelArray: AccessLevel[]
   acceptedFileTypes: string
+  maxFileSizeMb: number
   selectedProfile: string
   setSelectedProfile: (value: string) => void
   onPreview: (info: DocPreviewInfo) => void
@@ -90,6 +91,7 @@ export default function MuatNaikDokumenForm({
   dropdownJenisDokumen,
   accessLevelArray,
   acceptedFileTypes,
+  maxFileSizeMb,
   selectedProfile,
   setSelectedProfile,
   onPreview,
@@ -343,23 +345,26 @@ export default function MuatNaikDokumenForm({
     const allowedExtensions = acceptedFileTypes
       .split(',')
       .map((value) => value.trim().toLowerCase().replace(/^\./, ''))
+      .filter(Boolean)
     const fileExtension = file?.name?.split('.').pop()?.toLowerCase() ?? ''
-    const allowedMimeTypes = new Set([
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ])
+
+    const rejectFile = (message: string) => {
+      setUploadState(4)
+      setUploadErrorMessage(message)
+      setPreviewDocumentInfoData(null)
+      setSelectedFile(null)
+      event.target.value = ''
+    }
 
     if (file) {
-      const hasAllowedExtension = allowedExtensions.includes(fileExtension)
-      const hasAllowedMimeType = allowedMimeTypes.has(file.type)
+      if (!allowedExtensions.includes(fileExtension)) {
+        const formatsLabel = allowedExtensions.map((ext) => ext.toUpperCase()).join(', ')
+        rejectFile(`Format fail tidak disokong. Sila muat naik fail ${formatsLabel}.`)
+        return
+      }
 
-      if (!hasAllowedExtension && !hasAllowedMimeType) {
-        setUploadState(4)
-        setUploadErrorMessage('Format fail tidak disokong. Sila muat naik fail DOCX atau PDF.')
-        setPreviewDocumentInfoData(null)
-        setSelectedFile(null)
-        event.target.value = ''
+      if (file.size > maxFileSizeMb * 1024 * 1024) {
+        rejectFile(`Saiz fail melebihi had maksima ${maxFileSizeMb}MB.`)
         return
       }
 
@@ -389,11 +394,7 @@ export default function MuatNaikDokumenForm({
       } catch (error) {
         console.error('Error uploading to S3:', error)
         const backendError = extractBackendError(error)
-        setUploadState(4)
-        setUploadErrorMessage(backendError?.message || 'Upload gagal. Cuba lagi.')
-        setPreviewDocumentInfoData(null)
-        setSelectedFile(null)
-        event.target.value = ''
+        rejectFile(backendError?.message || 'Upload gagal. Cuba lagi.')
       }
     }
   }
@@ -656,6 +657,7 @@ export default function MuatNaikDokumenForm({
             handleDisabledButton={handleDisabledButton}
             uploadState={uploadState}
             fileType={acceptedFileTypes}
+            maxFileSizeMb={maxFileSizeMb}
             displayFileName={previewDocumentInfoData?.fileName}
             uploadErrorMessage={uploadErrorMessage}
             uploadPercentage={uploadPercentage}

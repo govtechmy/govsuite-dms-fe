@@ -3,6 +3,9 @@ import { getEnv } from '@/config/runtimeEnv'
 import { authAxios } from './http'
 import extractBackendError from '@/utils/extractBackendError'
 
+// Fallback when profile config has no maxFileSizeMb
+export const DEFAULT_MAX_FILE_SIZE_MB = 25
+
 // Profile Document Config by ID
 export interface MetadataField {
   key: string
@@ -120,6 +123,35 @@ export interface DownloadUrlResponse {
 }
 
 /**
+ * Normalize allowedFormats into lowercase extensions without dot (e.g. ['pdf', 'docx']).
+ * Accepts either plain strings or { key, title, value } objects (only enabled ones are kept).
+ */
+const normalizeAllowedFormats = (formats: unknown): string[] => {
+  if (!Array.isArray(formats)) {
+    return []
+  }
+
+  const extensions = formats
+    .map((item) => {
+      if (typeof item === 'string') {
+        return item
+      }
+      if (item && typeof item === 'object') {
+        const format = item as { key?: unknown; title?: unknown; value?: unknown }
+        if (format.value === false) {
+          return ''
+        }
+        return String(format.key ?? format.title ?? '')
+      }
+      return ''
+    })
+    .map((value) => value.trim().toLowerCase().replace(/^\./, ''))
+    .filter(Boolean)
+
+  return Array.from(new Set(extensions))
+}
+
+/**
  * Get profile document configuration by profile ID
  * GET /config/profile-document-id/{profileId}
  */
@@ -139,8 +171,8 @@ export const getProfileDocumentConfig = async (
     return {
       definitionGroupId: String(payload.definitionGroupId ?? ''),
       unitId: String(payload.unitId ?? ''),
-      allowedFormats: Array.isArray(payload.allowedFormats) ? payload.allowedFormats : [],
-      maxFileSizeMb: Number(payload.maxFileSizeMb ?? 0),
+      allowedFormats: normalizeAllowedFormats(payload.allowedFormats),
+      maxFileSizeMb: Number(payload.maxFileSizeMb ?? 0) || 0,
       requiredMetadata: Array.isArray(payload.requiredMetadata) ? payload.requiredMetadata : [],
       additionalMetadata: Array.isArray(payload.additionalMetadata)
         ? payload.additionalMetadata

@@ -20,6 +20,7 @@ import {
   updateUploadedRecord,
   type SaveUploadRecordRequest,
   getProfileDocumentConfig,
+  DEFAULT_MAX_FILE_SIZE_MB,
 } from '@/services/upload.svc'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import extractBackendError from '@/utils/extractBackendError'
@@ -62,6 +63,8 @@ export default function MuatNaikDokumenIDPage() {
   const [metadataRequired, setMetadataRequired] = useState<MetadataField[]>([])
   const [metadataAdditional, setMetadataAdditional] = useState<MetadataField[]>([])
   const [retentionPeriod, setRetentionPeriod] = useState<string>('')
+  const [allowedFormats, setAllowedFormats] = useState<string[]>([])
+  const [maxFileSizeMb, setMaxFileSizeMb] = useState<number>(0)
   const [presignedResponse, setPresignedResponse] = useState<PresignUploadResponse | null>(null)
   const [mongoDbRecordId, setMongoDbRecordId] = useState<string>('')
   const [uploadPercentage, setUploadPercentage] = useState<number>(0)
@@ -584,8 +587,12 @@ export default function MuatNaikDokumenIDPage() {
         setRetentionPeriod(unitsData?.retentionPeriod || '')
         setMetadataRequired(unitsData?.requiredMetadata || [])
         setMetadataAdditional(unitsData?.additionalMetadata || [])
+        setAllowedFormats(unitsData?.allowedFormats || [])
+        setMaxFileSizeMb(unitsData?.maxFileSizeMb || 0)
       } catch (err) {
         console.error('Error fetching profile document config:', err)
+        setAllowedFormats([])
+        setMaxFileSizeMb(0)
         setMetadataRequired([])
         setMetadataAdditional([])
       }
@@ -616,13 +623,22 @@ export default function MuatNaikDokumenIDPage() {
     replaceAdditionalMetadata,
   ])
 
-  const acceptedFileTypes = '.docx,.pdf'
+  const acceptedFileTypes = allowedFormats.length
+    ? allowedFormats.map((format) => `.${format}`).join(',')
+    : '.docx,.pdf'
+  const effectiveMaxFileSizeMb = maxFileSizeMb > 0 ? maxFileSizeMb : DEFAULT_MAX_FILE_SIZE_MB
+
+  const resetFileConstraints = () => {
+    setAllowedFormats([])
+    setMaxFileSizeMb(0)
+  }
 
   const handleUnitChange = (unitCode: string) => {
     setSelectedUnitsFromDropdown(unitCode)
     setSelectedProfile('')
     setSelectedProfileId('')
     setTitleFallbackNotice(null)
+    resetFileConstraints()
   }
 
   const handleProfileChange = (documentProfileCodeName: string) => {
@@ -637,6 +653,7 @@ export default function MuatNaikDokumenIDPage() {
     } else {
       setSelectedProfileId('')
       setSelectedProfileDetail(null)
+      resetFileConstraints()
     }
   }
 
@@ -661,6 +678,7 @@ export default function MuatNaikDokumenIDPage() {
             <MuatNaikDokumenForm
               dropdownJenisDokumen={dropdownJenisDokumen}
               acceptedFileTypes={acceptedFileTypes}
+              maxFileSizeMb={effectiveMaxFileSizeMb}
               accessLevelArray={accessLevelArray}
               selectedProfile={selectedProfile}
               setSelectedProfile={handleProfileChange}

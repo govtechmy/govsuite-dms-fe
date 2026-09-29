@@ -1,4 +1,5 @@
 import { type UploadState, useUploadStore } from '@/store/UploadStore'
+import { DEFAULT_MAX_FILE_SIZE_MB } from '@/services/upload.svc'
 import formatFileSize from '@/utils/FormatFileSize'
 import getFileIcon from '@/utils/GetFileIcon'
 import { Button, ButtonIcon } from '@govtechmy/myds-react/button'
@@ -13,6 +14,7 @@ interface UploadDocumentProps {
   handleDisabledButton: () => boolean
   uploadState: UploadState
   fileType: string
+  maxFileSizeMb?: number
   displayFileName?: string
   uploadErrorMessage?: string
   uploadPercentage?: number
@@ -34,6 +36,7 @@ export default function UploadDocument({
   handleDisabledButton,
   uploadState,
   fileType,
+  maxFileSizeMb,
   displayFileName,
   uploadErrorMessage,
   uploadPercentage,
@@ -42,6 +45,12 @@ export default function UploadDocument({
 }: UploadDocumentProps) {
   const { selectedFile } = useUploadStore()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const fileTypeLabel = fileType
+    .split(',')
+    .map((value) => value.trim().replace(/^\./, '').toUpperCase())
+    .filter(Boolean)
+    .join(', ')
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
@@ -63,10 +72,10 @@ export default function UploadDocument({
             Muat Naik Dokumen
           </div>
           <div className="font-body font-normal text-body-sm text-txt-black-500">
-            Jenis Fail: {fileType.toUpperCase()}
+            Jenis Fail: {fileTypeLabel}
           </div>
           <div className="font-body font-normal text-body-sm text-txt-black-500">
-            Saiz Maksima: 25MB
+            Saiz Maksima: {maxFileSizeMb ?? DEFAULT_MAX_FILE_SIZE_MB}MB
           </div>
         </div>
         <Button

@@ -31,7 +31,7 @@ const normalizeOption = (option: DropdownWithSearchOption): { value: string; lab
   typeof option === 'string' ? { value: option, label: option } : option
 
 export default function DropdownWithSearch({
-  placeholder = 'Profile Dokumen',
+  placeholder = 'Profil Dokumen',
   options,
   value,
   onValueChange,
