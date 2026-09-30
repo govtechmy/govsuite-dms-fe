@@ -70,16 +70,16 @@ export function HeaderDokumenID({
   }
 
   return (
-    <div className="relative flex w-full flex-col gap-6 overflow-hidden border-b border-otl-gray-200 bg-[radial-gradient(ellipse_2500px_1100px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)] p-4 py-8 sm:p-8 sm:py-12">
+    <div className="relative flex w-full shrink-0 flex-col gap-4 overflow-hidden border-b border-otl-gray-200 bg-[radial-gradient(ellipse_2500px_1100px_at_top,theme(colors.bg-primary-200)_1%,theme(colors.bg-primary-50)_10%)] px-4 py-6 md:gap-6 md:p-8 md:py-12">
       <div className="pointer-events-none absolute inset-0">
         <MaskHeader className="h-full w-full" />
       </div>
 
-      <div className="relative z-10 flex w-full max-w-[1000px] flex-col gap-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="relative z-10 flex w-full max-w-[1000px] flex-col gap-4 md:gap-6">
+        <div className="contents flex-wrap items-center justify-between gap-3 md:flex">
           <BreadcrumbBuilder path={path} />
           {isPelulus && status === 'DALAM_SEMAKAN' && (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 max-md:gap-2 max-md:[&>button]:justify-center max-md:[&>button]:whitespace-nowrap max-md:[&>button]:flex-1">
               <Button variant="danger-fill" onClick={() => setIsTakDiluluskanOpen(true)}>
                 Tidak Diluluskan
               </Button>
@@ -94,25 +94,25 @@ export function HeaderDokumenID({
         </div>
 
         {/* Document Header */}
-        <div className="flex w-full flex-col gap-3 md:flex-row md:items-end">
+        <div className="flex w-full flex-wrap items-start gap-3 md:flex-nowrap md:items-end">
           {/* Date Card */}
           <DateCard date={recordDate} size="lg" className="shadow-sm border border-otl-gray-200" />
 
           {/* Content */}
-          <div className="flex flex-1 flex-col gap-1.5">
+          <div className="flex flex-1 flex-col gap-1.5 max-md:min-w-0">
             {/* Tags */}
-            <div className="flex items-start gap-1">
+            <div className="flex items-start gap-1 max-md:flex-wrap">
               {renderStatusTag(status || 'No Status')}
               {renderSecretTag(accessLevel)}
             </div>
 
             {/* Title */}
-            <h1 className="line-clamp-2 text-base font-semibold text-txt-black-900">
+            <h1 className="line-clamp-2 text-base font-semibold text-txt-black-900 max-md:break-words">
               {recordTitle}
             </h1>
 
             {/* Metadata */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 max-md:flex-wrap max-md:gap-y-0.5">
               <span className="text-sm font-medium text-txt-black-500">{documentProfileCode}</span>
               <div className="size-1 rounded-full bg-txt-black-500" />
               <span className="text-sm font-medium text-txt-black-500">{unit}</span>
@@ -120,7 +120,7 @@ export function HeaderDokumenID({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1 max-md:w-full max-md:gap-2 max-md:[&>button:last-child]:flex-none max-md:[&>button]:flex-1 max-md:[&>button]:justify-center max-md:[&>button]:whitespace-nowrap">
             <DialogKongsi onShareDataRefresh={onShareDataRefresh} />
             {/* <Button
               variant="default-outline"

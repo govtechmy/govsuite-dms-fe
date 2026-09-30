@@ -18,6 +18,7 @@ export interface DocumentInfo {
   documentID: string
   path: string
   referencePath?: string
+  title?: string
 }
 
 type SearchParamsPayload = {
@@ -183,6 +184,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
           documentID: documentId,
           path: response.data.url,
           referencePath: response.data.document?.path ?? '',
+          title: response.data.document?.recordTitle ?? '',
         },
       })
     } catch (error) {

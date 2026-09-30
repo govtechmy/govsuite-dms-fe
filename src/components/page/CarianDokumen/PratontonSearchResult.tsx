@@ -164,15 +164,22 @@ export default function PratontonSearchResult({
   }
 
   const handleCopyReference = async () => {
-    const reference = documentInfo?.referencePath?.trim()
-    if (!reference) {
+    const referencePath = documentInfo?.referencePath?.trim()
+    if (!referencePath) {
       return
     }
+
+    const title = documentInfo?.title?.trim()
+    const reference = title
+      ? `${referencePath.slice(0, referencePath.lastIndexOf('/') + 1)}${title}`
+      : referencePath
 
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(reference)
       } else {
+        // Do not remove: navigator.clipboard is unavailable on non-HTTPS origins,
+        // so this textarea fallback keeps copy working on HTTP environments for now.
         const textArea = document.createElement('textarea')
         textArea.value = reference
         textArea.setAttribute('readonly', '')

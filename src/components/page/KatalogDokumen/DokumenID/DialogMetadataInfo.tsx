@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Button } from '@govtechmy/myds-react/button'
 import { DocumentFilledIcon } from '@govtechmy/myds-react/icon'
 import {
@@ -9,7 +10,6 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from '@govtechmy/myds-react/dialog'
 import MetadataSummary from '@/components/shared/MetadataSummary'
 import type { MetadataDocument } from '@/services/metadata.svc'
@@ -20,8 +20,68 @@ interface DialogMetadataInfoProps {
 }
 
 export default function DialogMetadataInfo({ metadataDocument }: DialogMetadataInfoProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isReferenceCopied, setIsReferenceCopied] = useState(false)
+
+  const lokasiFolder = metadataDocument?.recordData?.path?.trim() ?? ''
+  const tajuk = metadataDocument?.requiredMetadata
+    ?.find((item) => item.key === 'TAJUK')
+    ?.value?.trim()
+  const reference =
+    lokasiFolder && tajuk
+      ? `${lokasiFolder.slice(0, lokasiFolder.lastIndexOf('/') + 1)}${tajuk}`
+      : ''
+
+  useEffect(() => {
+    if (!isReferenceCopied) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setIsOpen(false)
+      setIsReferenceCopied(false)
+    }, 3000)
+
+    return () => window.clearTimeout(timer)
+  }, [isReferenceCopied])
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open)
+    if (!open) {
+      setIsReferenceCopied(false)
+    }
+  }
+
+  const handleCopyReference = async () => {
+    if (!reference) {
+      return
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(reference)
+      } else {
+        // Do not remove: navigator.clipboard is unavailable on non-HTTPS origins,
+        // so this textarea fallback keeps copy working on HTTP environments for now.
+        const textArea = document.createElement('textarea')
+        textArea.value = reference
+        textArea.setAttribute('readonly', '')
+        textArea.style.position = 'absolute'
+        textArea.style.left = '-9999px'
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+
+      setIsReferenceCopied(true)
+    } catch {
+      setIsReferenceCopied(false)
+    }
+  }
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger>
         <Button variant="default-outline" size="small" className="gap-1.5">
           <DocumentFilledIcon className="size-4" />
@@ -42,9 +102,9 @@ export default function DialogMetadataInfo({ metadataDocument }: DialogMetadataI
           </div>
         </DialogContent>
         <DialogFooter>
-          <DialogClose>
-            <Button variant="primary-fill">Salin Rujukan</Button>
-          </DialogClose>
+          <Button variant="primary-fill" onClick={handleCopyReference} disabled={!reference}>
+            {isReferenceCopied ? 'Rujukan Disalin !' : 'Salin Rujukan'}
+          </Button>
         </DialogFooter>
       </DialogBody>
     </Dialog>
