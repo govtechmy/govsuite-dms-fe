@@ -555,7 +555,7 @@ export default function MuatNaikDokumenForm({
         <div className="flex flex-col gap-1.5">
           <Tooltip>
             <TooltipTrigger className="flex">
-              Pilih Profil dokumen bagi unit <div className="text-txt-danger">*</div>
+              Pilih Profil Dokumen bagi Unit <div className="text-txt-danger">*</div>
             </TooltipTrigger>
             <TooltipContent>Dokumen akan diluluskan oleh Pelulus Unit ini</TooltipContent>
           </Tooltip>
