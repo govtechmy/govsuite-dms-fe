@@ -362,7 +362,7 @@ export default function DokumenIDPage() {
   return (
     <>
       {isApprovalProgressIdle && dokumenFetchState === 'success' && pdfData && (
-        <div className="flex w-full flex-col">
+        <div className="flex h-full w-full flex-col overflow-y-auto">
           {pdfData && (
             <HeaderDokumenID
               metadataDocument={metadataDocument}
