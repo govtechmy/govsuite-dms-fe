@@ -48,7 +48,7 @@ export default function ChangePasswordForm({
   const isConfirmMismatch = confirmPassword.trim() !== '' && confirmPassword !== newPassword
   const isFormValid =
     currentPassword.trim() !== '' &&
-    isPasswordPolicyMet(newPassword) &&
+    isPasswordPolicyMet(newPassword, currentPassword) &&
     confirmPassword.trim() !== '' &&
     newPassword === confirmPassword
 
@@ -137,7 +137,7 @@ export default function ChangePasswordForm({
               </button>
             </Input>
           </div>
-          <PasswordRequirementsChecklist password={newPassword} />
+          <PasswordRequirementsChecklist password={newPassword} currentPassword={currentPassword} />
         </div>
         <div className="flex flex-col gap-1.5">
           <div className="flex">

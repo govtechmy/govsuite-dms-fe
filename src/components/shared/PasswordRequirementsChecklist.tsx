@@ -5,18 +5,21 @@ import { PASSWORD_REQUIREMENTS } from '@/utils/passwordPolicy'
 
 interface PasswordRequirementsChecklistProps {
   password: string
+  currentPassword: string
 }
 
 export default function PasswordRequirementsChecklist({
   password,
+  currentPassword,
 }: PasswordRequirementsChecklistProps) {
   const requirementResults = useMemo(
     () =>
       PASSWORD_REQUIREMENTS.map((requirement) => ({
         ...requirement,
-        isMet: requirement.test(password),
+        isMet: requirement.test(password, currentPassword),
+        isViolated: requirement.isViolated?.(password, currentPassword) ?? false,
       })),
-    [password]
+    [password, currentPassword]
   )
 
   return (
@@ -26,7 +29,11 @@ export default function PasswordRequirementsChecklist({
           key={requirement.key}
           className={clx(
             'flex items-center gap-2 text-body-sm font-normal',
-            requirement.isMet ? 'text-txt-success' : 'text-txt-black-500'
+            requirement.isMet
+              ? 'text-txt-success'
+              : requirement.isViolated
+                ? 'text-txt-danger'
+                : 'text-txt-black-500'
           )}
         >
           {requirement.isMet ? (

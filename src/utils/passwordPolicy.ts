@@ -3,7 +3,9 @@ export const PASSWORD_MIN_LENGTH = 12
 export interface PasswordRequirement {
   key: string
   label: string
-  test: (value: string) => boolean
+  test: (value: string, currentPassword: string) => boolean
+  // Optional: flags an active violation (shown in red) rather than a not-yet-met rule.
+  isViolated?: (value: string, currentPassword: string) => boolean
 }
 
 export const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
@@ -32,7 +34,13 @@ export const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
     label: 'Sekurang-kurangnya 1 aksara khas (cth: ! @ # $ %)',
     test: (value) => /[^A-Za-z0-9]/.test(value),
   },
+  {
+    key: 'differentFromCurrent',
+    label: 'Berbeza daripada kata laluan semasa',
+    test: (value, currentPassword) => value !== '' && value !== currentPassword,
+    isViolated: (value, currentPassword) => value !== '' && value === currentPassword,
+  },
 ]
 
-export const isPasswordPolicyMet = (password: string): boolean =>
-  PASSWORD_REQUIREMENTS.every((requirement) => requirement.test(password))
+export const isPasswordPolicyMet = (password: string, currentPassword: string): boolean =>
+  PASSWORD_REQUIREMENTS.every((requirement) => requirement.test(password, currentPassword))
