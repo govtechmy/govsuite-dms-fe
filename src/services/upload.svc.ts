@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { getEnv } from '@/config/runtimeEnv'
-import { authAxios } from './http'
+import { authAxios, storageAuthHeaders } from './http'
 import extractBackendError from '@/utils/extractBackendError'
 import normalizeAllowedFormats from '@/utils/normalizeAllowedFormats'
 
@@ -237,6 +237,7 @@ export const uploadFileToPresignedUrl = async ({
     await axios.put(presignedUrl, file, {
       headers: {
         'Content-Type': fileType,
+        ...storageAuthHeaders(presignedUrl),
       },
       onUploadProgress,
     })

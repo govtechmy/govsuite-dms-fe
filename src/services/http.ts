@@ -12,6 +12,7 @@ export const unauthAxios = axios.create({
 })
 
 let authInterceptorAttached = false
+let storageTokenGetter: (() => string | null) | null = null
 
 let authResponseInterceptorAttached = false
 let isRefreshing = false
@@ -57,6 +58,7 @@ export const initializeAuthAxios = ({
   getToken: () => string | null
   refreshAccessToken?: () => Promise<string | null>
 }) => {
+  storageTokenGetter = getToken
   const token = getToken()
 
   if (token) {
@@ -143,4 +145,16 @@ export const initializeAuthAxios = ({
   )
 
   authResponseInterceptorAttached = true
+}
+
+// Same-origin (relative) storage URLs go through the frontend nginx auth_request gate, which
+// needs the user's Bearer token on every request. Absolute URLs (backend PROXY off / dev) go
+// straight to Garage, where an Authorization header would break the presigned signature.
+export const storageAuthHeaders = (url: string): Record<string, string> => {
+  const token = storageTokenGetter?.()
+  if (!token || !url.startsWith('/')) {
+    return {}
+  }
+
+  return { Authorization: `Bearer ${token}` }
 }

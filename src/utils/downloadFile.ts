@@ -1,3 +1,5 @@
+import { storageAuthHeaders } from '@/services/http'
+
 interface DownloadFileOptions {
   url: string
   fileName: string
@@ -47,7 +49,7 @@ export const downloadFile = ({ url, fileName, fallback, fileExtension }: Downloa
   }
 
   //for blob style fetching
-  fetch(url)
+  fetch(url, { headers: storageAuthHeaders(url) })
     .then((response) => {
       if (!response.ok) {
         throw new Error(`Failed to download file: ${response.status}`)
