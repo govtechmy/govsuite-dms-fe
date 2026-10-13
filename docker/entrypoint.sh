@@ -27,17 +27,22 @@ case "$(printf '%s' "${PROXY:-}" | tr '[:upper:]' '[:lower:]')" in
 esac
 
 if [ "$proxy_enabled" = true ]; then
-  echo "PROXY=ON: reverse-proxying /api to BACKEND_INTERNAL_URL"
+  echo "PROXY=ON: reverse-proxying /api to BACKEND_INTERNAL_URL and /<bucket>/ to STORAGE_INTERNAL_URL"
 
   # Fail fast if the private backend address is not provided. This must be a
   # plain (non VITE_ prefixed) variable so it is never written into env.js
   # and exposed to the browser.
   : "${BACKEND_INTERNAL_URL:?BACKEND_INTERNAL_URL must be set when PROXY=ON}"
 
-  # Render the nginx config, substituting ONLY BACKEND_INTERNAL_URL so
-  # nginx's own runtime variables ($host, $uri, $remote_addr, etc.) are
-  # left literal.
-  envsubst '${BACKEND_INTERNAL_URL}' \
+  # Garage's private address (host:port only), same rules as BACKEND_INTERNAL_URL.
+  # Must equal the backend's S3_ENDPOINT, since presigned URLs are signed for that host.
+  : "${STORAGE_INTERNAL_URL:?STORAGE_INTERNAL_URL must be set when PROXY=ON}"
+  export S3_BUCKET_NAME="${S3_BUCKET_NAME:-dms-documents}"
+  export STORAGE_MAX_BODY_SIZE="${STORAGE_MAX_BODY_SIZE:-105M}"
+
+  # Render the nginx config, substituting ONLY our own variables so nginx's
+  # own runtime variables ($host, $uri, $remote_addr, etc.) are left literal.
+  envsubst '${BACKEND_INTERNAL_URL} ${STORAGE_INTERNAL_URL} ${S3_BUCKET_NAME} ${STORAGE_MAX_BODY_SIZE}' \
     < /etc/nginx/templates/nginx.proxy.conf.template \
     > /etc/nginx/conf.d/default.conf
 else
