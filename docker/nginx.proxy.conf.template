@@ -47,6 +47,15 @@ server {
         # The Bearer token is for the backend only. Garage would try to parse it as S3 auth
         # and reject the request, so it must not be forwarded.
         proxy_set_header Authorization "";
+        # The browser cache is keyed by URL, not by account. Without this, a PDF one account
+        # opened could be served from cache to another account (or after logout) in the same
+        # browser without ever reaching auth_request.
+        proxy_hide_header Cache-Control;
+        add_header Cache-Control "no-store, private" always;
+        # A location-level add_header drops the server-level ones, so re-add them here.
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
         proxy_http_version 1.1;
         proxy_request_buffering off;
         proxy_buffering off;
