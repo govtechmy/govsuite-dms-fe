@@ -11,7 +11,7 @@ import DialogMetadataInfo from './DialogMetadataInfo'
 import DialogKongsi from './DialogKongsi'
 import { useAuthStore } from '@/store/AuthStore'
 import { resolveUserRoles } from '@/models/userRoles'
-import { HeartIcon } from '@govtechmy/myds-react/icon'
+import { HeartIcon, DownloadIcon } from '@govtechmy/myds-react/icon'
 
 // rework metadata info once finalized
 interface HeaderDokumenIDProps {
@@ -31,6 +31,7 @@ interface HeaderDokumenIDProps {
   metadataDocument?: MetadataDocument | null
   isFavorite?: boolean
   isFavoriteLoading?: boolean
+  isDownloading?: boolean
   onApproveDokumen: () => void
   onNotApproveDokumen: (reason: string) => void
   onDownloadDokumen: (recordTitle: string) => void
@@ -49,9 +50,10 @@ export function HeaderDokumenID({
   metadataDocument,
   isFavorite = false,
   isFavoriteLoading = false,
+  isDownloading = false,
   onApproveDokumen,
   onNotApproveDokumen,
-  // onDownloadDokumen,
+  onDownloadDokumen,
   onShareDataRefresh,
   onToggleFavorite,
 }: HeaderDokumenIDProps) {
@@ -121,16 +123,18 @@ export function HeaderDokumenID({
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-1 max-md:w-full max-md:gap-2 max-md:[&>button:last-child]:flex-none max-md:[&>button]:flex-1 max-md:[&>button]:justify-center max-md:[&>button]:whitespace-nowrap">
-            <DialogKongsi onShareDataRefresh={onShareDataRefresh} />
-            {/* <Button
+            <Button
               variant="default-outline"
               size="small"
               className="gap-1.5"
               onClick={() => onDownloadDokumen(recordTitle)}
+              disabled={isDownloading}
+              aria-busy={isDownloading}
             >
               <DownloadIcon className="size-4" />
-              Muat Turun
-            </Button> */}
+              {isDownloading ? 'Sedang Dimuat Turun...' : 'Muat Turun'}
+            </Button>
+            <DialogKongsi onShareDataRefresh={onShareDataRefresh} />
             <DialogMetadataInfo metadataDocument={metadataDocument} />
             <Button
               variant={'default-outline'}
