@@ -259,6 +259,14 @@ export default function MuatNaikDokumenPage() {
         setMongoDbRecordId(result.id)
       }
 
+      // A file replaced after a draft is swapped in by the backend under the record's original
+      // recordId, and the presigned recordId stops existing. Follow the recordId the backend
+      // returns so the next save (e.g. Simpan dan Hantar) doesn't 404 on the stale one.
+      if (result.recordId && result.recordId !== payload.recordId) {
+        const savedRecordId = result.recordId
+        setPresignedResponse((prev) => (prev ? { ...prev, recordId: savedRecordId } : prev))
+      }
+
       if (status === 'DALAM_SEMAKAN') {
         setSubmissionProgress('success')
       }

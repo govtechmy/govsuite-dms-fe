@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { getEnv } from '@/config/runtimeEnv'
-import { authAxios, storageAuthHeaders } from './http'
-import extractBackendError from '@/utils/extractBackendError'
+import { authAxios } from './http'
 import normalizeAllowedFormats from '@/utils/normalizeAllowedFormats'
 
 // Fallback when profile config has no maxFileSizeMb
@@ -235,9 +234,10 @@ export const uploadFileToPresignedUrl = async ({
 }): Promise<void> => {
   try {
     await axios.put(presignedUrl, file, {
+      // No Authorization header: the presigned signature authorizes the PUT, and Garage
+      // rejects requests that also carry a Bearer token.
       headers: {
         'Content-Type': fileType,
-        ...storageAuthHeaders(presignedUrl),
       },
       onUploadProgress,
     })
@@ -317,30 +317,19 @@ export const updateUploadedRecord = async (
 }
 
 /**
- * Save or update uploaded record with automatic fallback
- * Tries POST first, falls back to PUT if record already exists
+ * Save or update uploaded record
+ * POST for the first save; PUT once the record exists (e.g. Simpan Draf then Simpan dan Hantar).
+ * A second POST is rejected by the backend because the upload is no longer pending.
  */
 export const saveOrUpdateUploadedRecord = async (
   body: SaveUploadRecordRequest,
   mongoDbRecordId?: string
 ): Promise<SaveUploadRecordResponse> => {
-  try {
-    return await saveUploadedRecord(body)
-  } catch (error) {
-    const backendError = extractBackendError(error)
-
-    // Check for duplicate error (prefer code match, fallback to message)
-    const isDuplicateError =
-      backendError?.code === 'RECORD_ALREADY_EXISTS' ||
-      backendError?.message?.toLowerCase().includes('already exists')
-
-    if (isDuplicateError && mongoDbRecordId) {
-      return await updateUploadedRecord(body, mongoDbRecordId)
-    }
-
-    // Re-throw non-duplicate errors
-    throw error
+  if (mongoDbRecordId) {
+    return await updateUploadedRecord(body, mongoDbRecordId)
   }
+
+  return await saveUploadedRecord(body)
 }
 
 /**

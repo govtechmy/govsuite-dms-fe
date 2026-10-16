@@ -1,7 +1,3 @@
-# Short-lived cache of storage auth_request results (see /_storage_auth below).
-# This file is included inside nginx's http {} block, so http-level directives are valid here.
-proxy_cache_path /var/cache/nginx/storage_auth keys_zone=storage_auth:1m max_size=10m inactive=1m;
-
 server {
     listen 80;
     server_name _;
@@ -33,23 +29,20 @@ server {
         client_max_body_size 25M;
     }
 
-    # Garage S3 reverse proxy. With backend PROXY=true, presigned URLs are returned
+    # Garage S3 reverse proxy. With backend S3_PROXY=true, presigned upload URLs are returned
     # path-only (/<bucket>/<key>?X-Amz-...) so the browser sends them here. The URI is
     # forwarded verbatim (no URI on proxy_pass) and Host is left as nginx's default
     # ($proxy_host = STORAGE_INTERNAL_URL's host:port), which must equal the backend's
     # S3_ENDPOINT because that is the host the signature was computed for.
     location /${S3_BUCKET_NAME}/ {
         limit_except GET HEAD PUT { deny all; }
-        # Every request must carry the user's own Bearer token; the backend re-checks the
-        # session and record access each time, so a copied link on its own gets 401/403.
-        auth_request /_storage_auth;
         proxy_pass ${STORAGE_INTERNAL_URL};
-        # The Bearer token is for the backend only. Garage would try to parse it as S3 auth
-        # and reject the request, so it must not be forwarded.
+        # Garage would try to parse an Authorization header as S3 auth and reject the
+        # presigned request, so it must not be forwarded.
         proxy_set_header Authorization "";
         # The browser cache is keyed by URL, not by account. Without this, a PDF one account
         # opened could be served from cache to another account (or after logout) in the same
-        # browser without ever reaching auth_request.
+        # browser.
         proxy_hide_header Cache-Control;
         add_header Cache-Control "no-store, private" always;
         # A location-level add_header drops the server-level ones, so re-add them here.
@@ -64,28 +57,6 @@ server {
         proxy_connect_timeout 30s;
         proxy_send_timeout 600s;
         proxy_read_timeout 600s;
-    }
-
-    # auth_request target for /${S3_BUCKET_NAME}/. Backend answers 204 (allow), 401 (no/expired
-    # session) or 403 (no access to that object). pdf.js makes many Range requests per PDF,
-    # so an "allow" is cached for 30s per token + method + object; denials are never cached.
-    location = /_storage_auth {
-        internal;
-        proxy_pass ${BACKEND_INTERNAL_URL}/api/v1/record/storage-auth;
-        proxy_http_version 1.1;
-        proxy_method GET;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        proxy_set_header Authorization $http_authorization;
-        proxy_set_header X-Original-URI $request_uri;
-        proxy_set_header X-Original-Method $request_method;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_cache storage_auth;
-        proxy_cache_key "$http_authorization|$request_method|$uri";
-        proxy_cache_valid 204 30s;
-        proxy_cache_valid any 0;
-        proxy_ignore_headers Cache-Control Expires;
     }
 
     # SPA routing fallback.
