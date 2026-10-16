@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
-import { storageAuthHeaders } from '@/services/http'
+import { apiAuthHeaders } from '@/services/http'
 
 pdfjs.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.js`
 
@@ -567,10 +567,7 @@ export default function PdfJsDocumentViewer({
   }, [currentPageNumber, numPages, onPageChange])
 
   // Stable per URL so react-pdf doesn't reload the document when the component re-renders.
-  const pdfFile = useMemo(
-    () => ({ url: fileUrl, httpHeaders: storageAuthHeaders(fileUrl) }),
-    [fileUrl]
-  )
+  const pdfFile = useMemo(() => ({ url: fileUrl, httpHeaders: apiAuthHeaders() }), [fileUrl])
 
   if (!fileUrl) {
     return (

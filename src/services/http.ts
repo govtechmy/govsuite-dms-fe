@@ -1,5 +1,6 @@
 import axios, { AxiosHeaders } from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { getEnv } from '@/config/runtimeEnv'
 
 // Dedicated authenticated instance to keep auth concerns isolated.
 export const authAxios = axios.create({
@@ -12,7 +13,7 @@ export const unauthAxios = axios.create({
 })
 
 let authInterceptorAttached = false
-let storageTokenGetter: (() => string | null) | null = null
+let tokenGetter: (() => string | null) | null = null
 
 let authResponseInterceptorAttached = false
 let isRefreshing = false
@@ -58,7 +59,7 @@ export const initializeAuthAxios = ({
   getToken: () => string | null
   refreshAccessToken?: () => Promise<string | null>
 }) => {
-  storageTokenGetter = getToken
+  tokenGetter = getToken
   const token = getToken()
 
   if (token) {
@@ -147,14 +148,16 @@ export const initializeAuthAxios = ({
   authResponseInterceptorAttached = true
 }
 
-// Same-origin (relative) storage URLs go through the frontend nginx auth_request gate, which
-// needs the user's Bearer token on every request. Absolute URLs (backend PROXY off / dev) go
-// straight to Garage, where an Authorization header would break the presigned signature.
-export const storageAuthHeaders = (url: string): Record<string, string> => {
-  const token = storageTokenGetter?.()
-  if (!token || !url.startsWith('/')) {
-    return {}
-  }
+// For non-axios consumers (e.g. react-pdf, fetch) that call backend API endpoints directly.
+export const apiAuthHeaders = (): Record<string, string> => {
+  const token = tokenGetter?.()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 
-  return { Authorization: `Bearer ${token}` }
+// The backend returns root-relative API paths (e.g. /api/v1/record/download/:id). Resolve them
+// against VITE_API_BASE_URL's origin so they reach the backend both when it is a same-origin
+// relative path (PROXY=ON) and when it is the backend's full public URL (PROXY off).
+export const resolveApiUrl = (path: string): string => {
+  const apiBase = new URL(getEnv('VITE_API_BASE_URL'), window.location.origin)
+  return new URL(path, apiBase).toString()
 }
