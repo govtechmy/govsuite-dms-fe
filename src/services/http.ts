@@ -147,6 +147,12 @@ export const initializeAuthAxios = ({
   authResponseInterceptorAttached = true
 }
 
+// For non-axios consumers (e.g. react-pdf) that call backend API endpoints directly.
+export const apiAuthHeaders = (): Record<string, string> => {
+  const token = storageTokenGetter?.()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 // Same-origin (relative) storage URLs go through the frontend nginx auth_request gate, which
 // needs the user's Bearer token on every request. Absolute URLs (backend PROXY off / dev) go
 // straight to Garage, where an Authorization header would break the presigned signature.
