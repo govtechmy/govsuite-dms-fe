@@ -567,10 +567,7 @@ export default function PdfJsDocumentViewer({
   }, [currentPageNumber, numPages, onPageChange])
 
   // Stable per URL so react-pdf doesn't reload the document when the component re-renders.
-  const pdfFile = useMemo(
-    () => ({ url: fileUrl, httpHeaders: apiAuthHeaders() }),
-    [fileUrl]
-  )
+  const pdfFile = useMemo(() => ({ url: fileUrl, httpHeaders: apiAuthHeaders() }), [fileUrl])
 
   if (!fileUrl) {
     return (
