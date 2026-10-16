@@ -2,14 +2,21 @@ services:
   frontend:
     profiles: ['production']
     image: govsuite-dms-fe:latest
-    container_name: govsuite-dms-fe-prod
+    # govsuite-edge: the one container govsuitedms-wireguard/verify.sh allows on 0.0.0.0.
+    container_name: govsuite-edge
     restart: unless-stopped
     env_file: ./frontend.env
     ports:
-      - '80:80'
+      # The platform's only LAN-facing port (plan.md §1). No 443 until plan.md B4.
+      - '0.0.0.0:80:80'
     healthcheck:
       test: ['CMD', 'wget', '--quiet', '--spider', 'http://127.0.0.1/']
       interval: 30s
       timeout: 3s
       retries: 3
       start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
