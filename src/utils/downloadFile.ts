@@ -1,3 +1,5 @@
+import { apiAuthHeaders } from '@/services/http'
+
 interface DownloadFileOptions {
   url: string
   fileName: string
@@ -55,8 +57,9 @@ export const downloadFile = ({ url, fileName, fallback, fileExtension }: Downloa
     fileExtension,
   })
 
-  //for blob style fetching
-  fetch(url)
+  // The backend download endpoint requires the Bearer token, so fetch it as a blob rather than
+  // navigating to the URL (a plain link cannot carry the Authorization header).
+  fetch(url, { headers: apiAuthHeaders() })
     .then((response) => {
       if (!response.ok) {
         throw new Error(`Failed to download file: ${response.status}`)
@@ -65,8 +68,7 @@ export const downloadFile = ({ url, fileName, fallback, fileExtension }: Downloa
       return response.blob()
     })
     .then((blob) => downloadBlob(blob, resolvedFileName))
-    .catch(() => {
-      // Fallback for endpoints that do not allow blob fetch due to CORS.
-      triggerDownload(url, resolvedFileName)
+    .catch((error) => {
+      console.error('Error downloading file:', error)
     })
 }

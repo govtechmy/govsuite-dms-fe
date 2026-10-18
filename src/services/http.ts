@@ -1,5 +1,6 @@
 import axios, { AxiosHeaders } from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { getEnv } from '@/config/runtimeEnv'
 
 // Dedicated authenticated instance to keep auth concerns isolated.
 export const authAxios = axios.create({
@@ -12,6 +13,7 @@ export const unauthAxios = axios.create({
 })
 
 let authInterceptorAttached = false
+let tokenGetter: (() => string | null) | null = null
 
 let authResponseInterceptorAttached = false
 let isRefreshing = false
@@ -57,6 +59,7 @@ export const initializeAuthAxios = ({
   getToken: () => string | null
   refreshAccessToken?: () => Promise<string | null>
 }) => {
+  tokenGetter = getToken
   const token = getToken()
 
   if (token) {
@@ -143,4 +146,18 @@ export const initializeAuthAxios = ({
   )
 
   authResponseInterceptorAttached = true
+}
+
+// For non-axios consumers (e.g. react-pdf, fetch) that call backend API endpoints directly.
+export const apiAuthHeaders = (): Record<string, string> => {
+  const token = tokenGetter?.()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+// The backend returns root-relative API paths (e.g. /api/v1/record/download/:id). Resolve them
+// against VITE_API_BASE_URL's origin so they reach the backend both when it is a same-origin
+// relative path (PROXY=ON) and when it is the backend's full public URL (PROXY off).
+export const resolveApiUrl = (path: string): string => {
+  const apiBase = new URL(getEnv('VITE_API_BASE_URL'), window.location.origin)
+  return new URL(path, apiBase).toString()
 }
