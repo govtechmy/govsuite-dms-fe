@@ -1,59 +1,44 @@
-import { Button } from '@govtechmy/myds-react/button'
 // import { DownloadIcon } from '@govtechmy/myds-react/icon'
 import PdfJsDocumentViewer, {
-  type PdfPageNavigationRequest,
+  type PdfMatchPage,
   type PdfSearchNavigationRequest,
   type PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
 import SearchInPdf from './SearchInPdf'
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import DocumentMetaTags from './DocumentMetaTags'
+import DocumentPreviewHeader from './DocumentPreviewHeader'
+import { useEffect, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
-import { HeartIcon } from '@govtechmy/myds-react/icon'
-import { useToast } from '@govtechmy/myds-react/hooks'
-import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
-import extractBackendError from '@/utils/extractBackendError'
 // import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
   searchKeyword: string
-  onSearchKeywordChange: (keyword: string) => void
   currentMatchIndex: number
   totalMatches: number
   onPreviousMatch: () => void
   onNextMatch: () => void
   navigationRequest?: PdfSearchNavigationRequest | null
   onSearchStateChange: (state: PdfSearchState) => void
+  onMatchPagesChange?: (pages: PdfMatchPage[]) => void
   onDocumentLoad?: () => void
   isIndexing: boolean
 }
 
 export default function PratontonSearchResult({
   searchKeyword,
-  onSearchKeywordChange,
   currentMatchIndex,
   totalMatches,
   onPreviousMatch,
   onNextMatch,
   navigationRequest,
   onSearchStateChange,
+  onMatchPagesChange,
   onDocumentLoad,
   isIndexing,
 }: PratontonSearchResultProps) {
-  const navigate = useNavigate()
-  const { lang } = useParams()
-  const { toast } = useToast()
   const documentInfo = useSearchStore((state) => state.documentInfo)
   // const documentRecords = useSearchStore((state) => state.documentRecords)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
-  const [isReferenceCopied, setIsReferenceCopied] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(0)
-  const [pageNavigationRequest, setPageNavigationRequest] =
-    useState<PdfPageNavigationRequest | null>(null)
-  const pageNavigationTokenRef = useRef(0)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
 
   // const currentDocumentTitle = documentRecords.find(
   //   (documentRecord) => documentRecord.documentId === documentInfo?.documentID
@@ -61,74 +46,14 @@ export default function PratontonSearchResult({
 
   useEffect(() => {
     setIsPdfLoaded(false)
-    setCurrentPage(1)
-    setTotalPages(0)
-    setPageNavigationRequest(null)
-    pageNavigationTokenRef.current = 0
   }, [documentInfo?.documentID])
-
-  useEffect(() => {
-    const fetchFavoriteStatus = async () => {
-      try {
-        if (!documentInfo?.documentID) {
-          setIsFavorite(false)
-          return
-        }
-        const data = await getFavoriteStatus(documentInfo.documentID)
-        setIsFavorite(data.favorite)
-      } catch (error) {
-        setIsFavorite(false)
-        console.error('Error fetching favorite status:', error)
-      }
-    }
-
-    fetchFavoriteStatus()
-  }, [documentInfo?.documentID])
-
-  useEffect(() => {
-    if (!isReferenceCopied) {
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      setIsReferenceCopied(false)
-    }, 2000)
-
-    return () => window.clearTimeout(timer)
-  }, [isReferenceCopied])
-
-  const handleBukaPratonton = () => {
-    if (documentInfo?.documentID) {
-      navigate(`/${lang}/katalog-dokumen/${documentInfo.documentID}`)
-    }
-  }
 
   const handleDocumentLoad = () => {
     setIsPdfLoaded(true)
     onDocumentLoad?.()
   }
 
-  const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {
-    setCurrentPage(nextCurrentPage)
-    setTotalPages(nextTotalPages)
-  }
-
-  const queuePageNavigationRequest = (targetPage: number) => {
-    pageNavigationTokenRef.current += 1
-    setPageNavigationRequest({
-      page: targetPage,
-      token: pageNavigationTokenRef.current,
-    })
-  }
-
-  const handlePreviousPage = () => {
-    queuePageNavigationRequest(Math.max(1, currentPage - 1))
-  }
-
-  const handleNextPage = () => {
-    queuePageNavigationRequest(Math.min(totalPages, currentPage + 1))
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   // const handleDownloadDokumen = () => {
   //   if (!documentInfo?.path) {
   //     return
@@ -141,127 +66,36 @@ export default function PratontonSearchResult({
   //   })
   // }
 
-  const handleToggleFavorite = async () => {
-    if (!documentInfo?.documentID || isFavoriteLoading) return
-
-    setIsFavoriteLoading(true)
-    try {
-      const result = await postToggleFavorite(documentInfo.documentID)
-      setIsFavorite(result.action === 'added')
-    } catch (error) {
-      console.error('Error toggling favorite:', error)
-      const backendError = extractBackendError(error)
-      toast({
-        variant: 'error',
-        title: 'Kegemaran Gagal Dikemaskini',
-        description: `${backendError?.code ?? 'REQUEST_FAILED'} : ${
-          backendError?.message ?? 'Sila cuba lagi.'
-        }`,
-      })
-    } finally {
-      setIsFavoriteLoading(false)
-    }
-  }
-
-  const handleCopyReference = async () => {
-    const referencePath = documentInfo?.referencePath?.trim()
-    if (!referencePath) {
-      return
-    }
-
-    const title = documentInfo?.title?.trim()
-    const reference = title
-      ? `${referencePath.slice(0, referencePath.lastIndexOf('/') + 1)}${title}`
-      : referencePath
-
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(reference)
-      } else {
-        // Do not remove: navigator.clipboard is unavailable on non-HTTPS origins,
-        // so this textarea fallback keeps copy working on HTTP environments for now.
-        const textArea = document.createElement('textarea')
-        textArea.value = reference
-        textArea.setAttribute('readonly', '')
-        textArea.style.position = 'absolute'
-        textArea.style.left = '-9999px'
-        document.body.appendChild(textArea)
-        textArea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textArea)
-      }
-
-      setIsReferenceCopied(true)
-    } catch {
-      setIsReferenceCopied(false)
-    }
-  }
-
   return (
-    <div className="flex h-full min-h-[480px] min-w-0 flex-1 flex-col border border-otl-gray-200 border-l-0 bg-bg-gray-50 p-4 sm:p-6 lg:min-h-0">
-      <div className="flex justify-between items-center">
-        <p className="flex-1 text-body-md font-semibold text-txt-black-900">Pratonton</p>
-        {/* <Button
-          variant="default-outline"
-          size="small"
-          className="gap-1.5"
-          onClick={handleDownloadDokumen}
-          disabled={!documentInfo?.path}
-        >
-          <DownloadIcon className="size-4" />
-          Muat Turun
-        </Button> */}
-        <Button
-          variant={'default-outline'}
-          className={isFavorite ? 'px-2 text-txt-danger border-otl-danger-300' : 'px-2'}
-          onClick={handleToggleFavorite}
-          disabled={isFavoriteLoading || !documentInfo?.documentID}
-          aria-pressed={isFavorite}
-          aria-label={isFavorite ? 'Buang dari kegemaran' : 'Tambah ke kegemaran'}
-        >
-          <HeartIcon fill={isFavorite ? 'currentColor' : 'none'} />
-        </Button>
-      </div>
-      <SearchInPdf
-        searchKeyword={searchKeyword}
-        onSearchKeywordChange={onSearchKeywordChange}
-        currentMatchIndex={currentMatchIndex}
-        totalMatches={totalMatches}
-        onPreviousMatch={onPreviousMatch}
-        onNextMatch={onNextMatch}
-        isPdfLoaded={isPdfLoaded}
-        isIndexing={isIndexing}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPreviousPage={handlePreviousPage}
-        onNextPage={handleNextPage}
-      />
-      <div className="h-full min-h-0 w-full overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
-        <div className="h-full min-h-0 overflow-auto">
-          <PdfJsDocumentViewer
-            fileUrl={documentInfo?.path || ''}
-            searchKeyword={searchKeyword}
-            navigationRequest={navigationRequest}
-            pageNavigationRequest={pageNavigationRequest}
-            onSearchStateChange={onSearchStateChange}
-            onDocumentLoad={handleDocumentLoad}
-            onPageChange={handlePageChange}
+    <div className="flex h-full min-h-[480px] min-w-0 flex-1 flex-col border-y border-otl-gray-200 p-4 sm:p-6 md:min-h-0">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-dialog p-4 shadow-sm">
+        <SearchInPdf
+          searchKeyword={searchKeyword}
+          currentMatchIndex={currentMatchIndex}
+          totalMatches={totalMatches}
+          onPreviousMatch={onPreviousMatch}
+          onNextMatch={onNextMatch}
+          isPdfLoaded={isPdfLoaded}
+          isIndexing={isIndexing}
+        />
+        <DocumentPreviewHeader documentId={documentInfo?.documentID} title={documentInfo?.title}>
+          <DocumentMetaTags
+            documentProfile={documentInfo?.documentProfile}
+            recordDate={documentInfo?.recordDate}
           />
+        </DocumentPreviewHeader>
+        <div className="min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
+          <div className="h-full min-h-0 overflow-auto">
+            <PdfJsDocumentViewer
+              fileUrl={documentInfo?.path || ''}
+              searchKeyword={searchKeyword}
+              navigationRequest={navigationRequest}
+              onSearchStateChange={onSearchStateChange}
+              onMatchPagesChange={onMatchPagesChange}
+              onDocumentLoad={handleDocumentLoad}
+            />
+          </div>
         </div>
-      </div>
-      <div className="flex justify-between items-center pt-6">
-        <Button
-          variant="default-outline"
-          size="small"
-          className="gap-1.5"
-          onClick={handleCopyReference}
-          disabled={!documentInfo?.referencePath}
-        >
-          {isReferenceCopied ? 'Rujukan Disalin !' : 'Salin Rujukan'}
-        </Button>
-        <Button size="small" className="gap-1.5" onClick={handleBukaPratonton}>
-          Paparan Penuh
-        </Button>
       </div>
     </div>
   )

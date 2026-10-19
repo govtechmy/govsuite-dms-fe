@@ -77,6 +77,8 @@ export interface CatalogSearchResponse {
 export interface RecordSearchItem {
   recordId: string
   title: string
+  documentProfile?: string
+  recordDate?: string
 }
 
 export interface RecordSearchResponse {
@@ -403,10 +405,19 @@ export const getSearchRecordCarianDokumen = async ({
     const response = await authAxios.get(url)
     const payload = response.data?.data ?? response.data ?? {}
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
-      ? payload.items.map((item: { recordId?: string; title?: string }) => ({
-          recordId: String(item?.recordId ?? ''),
-          title: String(item?.title ?? ''),
-        }))
+      ? payload.items.map(
+          (item: {
+            recordId?: string
+            title?: string
+            documentProfile?: string
+            recordDate?: string
+          }) => ({
+            recordId: String(item?.recordId ?? ''),
+            title: String(item?.title ?? ''),
+            documentProfile: item?.documentProfile ?? '',
+            recordDate: item?.recordDate ?? '',
+          })
+        )
       : []
     const apiMeta = payload?.meta ?? {}
     const currentPage = Number(apiMeta.currentPage ?? page)

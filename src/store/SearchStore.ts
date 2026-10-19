@@ -6,6 +6,8 @@ import { getPdfGarage } from '@/services/pdf.svc'
 export interface DocumentRecord {
   documentId: string
   title: string
+  documentProfile?: string
+  recordDate?: string
 }
 
 export interface KeywordRecord {
@@ -19,6 +21,9 @@ export interface DocumentInfo {
   path: string
   referencePath?: string
   title?: string
+  documentProfile?: string
+  recordDate?: string
+  unit?: string
 }
 
 type SearchParamsPayload = {
@@ -59,6 +64,9 @@ type SearchStore = {
   searchMeta: CatalogListMeta | null
   dropdownUnits: DropdownUnit[]
   dropdownJenisDokumen: DropdownJenisDokumen[]
+  // One-off: the next search results load selects its last record instead of its first
+  // (used when navigating backwards across a results page boundary)
+  selectLastOnNextLoad: boolean
   setFromSearchParams: (payload: SearchParamsPayload) => void
   setQuery: (query: string) => void
   setJenisDokumen: (jenisDokumen: string) => void
@@ -76,8 +84,10 @@ type SearchStore = {
   setSearchMeta: (searchMeta: CatalogListMeta | null) => void
   setDropdownUnits: (dropdownUnits: DropdownUnit[]) => void
   setDropdownJenisDokumen: (dropdownJenisDokumen: DropdownJenisDokumen[]) => void
+  setSelectLastOnNextLoad: (selectLastOnNextLoad: boolean) => void
   resetSearchState: () => void
   fetchDocumentInfo: (documentId: string) => Promise<void>
+  selectDocument: (documentId: string) => void
 }
 
 export const useSearchStore = create<SearchStore>((set, get) => ({
@@ -98,6 +108,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   searchMeta: null,
   dropdownUnits: [],
   dropdownJenisDokumen: [],
+  selectLastOnNextLoad: false,
 
   setFromSearchParams: (payload) =>
     set({
@@ -136,6 +147,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setSearchMeta: (searchMeta) => set({ searchMeta }),
   setDropdownUnits: (dropdownUnits) => set({ dropdownUnits }),
   setDropdownJenisDokumen: (dropdownJenisDokumen) => set({ dropdownJenisDokumen }),
+  setSelectLastOnNextLoad: (selectLastOnNextLoad) => set({ selectLastOnNextLoad }),
   resetSearchState: () =>
     set({
       query: '',
@@ -185,6 +197,9 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
           path: response.data.url,
           referencePath: response.data.document?.path ?? '',
           title: response.data.document?.recordTitle ?? '',
+          documentProfile: response.data.document?.documentProfile ?? '',
+          recordDate: response.data.document?.recordDate ?? '',
+          unit: response.data.document?.unit ?? '',
         },
       })
     } catch (error) {
@@ -194,5 +209,13 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       console.error('Document info error:', error)
       set({ documentInfo: null })
     }
+  },
+  selectDocument: (documentId) => {
+    if (get().selectedDocumentId === documentId) {
+      return
+    }
+
+    set({ selectedDocumentId: documentId, selectedKeywordId: null })
+    void get().fetchDocumentInfo(documentId)
   },
 }))

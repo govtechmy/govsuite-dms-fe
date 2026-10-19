@@ -12,6 +12,7 @@ import { useParams } from 'react-router-dom'
 import { AutoToast } from '@govtechmy/myds-react/toast'
 import { useToast } from '@govtechmy/myds-react/hooks'
 import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
+import { apiAuthHeaders } from '@/services/http'
 import normalizeWord from '@/utils/NormalizeWord'
 import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
 import { getDropdownUnits, type DropdownUnit } from '@/services/dropdown.svc'
@@ -178,7 +179,7 @@ export default function DokumenIDPage() {
 
     setIsDownloading(true)
     try {
-      const response = await fetch(pdfData.url)
+      const response = await fetch(pdfData.url, { headers: apiAuthHeaders() })
       if (!response.ok) {
         throw new Error(`Failed to fetch PDF (${response.status})`)
       }
@@ -416,7 +417,7 @@ export default function DokumenIDPage() {
       setHtmlResult(null)
 
       try {
-        const pdfResponse = await fetch(pdfUrl)
+        const pdfResponse = await fetch(pdfUrl, { headers: apiAuthHeaders() })
         if (!pdfResponse.ok) {
           throw new Error(`Failed to fetch PDF (${pdfResponse.status})`)
         }
