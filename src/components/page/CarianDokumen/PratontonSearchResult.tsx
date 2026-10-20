@@ -1,13 +1,14 @@
 // import { DownloadIcon } from '@govtechmy/myds-react/icon'
-import PdfJsDocumentViewer, {
-  type PdfMatchPage,
-  type PdfSearchNavigationRequest,
-  type PdfSearchState,
+import type {
+  PdfMatchPage,
+  PdfSearchNavigationRequest,
+  PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
+import DocumentHtmlPreview from './DocumentHtmlPreview'
 import SearchInPdf from './SearchInPdf'
 import DocumentMetaTags from './DocumentMetaTags'
 import DocumentPreviewHeader from './DocumentPreviewHeader'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 // import { downloadFile } from '@/utils/downloadFile'
 
@@ -48,12 +49,11 @@ export default function PratontonSearchResult({
     setIsPdfLoaded(false)
   }, [documentInfo?.documentID])
 
-  const handleDocumentLoad = () => {
+  const handleDocumentLoad = useCallback(() => {
     setIsPdfLoaded(true)
     onDocumentLoad?.()
-  }
+  }, [onDocumentLoad])
 
-   
   // const handleDownloadDokumen = () => {
   //   if (!documentInfo?.path) {
   //     return
@@ -84,18 +84,15 @@ export default function PratontonSearchResult({
             recordDate={documentInfo?.recordDate}
           />
         </DocumentPreviewHeader>
-        <div className="min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
-          <div className="h-full min-h-0 overflow-auto">
-            <PdfJsDocumentViewer
-              fileUrl={documentInfo?.path || ''}
-              searchKeyword={searchKeyword}
-              navigationRequest={navigationRequest}
-              onSearchStateChange={onSearchStateChange}
-              onMatchPagesChange={onMatchPagesChange}
-              onDocumentLoad={handleDocumentLoad}
-            />
-          </div>
-        </div>
+        <DocumentHtmlPreview
+          documentId={documentInfo?.documentID}
+          fileUrl={documentInfo?.path}
+          searchKeyword={searchKeyword}
+          navigationRequest={navigationRequest}
+          onSearchStateChange={onSearchStateChange}
+          onMatchPagesChange={onMatchPagesChange}
+          onDocumentLoad={handleDocumentLoad}
+        />
       </div>
     </div>
   )

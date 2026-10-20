@@ -1,8 +1,8 @@
 import { Button } from '@govtechmy/myds-react/button'
 import { ChevronLeftIcon, ChevronRightIcon } from '@govtechmy/myds-react/icon'
-import PdfJsDocumentViewer from '@/components/shared/PdfJsDocumentViewer'
 import { useSearchStore } from '@/store/SearchStore'
 import DocumentMetaTags from './DocumentMetaTags'
+import DocumentHtmlPreview from './DocumentHtmlPreview'
 import DocumentPreviewHeader from './DocumentPreviewHeader'
 import { useSearchPage } from './useSearchPage'
 
@@ -96,11 +96,11 @@ export default function HybridPratontonSearchResult({
         <DocumentPreviewHeader documentId={documentInfo?.documentID} title={documentInfo?.title}>
           <DocumentMetaTags variant="plain" recordDate={documentInfo?.recordDate} unit={unitName} />
         </DocumentPreviewHeader>
-        <div className="min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
-          <div className="h-full min-h-0 overflow-auto">
-            <PdfJsDocumentViewer fileUrl={documentInfo?.path || ''} searchKeyword={searchKeyword} />
-          </div>
-        </div>
+        <DocumentHtmlPreview
+          documentId={documentInfo?.documentID}
+          fileUrl={documentInfo?.path}
+          searchKeyword={searchKeyword}
+        />
       </div>
     </div>
   )

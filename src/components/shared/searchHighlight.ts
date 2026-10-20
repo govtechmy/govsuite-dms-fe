@@ -2,6 +2,7 @@ import { Extension, type Editor } from '@tiptap/core'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import type { PdfMatchPage } from './PdfJsDocumentViewer'
 
 type SearchMatchRange = {
   from: number
@@ -14,6 +15,7 @@ interface SearchHighlightState {
   activeIndex: number
   totalMatches: number
   ranges: SearchMatchRange[]
+  matchPages: PdfMatchPage[]
   decorations: DecorationSet
 }
 
@@ -27,18 +29,25 @@ export const searchHighlightKey = new PluginKey<SearchHighlightState>('searchHig
 // Text is split across styled spans and per-line blocks, so join it into one
 // string and map each match back to document positions. A match spanning
 // several text nodes becomes several ranges sharing the same index.
+// Matches are grouped by the 1-based page they start on.
 const findMatches = (doc: ProseMirrorNode, keyword: string) => {
   const ranges: SearchMatchRange[] = []
+  const matchPages: PdfMatchPage[] = []
 
   if (!keyword) {
-    return { ranges, totalMatches: 0 }
+    return { ranges, matchPages, totalMatches: 0 }
   }
 
   let fullText = ''
   let startsNewBlock = false
-  const segments: { start: number; end: number; pos: number }[] = []
+  let pageNumber = 0
+  const segments: { start: number; end: number; pos: number; page: number }[] = []
 
   doc.descendants((node, pos) => {
+    if (node.type.name === 'page') {
+      pageNumber += 1
+    }
+
     if (!node.isText) {
       if (node.isTextblock || node.isInline) {
         startsNewBlock = true
@@ -52,7 +61,12 @@ const findMatches = (doc: ProseMirrorNode, keyword: string) => {
     }
     startsNewBlock = false
 
-    segments.push({ start: fullText.length, end: fullText.length + text.length, pos })
+    segments.push({
+      start: fullText.length,
+      end: fullText.length + text.length,
+      pos,
+      page: pageNumber,
+    })
     fullText += text
   })
 
@@ -66,6 +80,14 @@ const findMatches = (doc: ProseMirrorNode, keyword: string) => {
 
     while (segmentPointer < segments.length && segments[segmentPointer].end <= searchPosition) {
       segmentPointer += 1
+    }
+
+    const matchPage = segments[segmentPointer]?.page ?? pageNumber
+    const lastMatchPage = matchPages[matchPages.length - 1]
+    if (lastMatchPage?.page === matchPage) {
+      lastMatchPage.matchCount += 1
+    } else {
+      matchPages.push({ page: matchPage, firstMatchIndex: totalMatches, matchCount: 1 })
     }
 
     for (let i = segmentPointer; i < segments.length && segments[i].start < matchEnd; i += 1) {
@@ -86,7 +108,7 @@ const findMatches = (doc: ProseMirrorNode, keyword: string) => {
     searchPosition = normalizedText.indexOf(keyword, matchEnd)
   }
 
-  return { ranges, totalMatches }
+  return { ranges, matchPages, totalMatches }
 }
 
 const buildDecorations = (doc: ProseMirrorNode, ranges: SearchMatchRange[], activeIndex: number) =>
@@ -121,6 +143,7 @@ export const SearchHighlight = Extension.create({
             activeIndex: -1,
             totalMatches: 0,
             ranges: [],
+            matchPages: [],
             decorations: DecorationSet.empty,
           }),
           apply(tr, previous, _oldState, newState) {
@@ -132,7 +155,7 @@ export const SearchHighlight = Extension.create({
 
             const keyword = meta?.keyword?.trim().toLocaleLowerCase() ?? previous.keyword
             const isNewSearch = tr.docChanged || keyword !== previous.keyword
-            const { ranges, totalMatches } = isNewSearch
+            const { ranges, matchPages, totalMatches } = isNewSearch
               ? findMatches(newState.doc, keyword)
               : previous
             const activeIndex =
@@ -144,6 +167,7 @@ export const SearchHighlight = Extension.create({
               activeIndex,
               totalMatches,
               ranges,
+              matchPages,
               decorations: buildDecorations(newState.doc, ranges, activeIndex),
             }
           },

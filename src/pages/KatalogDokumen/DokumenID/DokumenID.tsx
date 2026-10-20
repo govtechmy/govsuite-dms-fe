@@ -3,7 +3,7 @@ import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
-import DokumenHtmlContentID from '@/components/page/KatalogDokumen/DokumenID/DokumenHtmlContentID'
+import PdfHtmlDocumentViewer from '@/components/shared/PdfHtmlDocumentViewer'
 import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/HeaderDokumenID'
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
@@ -28,14 +28,7 @@ import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval
 import extractBackendError from '@/utils/extractBackendError'
 import { useShareDocumentStore } from '@/store/ShareDocumentStore'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
-import {
-  getPdfConvertStatus,
-  postPdfConvert,
-  type PdfConvertResult,
-} from '@/services/pdfConvert.svc'
-
-const PDF_CONVERT_POLL_INTERVAL_MS = 1000
-const PDF_CONVERT_TIMEOUT_MS = 3 * 60 * 1000
+import { usePdfHtmlConversion } from '@/hooks/usePdfHtmlConversion'
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
@@ -45,8 +38,6 @@ export default function DokumenIDPage() {
   const [dokumenFetchState, setDokumenFetchState] = useState<ProgressState>(null)
   const [dokumenFetchError, setDokumenFetchError] = useState<PdfGarageError | null>(null)
   const [pdfData, setPdfData] = useState<PdfGarageBase | null>(null)
-  const [htmlConvertState, setHtmlConvertState] = useState<ProgressState>(null)
-  const [htmlResult, setHtmlResult] = useState<PdfConvertResult | null>(null)
   const [metadataDocument, setMetadataDocument] = useState<MetadataDocument | null>(null)
   const [approvalError, setApprovalError] = useState<{ code: string; message: string } | null>(null)
   const [disapprovalError, setDisapprovalError] = useState<{
@@ -405,60 +396,10 @@ export default function DokumenIDPage() {
   }, [])
 
   // To processed html from pdf-page-cast
-  const pdfUrl = pdfData?.url
-
-  useEffect(() => {
-    if (!pdfUrl) return
-
-    let cancelled = false
-
-    const fetchNewData = async () => {
-      setHtmlConvertState('loading')
-      setHtmlResult(null)
-
-      try {
-        const pdfResponse = await fetch(pdfUrl, { headers: apiAuthHeaders() })
-        if (!pdfResponse.ok) {
-          throw new Error(`Failed to fetch PDF (${pdfResponse.status})`)
-        }
-        const pdfBlob = await pdfResponse.blob()
-        const { jobId } = await postPdfConvert(pdfBlob, `${DokumenID ?? 'document'}.pdf`)
-        const deadline = Date.now() + PDF_CONVERT_TIMEOUT_MS
-
-        while (!cancelled) {
-          const job = await getPdfConvertStatus(jobId)
-          if (cancelled) return
-
-          if (job.status === 'completed' && job.result?.html) {
-            setHtmlResult(job.result)
-            setHtmlConvertState('success')
-            return
-          }
-
-          if (job.status === 'failed' || job.status === 'completed') {
-            throw new Error(job.error ?? 'pdf-page-cast returned no HTML')
-          }
-
-          if (Date.now() >= deadline) {
-            throw new Error(`pdf-page-cast job ${jobId} timed out`)
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, PDF_CONVERT_POLL_INTERVAL_MS))
-        }
-      } catch (error) {
-        console.error('Error converting PDF via pdf-page-cast:', error)
-        if (!cancelled) {
-          setHtmlConvertState('error')
-        }
-      }
-    }
-
-    fetchNewData()
-
-    return () => {
-      cancelled = true
-    }
-  }, [pdfUrl, DokumenID])
+  const { state: htmlConvertState, result: htmlResult } = usePdfHtmlConversion(
+    pdfData?.url,
+    `${DokumenID ?? 'document'}.pdf`
+  )
 
   useEffect(() => {
     setSearchKeyword('')
@@ -526,7 +467,7 @@ export default function DokumenIDPage() {
             onNextPage={handleNextPage}
           />
           {htmlConvertState === 'success' && htmlResult ? (
-            <DokumenHtmlContentID
+            <PdfHtmlDocumentViewer
               html={htmlResult.html}
               baseStyle={htmlResult.baseStyle}
               searchKeyword={searchKeyword}

@@ -39,7 +39,6 @@ export const postPdfConvert = async (file: Blob, fileName: string): Promise<PdfU
   formData.append('file', file, fileName)
 
   const response = await unauthAxios.post<PdfUploadResponse>(url, formData)
-  console.log(response.data)
   return response.data
 }
 
@@ -50,6 +49,5 @@ export const postPdfConvert = async (file: Blob, fileName: string): Promise<PdfU
 export const getPdfConvertStatus = async (jobId: string): Promise<PdfConvertStatusResponse> => {
   const url = `${getEnv('VITE_PDF_SERVICE_URL')}/api/validation-status/${encodeURIComponent(jobId)}`
   const response = await unauthAxios.get<PdfConvertStatusResponse>(url)
-  console.log(response.data)
   return response.data
 }

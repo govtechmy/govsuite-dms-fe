@@ -4,22 +4,28 @@ import { StarterKit } from '@tiptap/starter-kit'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { TextStyleKit } from '@tiptap/extension-text-style'
 import { Image } from '@tiptap/extension-image'
+import type { CSSProperties } from 'react'
 import type {
+  PdfMatchPage,
   PdfPageNavigationRequest,
   PdfSearchNavigationRequest,
   PdfSearchState,
-} from '@/components/shared/PdfJsDocumentViewer'
+} from './PdfJsDocumentViewer'
 import type { PdfConvertResult } from '@/services/pdfConvert.svc'
+import { PageVisibility, setVisiblePage } from './pageVisibility'
 import { FrameNode, PageDocument, PageNode } from './pdfPageNodes'
 import { SearchHighlight, searchHighlightKey, setSearchHighlight } from './searchHighlight'
 
-interface DokumenHtmlContentIDProps {
+interface PdfHtmlDocumentViewerProps {
   html: string
   baseStyle?: PdfConvertResult['baseStyle']
   searchKeyword: string
+  // Show only the page holding the active match (page 1 when nothing matches)
+  singlePage?: boolean
   navigationRequest?: PdfSearchNavigationRequest | null
   pageNavigationRequest?: PdfPageNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
+  onMatchPagesChange?: (pages: PdfMatchPage[]) => void
   onDocumentLoad?: () => void
   onPageChange?: (currentPage: number, totalPages: number) => void
 }
@@ -35,18 +41,23 @@ const toBaseCss = (baseStyle?: PdfConvertResult['baseStyle']) =>
     .filter(Boolean)
     .join('; ')
 
-export default function DokumenHtmlContentID({
+export default function PdfHtmlDocumentViewer({
   html,
   baseStyle,
   searchKeyword,
+  singlePage = false,
   navigationRequest,
   pageNavigationRequest,
   onSearchStateChange,
+  onMatchPagesChange,
   onDocumentLoad,
   onPageChange,
-}: DokumenHtmlContentIDProps) {
+}: PdfHtmlDocumentViewerProps) {
   const [pageElements, setPageElements] = useState<HTMLElement[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [pageScale, setPageScale] = useState(1)
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const pageScaleRef = useRef(1)
   const handledNavigationTokenRef = useRef<number | null>(null)
   const handledPageNavigationTokenRef = useRef<number | null>(null)
   // While a page-navigation scroll is animating, pages in between briefly become
@@ -68,6 +79,7 @@ export default function DokumenHtmlContentID({
       TextStyleKit,
       Image.configure({ inline: false, allowBase64: true }),
       SearchHighlight,
+      PageVisibility,
     ],
     content: html,
     editorProps: {
@@ -86,11 +98,19 @@ export default function DokumenHtmlContentID({
       return {
         totalMatches: state?.totalMatches ?? 0,
         activeIndex: state?.activeIndex ?? -1,
+        matchPages: state?.matchPages ?? [],
       }
     },
   })
   const totalMatches = searchState?.totalMatches ?? 0
   const activeIndex = searchState?.activeIndex ?? -1
+  const matchPages = searchState?.matchPages
+  const activeMatchPage =
+    matchPages?.find(
+      ({ firstMatchIndex, matchCount }) =>
+        activeIndex >= firstMatchIndex && activeIndex < firstMatchIndex + matchCount
+    )?.page ?? 1
+  const visiblePage = singlePage ? activeMatchPage : null
 
   useEffect(() => {
     if (editor && html !== editor.getHTML()) {
@@ -118,6 +138,13 @@ export default function DokumenHtmlContentID({
       setSearchHighlight(editor, { keyword: searchKeyword })
     }
   }, [editor, searchKeyword])
+
+  // Runs before the active-match scroll below so the target page is shown first
+  useEffect(() => {
+    if (editor) {
+      setVisiblePage(editor, visiblePage)
+    }
+  }, [editor, visiblePage])
 
   useEffect(() => {
     if (
@@ -156,6 +183,47 @@ export default function DokumenHtmlContentID({
   useEffect(() => {
     onSearchStateChange?.({ totalMatches, currentMatchIndex: activeIndex, isIndexing: false })
   }, [totalMatches, activeIndex, onSearchStateChange])
+
+  useEffect(() => {
+    if (matchPages) {
+      onMatchPagesChange?.(matchPages)
+    }
+  }, [matchPages, onMatchPagesChange])
+
+  // Pages keep the converter's fixed size; shrink them all by one factor so the
+  // widest page fits the viewport. CSS zoom also shrinks the layout box, so
+  // scrolling and page visibility tracking keep working on the scaled pages.
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport || pageElements.length === 0) return
+
+    const updatePageScale = () => {
+      const { paddingLeft, paddingRight } = getComputedStyle(viewport)
+      const availableWidth =
+        viewport.clientWidth - parseFloat(paddingLeft) - parseFloat(paddingRight)
+      // Rendered widths already include the current zoom, so undo it first.
+      // Hidden pages measure 0 and are ignored
+      const widestPageWidth = Math.max(
+        ...pageElements.map(
+          (pageElement) => pageElement.getBoundingClientRect().width / pageScaleRef.current
+        )
+      )
+
+      if (availableWidth <= 0 || widestPageWidth <= 0) return
+
+      const nextScale = Math.min(1, availableWidth / widestPageWidth)
+      if (Math.abs(nextScale - pageScaleRef.current) < 0.001) return
+
+      pageScaleRef.current = nextScale
+      setPageScale(nextScale)
+    }
+
+    updatePageScale()
+
+    const resizeObserver = new ResizeObserver(updatePageScale)
+    resizeObserver.observe(viewport)
+    return () => resizeObserver.disconnect()
+  }, [pageElements, visiblePage])
 
   useEffect(() => {
     if (
@@ -226,7 +294,11 @@ export default function DokumenHtmlContentID({
   }, [currentPage, pageElements.length, onPageChange])
 
   return (
-    <div className="w-full overflow-x-auto p-3">
+    <div
+      ref={viewportRef}
+      className="w-full overflow-x-auto p-3"
+      style={{ '--pdf-page-scale': pageScale } as CSSProperties}
+    >
       <EditorContent editor={editor} />
     </div>
   )
