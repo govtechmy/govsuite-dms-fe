@@ -3,17 +3,19 @@ set -eu
 
 # DEPLOY_ENV (plan.md §2): development = plain HTTP on :80 (plan.md Phase A).
 # production (TLS on :443, plan.md B4) isn't built yet, so it's refused
-# rather than silently serving plain HTTP. Unset = development with a warning.
-case "${DEPLOY_ENV:-}" in
+# rather than silently serving plain HTTP. Unset, a typo or any other value
+# (prod, produciton, …) runs development, with a warning; case is ignored (Production = production): only
+# "production" (any case) selects production.
+DEPLOY_ENV=$(printf '%s' "${DEPLOY_ENV:-}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')   # case and spaces ignored: Production = production
+case "$DEPLOY_ENV" in
   development) ;;
-  "") echo "DEPLOY_ENV not set: running development (no TLS)" ;;
+  "") echo "⚠️  DEPLOY_ENV not set: DEPLOYMENT ENVIRONMENT = DEVELOPMENT (no TLS)" ;;
   production)
     echo "DEPLOY_ENV=production is not implemented for the edge yet (plan.md Phase B, B4)" >&2
     exit 1
     ;;
   *)
-    echo "DEPLOY_ENV must be 'development' or 'production' (got '${DEPLOY_ENV}')" >&2
-    exit 1
+    echo "⚠️  DEPLOY_ENV='${DEPLOY_ENV}' not recognised: DEPLOYMENT ENVIRONMENT = DEVELOPMENT (no TLS)"
     ;;
 esac
 

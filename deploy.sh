@@ -4,7 +4,7 @@ set -euo pipefail
 # Deploys the edge (frontend nginx) on BM1. Reads frontend.env.
 #   DEPLOY_ENV=development -> plain HTTP on 0.0.0.0:80 (plan.md Phase A)
 #   DEPLOY_ENV=production  -> refused: TLS edge not implemented yet (plan.md B4)
-# Unset falls back to development with a warning; any other value is refused.
+# Unset, a typo or any other value (prod, produciton, …) runs development, with a warning; case and spaces are ignored, so only "production" (Production, PRODUCTION, …) selects production.
 # (The compose profile is called "production"; that's only its name, not DEPLOY_ENV.)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -70,10 +70,11 @@ if [ ! -f "$COMPOSE_FILE" ]; then
 fi
 
 DEPLOY_ENV=$(grep -E '^DEPLOY_ENV=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2- | tr -d '[:space:]"'"'"'' || true)
+DEPLOY_ENV=$(printf '%s' "${DEPLOY_ENV:-}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')   # case and spaces ignored: Production = production
 case "$DEPLOY_ENV" in
   development) ;;
   "")
-    echo "⚠️  DEPLOY_ENV not set: running development (no TLS)"
+    echo "⚠️  DEPLOY_ENV not set: DEPLOYMENT ENVIRONMENT = DEVELOPMENT (no TLS)"
     DEPLOY_ENV=development
     ;;
   production)
@@ -81,8 +82,10 @@ case "$DEPLOY_ENV" in
     exit 1
     ;;
   *)
-    echo "❌ Error: DEPLOY_ENV must be 'development' or 'production' (got '$DEPLOY_ENV')"
-    exit 1
+    # Typos or unknown values (e.g. prod, produciton) run as development: only the
+    # value "production" (any case; normalised above) selects production mode.
+    echo "⚠️  DEPLOY_ENV='$DEPLOY_ENV' not recognised: DEPLOYMENT ENVIRONMENT = DEVELOPMENT (no TLS)"
+    DEPLOY_ENV=development
     ;;
 esac
 
