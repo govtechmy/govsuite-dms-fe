@@ -3,8 +3,9 @@ import { unauthAxios } from './http'
 
 export interface PdfConvertResult {
   success: boolean
-  data: string
-  html: string
+  // Only sent with ?includeHtml=true; page HTML otherwise comes from getPdfConvertPages
+  data?: string
+  html?: string
   baseStyle?: {
     fontFamily?: string | null
     fontSize?: string | null
@@ -29,6 +30,28 @@ export interface PdfConvertStatusResponse {
   error?: string | null
 }
 
+export interface PdfConvertPage {
+  page: number
+  html: string
+  width: number
+  height: number
+}
+
+export interface PdfConvertPagesMeta {
+  currentPage: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+
+export interface PdfConvertPagesResponse {
+  items: PdfConvertPage[]
+  baseStyle: PdfConvertResult['baseStyle']
+  meta: PdfConvertPagesMeta
+}
+
 /**
  * Upload a PDF to the PDF conversion FastAPI service; conversion runs as a background job.
  * POST /api/upload
@@ -49,5 +72,18 @@ export const postPdfConvert = async (file: Blob, fileName: string): Promise<PdfU
 export const getPdfConvertStatus = async (jobId: string): Promise<PdfConvertStatusResponse> => {
   const url = `${getEnv('VITE_PDF_SERVICE_URL')}/api/validation-status/${encodeURIComponent(jobId)}`
   const response = await unauthAxios.get<PdfConvertStatusResponse>(url)
+  return response.data
+}
+
+/**
+ * Fetch a completed job's converted pages in chunks; each item is one PDF page.
+ * GET /api/result/:jobId?page=&pageSize=
+ */
+export const getPdfConvertPages = async (
+  jobId: string,
+  params: { page: number; pageSize: number }
+): Promise<PdfConvertPagesResponse> => {
+  const url = `${getEnv('VITE_PDF_SERVICE_URL')}/api/result/${encodeURIComponent(jobId)}`
+  const response = await unauthAxios.get<PdfConvertPagesResponse>(url, { params })
   return response.data
 }

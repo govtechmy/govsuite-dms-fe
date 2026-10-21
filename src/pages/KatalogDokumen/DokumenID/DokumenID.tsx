@@ -396,10 +396,13 @@ export default function DokumenIDPage() {
   }, [])
 
   // To processed html from pdf-page-cast
-  const { state: htmlConvertState, result: htmlResult } = usePdfHtmlConversion(
-    pdfData?.url,
-    `${DokumenID ?? 'document'}.pdf`
-  )
+  const {
+    state: htmlConvertState,
+    result: htmlResult,
+    isLoadingMore: isLoadingMorePages,
+    loadMoreFailed: loadMorePagesFailed,
+    loadMore: loadMorePages,
+  } = usePdfHtmlConversion(pdfData?.url, `${DokumenID ?? 'document'}.pdf`)
 
   useEffect(() => {
     setSearchKeyword('')
@@ -468,7 +471,11 @@ export default function DokumenIDPage() {
           />
           {htmlConvertState === 'success' && htmlResult ? (
             <PdfHtmlDocumentViewer
-              html={htmlResult.html}
+              pages={htmlResult.pages}
+              totalPages={htmlResult.totalPages}
+              isLoadingMore={isLoadingMorePages}
+              loadMoreFailed={loadMorePagesFailed}
+              onLoadMore={loadMorePages}
               baseStyle={htmlResult.baseStyle}
               searchKeyword={searchKeyword}
               navigationRequest={navigationRequest}

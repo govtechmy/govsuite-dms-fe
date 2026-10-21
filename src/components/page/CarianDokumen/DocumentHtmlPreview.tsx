@@ -25,7 +25,10 @@ export default function DocumentHtmlPreview({
   onMatchPagesChange,
   onDocumentLoad,
 }: DocumentHtmlPreviewProps) {
-  const { state, result } = usePdfHtmlConversion(fileUrl, `${documentId ?? 'document'}.pdf`)
+  const { state, result, isLoadingMore, loadMoreFailed, loadMore } = usePdfHtmlConversion(
+    fileUrl,
+    `${documentId ?? 'document'}.pdf`
+  )
 
   const statusMessage = !fileUrl
     ? 'Tiada dokumen untuk dipaparkan.'
@@ -39,7 +42,11 @@ export default function DocumentHtmlPreview({
         {fileUrl && state === 'success' && result ? (
           <PdfHtmlDocumentViewer
             key={fileUrl}
-            html={result.html}
+            pages={result.pages}
+            totalPages={result.totalPages}
+            isLoadingMore={isLoadingMore}
+            loadMoreFailed={loadMoreFailed}
+            onLoadMore={loadMore}
             baseStyle={result.baseStyle}
             searchKeyword={searchKeyword}
             singlePage

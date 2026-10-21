@@ -154,13 +154,16 @@ export const SearchHighlight = Extension.create({
             }
 
             const keyword = meta?.keyword?.trim().toLocaleLowerCase() ?? previous.keyword
-            const isNewSearch = tr.docChanged || keyword !== previous.keyword
-            const { ranges, matchPages, totalMatches } = isNewSearch
-              ? findMatches(newState.doc, keyword)
-              : previous
+            const isNewKeyword = keyword !== previous.keyword
+            const { ranges, matchPages, totalMatches } =
+              isNewKeyword || tr.docChanged ? findMatches(newState.doc, keyword) : previous
+            // Pages loaded later are appended, which leaves earlier match indexes
+            // unchanged, so the active match is kept while the keyword stays the same
+            const keepsActiveMatch =
+              !isNewKeyword && previous.activeIndex >= 0 && previous.activeIndex < totalMatches
             const activeIndex =
               meta?.activeIndex ??
-              (isNewSearch ? (totalMatches > 0 ? 0 : -1) : previous.activeIndex)
+              (keepsActiveMatch ? previous.activeIndex : totalMatches > 0 ? 0 : -1)
 
             return {
               keyword,
