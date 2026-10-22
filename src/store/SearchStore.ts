@@ -8,6 +8,8 @@ export interface DocumentRecord {
   title: string
   documentProfile?: string
   recordDate?: string
+  fileType?: string
+  fileExtension?: string
 }
 
 export interface KeywordRecord {
@@ -24,6 +26,8 @@ export interface DocumentInfo {
   documentProfile?: string
   recordDate?: string
   unit?: string
+  fileType?: string
+  fileExtension?: string
 }
 
 type SearchParamsPayload = {
@@ -200,6 +204,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
           documentProfile: response.data.document?.documentProfile ?? '',
           recordDate: response.data.document?.recordDate ?? '',
           unit: response.data.document?.unit ?? '',
+          fileType: response.data.meta?.fileType ?? '',
+          fileExtension: response.data.meta?.fileExtension ?? '',
         },
       })
     } catch (error) {

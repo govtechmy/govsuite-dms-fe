@@ -94,7 +94,13 @@ export default function HybridPratontonSearchResult({
           </div>
         </div>
         <DocumentPreviewHeader documentId={documentInfo?.documentID} title={documentInfo?.title}>
-          <DocumentMetaTags variant="plain" recordDate={documentInfo?.recordDate} unit={unitName} />
+          <DocumentMetaTags
+            variant="plain"
+            recordDate={documentInfo?.recordDate}
+            unit={unitName}
+            fileType={documentInfo?.fileType}
+            fileExtension={documentInfo?.fileExtension}
+          />
         </DocumentPreviewHeader>
         <DocumentHtmlPreview
           documentId={documentInfo?.documentID}

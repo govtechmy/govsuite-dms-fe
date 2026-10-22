@@ -25,7 +25,10 @@ export default function DocumentPreviewHeader({
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-otl-primary-200 bg-bg-primary-50 p-3">
       <div className="flex items-start gap-3">
-        <h3 className="flex-1 text-base font-semibold leading-6 tracking-normal text-txt-black-900 line-clamp-2">
+        <h3
+          title={title || undefined}
+          className="line-clamp-2 min-w-0 flex-1 break-words text-base font-semibold leading-6 tracking-normal text-txt-black-900"
+        >
           {title || 'Pratonton'}
         </h3>
         <Button

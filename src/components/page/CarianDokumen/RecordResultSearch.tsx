@@ -38,7 +38,7 @@ export default function RecordResultSearch() {
   }
 
   return (
-    <div className="flex max-h-[640px] w-full flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-dialog p-4 shadow-sm md:max-h-none md:min-h-0 md:flex-1">
+    <div className="flex max-h-[640px] w-full flex-col gap-3 rounded-lg border border-otl-gray-200 bg-bg-dialog p-4 shadow-sm md:max-h-none md:min-h-0 md:flex-1 xl:w-[334px]">
       <div className="flex w-full items-center gap-6">
         <p className="flex-1 text-body-sm font-medium text-txt-black-700">
           {totalItems > 0 ? `${totalItems} rekod ditemui` : 'Tiada rekod ditemui'}
@@ -72,8 +72,9 @@ export default function RecordResultSearch() {
               >
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <p
+                    title={record.title}
                     className={clx(
-                      'text-body-sm font-medium',
+                      'line-clamp-2 break-words text-body-sm font-medium',
                       isSelected ? 'text-txt-primary' : 'text-txt-black-900'
                     )}
                   >
@@ -82,6 +83,8 @@ export default function RecordResultSearch() {
                   <DocumentMetaTags
                     documentProfile={record.documentProfile}
                     recordDate={record.recordDate}
+                    fileType={record.fileType}
+                    fileExtension={record.fileExtension}
                   />
                 </div>
                 {isSelected && (

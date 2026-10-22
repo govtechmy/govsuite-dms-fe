@@ -110,6 +110,8 @@ export default function CarianDokumenPage() {
         title: item.title,
         documentProfile: item.documentProfile,
         recordDate: item.recordDate,
+        fileType: item.fileType,
+        fileExtension: item.fileExtension,
       }))
 
       setDocumentRecords(documents)

@@ -56,7 +56,10 @@ export default function SearchInPdf({
         </Button>
       </div>
       {displayText && (
-        <p className="min-w-0 truncate text-xs font-medium leading-[18px] tracking-normal text-txt-black-700" aria-live="polite">
+        <p
+          className="min-w-0 truncate text-xs font-medium leading-[18px] tracking-normal text-txt-black-700"
+          aria-live="polite"
+        >
           {displayText}
         </p>
       )}

@@ -150,7 +150,7 @@ export default function FullTextSearchResults() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch md:flex-row">
-        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 border-y py-6 md:h-full md:w-[280px] lg:w-[320px] md:self-stretch md:pl-6">
+        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 border-y py-6 md:h-full md:w-[280px] lg:w-[320px] md:self-stretch md:pl-6 xl:w-auto">
           <RecordResultSearch />
 
           {/* <WordsResultSearch
@@ -159,10 +159,9 @@ export default function FullTextSearchResults() {
             onKeywordSelect={onKeywordSelect}
           /> */}
         </div>
-        <div className="flex min-h-0 w-full shrink-0 flex-col border-y py-6 md:h-full md:w-[160px] lg:w-[200px] md:self-stretch md:pl-6">
+        <div className="flex min-h-0 w-full shrink-0 flex-col border-y py-6 md:h-full md:w-[160px] lg:w-[200px] md:self-stretch md:pl-6 xl:w-auto">
           <MatchPageSearch
             matchPages={matchPages}
-            totalMatches={pdfSearchState.totalMatches}
             activeMatchIndex={pdfSearchState.currentMatchIndex}
             isLoading={!isPdfLoaded || pdfSearchState.isIndexing}
             onSelect={handleMatchPageSelect}

@@ -78,6 +78,8 @@ export default function HybridRecordResultSearch() {
                 <DocumentMetaTags
                   documentProfile={record.documentProfile}
                   recordDate={record.recordDate}
+                  fileType={record.fileType}
+                  fileExtension={record.fileExtension}
                 />
               </button>
             </li>

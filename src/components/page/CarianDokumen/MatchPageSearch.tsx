@@ -5,7 +5,6 @@ import type { PdfMatchPage } from '@/components/shared/PdfJsDocumentViewer'
 
 interface MatchPageSearchProps {
   matchPages: PdfMatchPage[]
-  totalMatches: number
   activeMatchIndex: number
   isLoading: boolean
   onSelect: (firstMatchIndex: number) => void
@@ -13,7 +12,6 @@ interface MatchPageSearchProps {
 
 export default function MatchPageSearch({
   matchPages,
-  totalMatches,
   activeMatchIndex,
   isLoading,
   onSelect,
@@ -31,19 +29,19 @@ export default function MatchPageSearch({
   }, [activePage])
 
   return (
-    <div className="flex h-full max-h-[320px] w-full flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-dialog p-4 shadow-sm md:max-h-none">
-      <p className="text-sm font-medium leading-5 tracking-normal text-txt-black-900">
-        {isLoading ? 'Perkataan ditemui' : `${totalMatches} perkataan ditemui`}
+    <div className="flex h-full max-h-[320px] w-full flex-col gap-3 rounded-lg border border-otl-gray-200 bg-bg-dialog py-2 shadow-sm md:h-[590px] md:max-h-full xl:w-[186px]">
+      <p className="px-4 text-sm font-medium leading-5 tracking-normal text-txt-black-900">
+        {isLoading ? 'Muka surat ditemui' : `${matchPages.length} muka surat ditemui`}
       </p>
 
       {isLoading ? (
-        <p className="text-body-sm text-txt-black-500">Dokumen sedang dimuatkan...</p>
+        <p className="px-4 text-body-sm text-txt-black-500">Dokumen sedang dimuatkan...</p>
       ) : matchPages.length === 0 ? (
-        <p className="text-body-sm text-txt-black-500">
+        <p className="px-4 text-body-sm text-txt-black-500">
           Tiada perkataan ditemui dalam dokumen ini.
         </p>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4">
           {matchPages.map((matchPage, index) => {
             const isActive = matchPage.page === activePage
             return (
@@ -63,8 +61,10 @@ export default function MatchPageSearch({
                 <span className="text-body-sm font-semibold text-txt-black-900">
                   Tindakan {index + 1}
                 </span>
-                <Tag mode="pill" size="small">
-                  Muka surat {matchPage.page}
+                <Tag size="small" className="rounded-sm">
+                  <span className="text-[10px] font-normal leading-[12px]">
+                    Muka surat {matchPage.page}
+                  </span>
                 </Tag>
               </button>
             )

@@ -79,6 +79,8 @@ export interface RecordSearchItem {
   title: string
   documentProfile?: string
   recordDate?: string
+  fileType?: string
+  fileExtension?: string
 }
 
 export interface RecordSearchResponse {
@@ -411,11 +413,14 @@ export const getSearchRecordCarianDokumen = async ({
             title?: string
             documentProfile?: string
             recordDate?: string
+            file?: { type?: string; extension?: string }
           }) => ({
             recordId: String(item?.recordId ?? ''),
             title: String(item?.title ?? ''),
             documentProfile: item?.documentProfile ?? '',
             recordDate: item?.recordDate ?? '',
+            fileType: item?.file?.type ?? '',
+            fileExtension: item?.file?.extension ?? '',
           })
         )
       : []
