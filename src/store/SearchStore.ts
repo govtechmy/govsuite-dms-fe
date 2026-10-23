@@ -1,5 +1,9 @@
 import { create } from 'zustand'
-import type { CatalogListMeta } from '@/services/catalog.svc'
+import {
+  getSearchRecordCarianDokumen,
+  type CatalogListMeta,
+  type RecordSearchItem,
+} from '@/services/catalog.svc'
 import type { DropdownJenisDokumen, DropdownUnit } from '@/services/dropdown.svc'
 import { getPdfGarage } from '@/services/pdf.svc'
 
@@ -14,6 +18,18 @@ export interface DocumentRecord {
   snippet?: string
   relevancePercent?: number
 }
+
+export const toDocumentRecord = (item: RecordSearchItem): DocumentRecord => ({
+  documentId: item.recordId,
+  title: item.title,
+  documentProfile: item.documentProfile,
+  recordDate: item.recordDate,
+  fileType: item.fileType,
+  fileExtension: item.fileExtension,
+  pageNumber: item.pageNumber,
+  snippet: item.snippet,
+  relevancePercent: item.relevancePercent,
+})
 
 export interface KeywordRecord {
   keyword: string
@@ -52,6 +68,9 @@ const normalizePageNumber = (value: number) => Math.max(1, value || DEFAULT_PAGE
 const normalizePageSize = (value: number) => Math.max(1, value || DEFAULT_PAGE_SIZE)
 
 let latestDocumentInfoRequestToken = 0
+// Bumped whenever the record list is replaced, so an in-flight "load more" for the
+// previous list is ignored
+let documentRecordsVersion = 0
 
 type SearchStore = {
   query: string
@@ -63,6 +82,8 @@ type SearchStore = {
   pageNumber: number
   pageSize: number
   isLoadingSearch: boolean
+  isLoadingMoreRecords: boolean
+  loadMoreRecordsFailed: boolean
   documentRecords: DocumentRecord[]
   selectedDocumentId: string | null
   // Position of the selected result in documentRecords. Hybrid results are per matched
@@ -97,6 +118,8 @@ type SearchStore = {
   setSelectLastOnNextLoad: (selectLastOnNextLoad: boolean) => void
   resetSearchState: () => void
   fetchDocumentInfo: (documentId: string) => Promise<void>
+  // Appends the next page of full-text search results (lazy loading)
+  loadMoreDocumentRecords: () => Promise<void>
   selectDocument: (documentId: string, resultIndex?: number) => void
 }
 
@@ -110,6 +133,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   pageNumber: DEFAULT_PAGE_NUMBER,
   pageSize: DEFAULT_PAGE_SIZE,
   isLoadingSearch: false,
+  isLoadingMoreRecords: false,
+  loadMoreRecordsFailed: false,
   documentRecords: [],
   selectedDocumentId: null,
   selectedResultIndex: null,
@@ -150,7 +175,10 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       pageNumber: DEFAULT_PAGE_NUMBER,
     }),
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
-  setDocumentRecords: (documentRecords) => set({ documentRecords }),
+  setDocumentRecords: (documentRecords) => {
+    documentRecordsVersion += 1
+    set({ documentRecords, isLoadingMoreRecords: false, loadMoreRecordsFailed: false })
+  },
   setSelectedDocumentId: (selectedDocumentId, resultIndex) =>
     set({ selectedDocumentId, selectedResultIndex: resultIndex ?? null }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
@@ -160,7 +188,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setDropdownUnits: (dropdownUnits) => set({ dropdownUnits }),
   setDropdownJenisDokumen: (dropdownJenisDokumen) => set({ dropdownJenisDokumen }),
   setSelectLastOnNextLoad: (selectLastOnNextLoad) => set({ selectLastOnNextLoad }),
-  resetSearchState: () =>
+  resetSearchState: () => {
+    documentRecordsVersion += 1
     set({
       query: '',
       jenisDokumen: '',
@@ -178,7 +207,10 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       documentInfo: null,
       searchMeta: null,
       isLoadingSearch: false,
-    }),
+      isLoadingMoreRecords: false,
+      loadMoreRecordsFailed: false,
+    })
+  },
   fetchDocumentInfo: async (documentId) => {
     if (!documentId) {
       set({ documentInfo: null })
@@ -223,6 +255,49 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       }
       console.error('Document info error:', error)
       set({ documentInfo: null })
+    }
+  },
+  loadMoreDocumentRecords: async () => {
+    const { searchMeta, isLoadingMoreRecords, isLoadingSearch } = get()
+    if (!searchMeta?.hasNextPage || isLoadingMoreRecords || isLoadingSearch) {
+      return
+    }
+
+    const version = documentRecordsVersion
+    set({ isLoadingMoreRecords: true, loadMoreRecordsFailed: false })
+
+    try {
+      const { query, unit, jenisDokumen, dateFrom, dateTo, sort, pageSize } = get()
+      const response = await getSearchRecordCarianDokumen({
+        query,
+        unit,
+        jenisDokumen,
+        dateFrom,
+        dateTo,
+        sort,
+        page: searchMeta.currentPage + 1,
+        limit: pageSize,
+      })
+      if (version !== documentRecordsVersion) return
+
+      set((state) => {
+        // Pages are offset-based, so a record published meanwhile shifts the results and
+        // the next page can repeat records already in the list
+        const loadedIds = new Set(state.documentRecords.map((record) => record.documentId))
+        const newRecords = response.items
+          .map(toDocumentRecord)
+          .filter((record) => !loadedIds.has(record.documentId))
+
+        return {
+          documentRecords: [...state.documentRecords, ...newRecords],
+          searchMeta: response.meta,
+          isLoadingMoreRecords: false,
+        }
+      })
+    } catch (error) {
+      if (version !== documentRecordsVersion) return
+      console.error('Load more search records error:', error)
+      set({ isLoadingMoreRecords: false, loadMoreRecordsFailed: true })
     }
   },
   selectDocument: (documentId, resultIndex) => {

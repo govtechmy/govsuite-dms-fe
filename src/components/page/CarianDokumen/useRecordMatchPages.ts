@@ -12,6 +12,7 @@ export function useRecordMatchPages(recordId: string | null, query: string) {
   const [nextPage, setNextPage] = useState<number | null>(null)
   const [status, setStatus] = useState<MatchPagesStatus>('idle')
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false)
   // Ignores responses for a record or keyword that is no longer selected
   const requestTokenRef = useRef(0)
 
@@ -24,6 +25,7 @@ export function useRecordMatchPages(recordId: string | null, query: string) {
         setStatus('loading')
       } else {
         setIsLoadingMore(true)
+        setLoadMoreFailed(false)
       }
 
       try {
@@ -42,7 +44,11 @@ export function useRecordMatchPages(recordId: string | null, query: string) {
       } catch {
         if (requestToken !== requestTokenRef.current) return
         // A failed later page keeps the pages already shown
-        if (page === 1) setStatus('error')
+        if (page === 1) {
+          setStatus('error')
+        } else {
+          setLoadMoreFailed(true)
+        }
       } finally {
         if (requestToken === requestTokenRef.current) setIsLoadingMore(false)
       }
@@ -56,6 +62,7 @@ export function useRecordMatchPages(recordId: string | null, query: string) {
     setTotalItems(0)
     setNextPage(null)
     setIsLoadingMore(false)
+    setLoadMoreFailed(false)
     setStatus(recordId && query ? 'loading' : 'idle')
     void fetchPage(1)
   }, [fetchPage, recordId, query])
@@ -72,6 +79,7 @@ export function useRecordMatchPages(recordId: string | null, query: string) {
     status,
     hasMore: nextPage !== null,
     isLoadingMore,
+    loadMoreFailed,
     loadMore,
     retry,
   }

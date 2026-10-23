@@ -178,6 +178,7 @@ export default function FullTextSearchResults() {
             activePage={previewPage ?? undefined}
             hasMore={recordMatchPages.hasMore}
             isLoadingMore={recordMatchPages.isLoadingMore}
+            loadMoreFailed={recordMatchPages.loadMoreFailed}
             onSelect={handleMatchPageSelect}
             onLoadMore={recordMatchPages.loadMore}
             onRetry={recordMatchPages.retry}

@@ -5,23 +5,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
+import { Button } from '@govtechmy/myds-react/button'
 import { ChevronRightIcon } from '@govtechmy/myds-react/icon'
 import { clx } from '@govtechmy/myds-react/utils'
 import { useSearchStore } from '@/store/SearchStore'
+import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import DocumentMetaTags from './DocumentMetaTags'
-import CompactPagination from './CompactPagination'
 import { useSearchPage } from './useSearchPage'
 
 export default function RecordResultSearch() {
   const [searchParams, setSearchParams] = useSearchParams()
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const totalItems = useSearchStore((state) => state.searchMeta?.totalItems ?? 0)
-  const { pageNumber, pageSize, goToPage } = useSearchPage()
+  const hasNextPage = useSearchStore((state) => state.searchMeta?.hasNextPage ?? false)
+  const isLoadingMoreRecords = useSearchStore((state) => state.isLoadingMoreRecords)
+  const loadMoreRecordsFailed = useSearchStore((state) => state.loadMoreRecordsFailed)
+  const loadMoreDocumentRecords = useSearchStore((state) => state.loadMoreDocumentRecords)
+  const { pageSize } = useSearchPage()
   const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
   const sortBy = useSearchStore((state) => state.sort)
   const setSort = useSearchStore((state) => state.setSort)
   const selectDocument = useSearchStore((state) => state.selectDocument)
+  const listRef = useRef<HTMLUListElement>(null)
+  const loadMoreSentinelRef = useRef<HTMLLIElement>(null)
+
+  const canLoadMore = hasNextPage && !isLoadingMoreRecords && !loadMoreRecordsFailed
+
+  // Load the next page when the end of the list scrolls near the bottom of the list
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel || !canLoadMore) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          void loadMoreDocumentRecords()
+        }
+      },
+      { root: listRef.current, rootMargin: '0px 0px 200px 0px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [canLoadMore, loadMoreDocumentRecords])
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams)
@@ -54,7 +80,12 @@ export default function RecordResultSearch() {
         </Select>
       </div>
 
-      <ul className="flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label="Senarai rekod">
+      <ul
+        ref={listRef}
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+        aria-label="Senarai rekod"
+        aria-busy={isLoadingMoreRecords}
+      >
         {documentRecords.map((record) => {
           const isSelected = selectedDocumentId === record.documentId
           return (
@@ -97,17 +128,29 @@ export default function RecordResultSearch() {
             </li>
           )
         })}
+        {hasNextPage && (
+          <li
+            ref={loadMoreSentinelRef}
+            role={loadMoreRecordsFailed ? 'alert' : 'status'}
+            className="flex flex-col items-center gap-2 py-4 text-center text-body-sm text-txt-black-500"
+          >
+            {loadMoreRecordsFailed ? (
+              <>
+                <span>Rekod seterusnya gagal dimuatkan.</span>
+                <Button
+                  variant="default-outline"
+                  size="small"
+                  onClick={() => void loadMoreDocumentRecords()}
+                >
+                  Cuba Lagi
+                </Button>
+              </>
+            ) : (
+              'Memuatkan rekod seterusnya...'
+            )}
+          </li>
+        )}
       </ul>
-
-      {totalItems > pageSize && (
-        <CompactPagination
-          page={pageNumber}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          onPageChange={goToPage}
-          fullWidth
-        />
-      )}
     </div>
   )
 }

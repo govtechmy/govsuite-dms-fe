@@ -10,6 +10,7 @@ interface MatchPageSearchProps {
   activePage?: number
   hasMore: boolean
   isLoadingMore: boolean
+  loadMoreFailed: boolean
   onSelect: (page: number) => void
   onLoadMore: () => void
   onRetry: () => void
@@ -22,11 +23,33 @@ export default function MatchPageSearch({
   activePage,
   hasMore,
   isLoadingMore,
+  loadMoreFailed,
   onSelect,
   onLoadMore,
   onRetry,
 }: MatchPageSearchProps) {
   const activeItemRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null)
+
+  const canLoadMore = hasMore && !isLoadingMore && !loadMoreFailed
+
+  // Load the next pages when the end of the list scrolls near the bottom of the list
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel || !canLoadMore) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          onLoadMore()
+        }
+      },
+      { root: listRef.current, rootMargin: '0px 0px 200px 0px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [canLoadMore, onLoadMore])
 
   useEffect(() => {
     activeItemRef.current?.scrollIntoView({ block: 'nearest' })
@@ -54,7 +77,11 @@ export default function MatchPageSearch({
           Tiada perkataan ditemui dalam dokumen ini.
         </p>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4">
+        <div
+          ref={listRef}
+          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4"
+          aria-busy={isLoadingMore}
+        >
           {matchPages.map((matchPage) => {
             const isActive = matchPage.pageNumber === activePage
             return (
@@ -78,15 +105,22 @@ export default function MatchPageSearch({
             )
           })}
           {hasMore && (
-            <Button
-              variant="default-outline"
-              size="small"
-              className="shrink-0 justify-center"
-              onClick={onLoadMore}
-              disabled={isLoadingMore}
+            <div
+              ref={loadMoreSentinelRef}
+              role={loadMoreFailed ? 'alert' : 'status'}
+              className="flex shrink-0 flex-col items-center gap-2 py-3 text-center text-body-sm text-txt-black-500"
             >
-              {isLoadingMore ? 'Memuatkan...' : 'Muat lagi'}
-            </Button>
+              {loadMoreFailed ? (
+                <>
+                  <span>Muka surat seterusnya gagal dimuatkan.</span>
+                  <Button variant="default-outline" size="small" onClick={onLoadMore}>
+                    Cuba Lagi
+                  </Button>
+                </>
+              ) : (
+                'Memuatkan muka surat...'
+              )}
+            </div>
           )}
         </div>
       )}

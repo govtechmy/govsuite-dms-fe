@@ -15,7 +15,7 @@ import { getHybridSearchRecords, getSearchRecordCarianDokumen } from '@/services
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
 import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useSearchStore } from '@/store/SearchStore'
+import { toDocumentRecord, useSearchStore } from '@/store/SearchStore'
 import { AutoToast } from '@govtechmy/myds-react/toast'
 
 export interface DocumentRecord {
@@ -42,6 +42,12 @@ export interface DocumentInfoResponse {
     path: string
   }
 }
+
+// Full-text search lazy loads further pages into the list, so it always starts at page 1
+const getSearchPageNumber = (searchParams: URLSearchParams) =>
+  searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
+    ? Math.max(1, Number(searchParams.get('page')) || 1)
+    : 1
 
 // Only hybrid search lets the user pick rows per page ("Baris Setiap Halaman");
 // full-text search always shows a fixed page size.
@@ -108,17 +114,7 @@ export default function CarianDokumenPage() {
 
       setSearchMeta(backendResponse.meta)
 
-      const documents = backendResponse.items.map((item) => ({
-        documentId: item.recordId,
-        title: item.title,
-        documentProfile: item.documentProfile,
-        recordDate: item.recordDate,
-        fileType: item.fileType,
-        fileExtension: item.fileExtension,
-        pageNumber: item.pageNumber,
-        snippet: item.snippet,
-        relevancePercent: item.relevancePercent,
-      }))
+      const documents = backendResponse.items.map(toDocumentRecord)
 
       setDocumentRecords(documents)
 
@@ -175,7 +171,7 @@ export default function CarianDokumenPage() {
       dateFrom: searchParams.get('dateFrom') || '',
       dateTo: searchParams.get('dateTo') || '',
       sort: searchParams.get('sort') || 'desc',
-      pageNumber: Math.max(1, Number(searchParams.get('page')) || 1),
+      pageNumber: getSearchPageNumber(searchParams),
       pageSize: getSearchPageSize(searchParams),
     })
   }, [searchParams, setFromSearchParams])
