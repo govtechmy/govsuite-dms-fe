@@ -10,6 +10,9 @@ export interface DocumentRecord {
   recordDate?: string
   fileType?: string
   fileExtension?: string
+  pageNumber?: number
+  snippet?: string
+  relevancePercent?: number
 }
 
 export interface KeywordRecord {
@@ -62,6 +65,9 @@ type SearchStore = {
   isLoadingSearch: boolean
   documentRecords: DocumentRecord[]
   selectedDocumentId: string | null
+  // Position of the selected result in documentRecords. Hybrid results are per matched
+  // page, so the same document can appear more than once and the id alone is ambiguous
+  selectedResultIndex: number | null
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
   documentInfo: DocumentInfo | null
@@ -81,7 +87,7 @@ type SearchStore = {
   setPageSize: (pageSize: number) => void
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
   setDocumentRecords: (documentRecords: DocumentRecord[]) => void
-  setSelectedDocumentId: (selectedDocumentId: string | null) => void
+  setSelectedDocumentId: (selectedDocumentId: string | null, resultIndex?: number) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void
   setDocumentInfo: (documentInfo: DocumentInfo | null) => void
@@ -91,7 +97,7 @@ type SearchStore = {
   setSelectLastOnNextLoad: (selectLastOnNextLoad: boolean) => void
   resetSearchState: () => void
   fetchDocumentInfo: (documentId: string) => Promise<void>
-  selectDocument: (documentId: string) => void
+  selectDocument: (documentId: string, resultIndex?: number) => void
 }
 
 export const useSearchStore = create<SearchStore>((set, get) => ({
@@ -106,6 +112,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   isLoadingSearch: false,
   documentRecords: [],
   selectedDocumentId: null,
+  selectedResultIndex: null,
   keywordRecords: null,
   selectedKeywordId: null,
   documentInfo: null,
@@ -144,7 +151,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     }),
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
-  setSelectedDocumentId: (selectedDocumentId) => set({ selectedDocumentId }),
+  setSelectedDocumentId: (selectedDocumentId, resultIndex) =>
+    set({ selectedDocumentId, selectedResultIndex: resultIndex ?? null }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
   setSelectedKeywordId: (selectedKeywordId) => set({ selectedKeywordId }),
   setDocumentInfo: (documentInfo) => set({ documentInfo }),
@@ -165,6 +173,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       documentRecords: [],
       keywordRecords: null,
       selectedDocumentId: null,
+      selectedResultIndex: null,
       selectedKeywordId: null,
       documentInfo: null,
       searchMeta: null,
@@ -216,12 +225,17 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       set({ documentInfo: null })
     }
   },
-  selectDocument: (documentId) => {
+  selectDocument: (documentId, resultIndex) => {
     if (get().selectedDocumentId === documentId) {
+      set({ selectedResultIndex: resultIndex ?? null })
       return
     }
 
-    set({ selectedDocumentId: documentId, selectedKeywordId: null })
+    set({
+      selectedDocumentId: documentId,
+      selectedResultIndex: resultIndex ?? null,
+      selectedKeywordId: null,
+    })
     void get().fetchDocumentInfo(documentId)
   },
 }))

@@ -1,4 +1,3 @@
-import { Tag } from '@govtechmy/myds-react/tag'
 import { clx } from '@govtechmy/myds-react/utils'
 import { useEffect, useRef } from 'react'
 import type { PdfMatchPage } from '@/components/shared/PdfJsDocumentViewer'
@@ -29,8 +28,8 @@ export default function MatchPageSearch({
   }, [activePage])
 
   return (
-    <div className="flex h-full max-h-[320px] w-full flex-col gap-3 rounded-lg border border-otl-gray-200 bg-bg-dialog py-2 shadow-sm md:h-[590px] md:max-h-full xl:w-[186px]">
-      <p className="px-4 text-sm font-medium leading-5 tracking-normal text-txt-black-900">
+    <div className="flex h-full max-h-[320px] w-full flex-col gap-3 rounded-lg border border-otl-gray-200 bg-bg-dialog py-2 shadow-sm md:h-[590px] md:max-h-full">
+      <p className="px-4 pt-2 text-sm font-medium leading-5 tracking-normal text-txt-black-900">
         {isLoading ? 'Muka surat ditemui' : `${matchPages.length} muka surat ditemui`}
       </p>
 
@@ -42,7 +41,7 @@ export default function MatchPageSearch({
         </p>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4">
-          {matchPages.map((matchPage, index) => {
+          {matchPages.map((matchPage) => {
             const isActive = matchPage.page === activePage
             return (
               <button
@@ -59,13 +58,8 @@ export default function MatchPageSearch({
                 )}
               >
                 <span className="text-body-sm font-semibold text-txt-black-900">
-                  Tindakan {index + 1}
+                  Muka Surat {matchPage.page}
                 </span>
-                <Tag size="small" className="rounded-sm">
-                  <span className="text-[10px] font-normal leading-[12px]">
-                    Muka surat {matchPage.page}
-                  </span>
-                </Tag>
               </button>
             )
           })}
