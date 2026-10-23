@@ -1,10 +1,10 @@
 import RecordResultSearch from './RecordResultSearch'
 import MatchPageSearch from './MatchPageSearch'
 import PratontonSearchResult from './PratontonSearchResult'
+import { useRecordMatchPages } from './useRecordMatchPages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import type {
-  PdfMatchPage,
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
@@ -14,6 +14,7 @@ export default function FullTextSearchResults() {
   const keywordRecords = useSearchStore((state) => state.keywordRecords)
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
+  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
@@ -22,7 +23,6 @@ export default function FullTextSearchResults() {
     currentMatchIndex: -1,
     isIndexing: true,
   })
-  const [matchPages, setMatchPages] = useState<PdfMatchPage[]>([])
   const [navigationRequest, setNavigationRequest] = useState<PdfSearchNavigationRequest | null>(
     null
   )
@@ -31,6 +31,18 @@ export default function FullTextSearchResults() {
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const hasAutoSelectedRef = useRef(false)
   const lastDocumentIdRef = useRef<string>('')
+  // Page picked from the match page list, tied to the record and keyword it was picked for
+  const [pickedMatchPage, setPickedMatchPage] = useState<{ key: string; page: number } | null>(null)
+
+  const recordMatchPages = useRecordMatchPages(selectedDocumentId, previewSearchQuery)
+  const matchPagesKey = `${selectedDocumentId}:${previewSearchQuery}`
+
+  // Only the selected page is fetched for the preview; default to the first matched page,
+  // and to page 1 when the list failed or found nothing
+  const previewPage =
+    (pickedMatchPage?.key === matchPagesKey ? pickedMatchPage.page : null) ??
+    recordMatchPages.pages[0]?.pageNumber ??
+    (recordMatchPages.status === 'success' || recordMatchPages.status === 'error' ? 1 : null)
 
   // Get the keyword text from keyword record
   const keyword = keywordRecords?.keyword || ''
@@ -74,10 +86,10 @@ export default function FullTextSearchResults() {
   }, [queueNavigationRequest])
 
   const handleMatchPageSelect = useCallback(
-    (firstMatchIndex: number) => {
-      queueNavigationRequest('jump', firstMatchIndex)
+    (page: number) => {
+      setPickedMatchPage({ key: matchPagesKey, page })
     },
-    [queueNavigationRequest]
+    [matchPagesKey]
   )
 
   useEffect(() => {
@@ -99,7 +111,6 @@ export default function FullTextSearchResults() {
         currentMatchIndex: -1,
         isIndexing: true,
       })
-      setMatchPages([])
       setNavigationRequest(null)
       navigationTokenRef.current = 0
     }
@@ -161,10 +172,15 @@ export default function FullTextSearchResults() {
         </div>
         <div className="flex min-h-0 w-full shrink-0 flex-col border-y py-6 md:h-full md:w-[20%] md:self-stretch md:pl-6">
           <MatchPageSearch
-            matchPages={matchPages}
-            activeMatchIndex={pdfSearchState.currentMatchIndex}
-            isLoading={!isPdfLoaded || pdfSearchState.isIndexing}
+            matchPages={recordMatchPages.pages}
+            totalItems={recordMatchPages.totalItems}
+            status={recordMatchPages.status}
+            activePage={previewPage ?? undefined}
+            hasMore={recordMatchPages.hasMore}
+            isLoadingMore={recordMatchPages.isLoadingMore}
             onSelect={handleMatchPageSelect}
+            onLoadMore={recordMatchPages.loadMore}
+            onRetry={recordMatchPages.retry}
           />
         </div>
         <PratontonSearchResult
@@ -175,9 +191,9 @@ export default function FullTextSearchResults() {
           onNextMatch={handleNextMatch}
           navigationRequest={navigationRequest}
           onSearchStateChange={handleSearchStateChange}
-          onMatchPagesChange={setMatchPages}
           onDocumentLoad={handleDocumentLoad}
           isIndexing={pdfSearchState.isIndexing}
+          page={previewPage}
         />
       </div>
 

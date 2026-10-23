@@ -22,6 +22,8 @@ type Conversion = {
   pages: string[]
   totalPages: number
   loadedChunk: number
+  // Single-page mode: the PDF page currently held in `pages`
+  loadedPage: number | null
   isLoadingMore: boolean
   loadMoreFailed: boolean
 }
@@ -33,6 +35,7 @@ const createConversion = (pdfUrl: string, state: ProgressState): Conversion => (
   pages: [],
   totalPages: 0,
   loadedChunk: 0,
+  loadedPage: null,
   isLoadingMore: false,
   loadMoreFailed: false,
 })
@@ -42,8 +45,17 @@ const createConversion = (pdfUrl: string, state: ProgressState): Conversion => (
  * uploads it as a background job and polls until the conversion is done, then
  * loads the first chunk of pages. `loadMore` appends the next chunk.
  * Polling stops when `pdfUrl` changes or the component unmounts.
+ *
+ * Passing `onlyPage` switches to single-page mode: only that PDF page is fetched
+ * (null waits until the page is known), and changing it fetches the new page
+ * from the same job without converting again.
  */
-export function usePdfHtmlConversion(pdfUrl: string | undefined, fileName: string) {
+export function usePdfHtmlConversion(
+  pdfUrl: string | undefined,
+  fileName: string,
+  onlyPage?: number | null
+) {
+  const isSinglePageMode = onlyPage !== undefined
   const [conversion, setConversion] = useState<Conversion | null>(null)
   // Job whose next chunk is being fetched; blocks repeat calls before state catches up
   const loadMoreJobIdRef = useRef<string | null>(null)
@@ -72,6 +84,11 @@ export function usePdfHtmlConversion(pdfUrl: string | undefined, fileName: strin
           if (cancelled) return
 
           if (job.status === 'completed') {
+            if (isSinglePageMode) {
+              setConversion({ ...createConversion(pdfUrl, 'success'), jobId })
+              return
+            }
+
             const firstChunk = await getPdfConvertPages(jobId, {
               page: 1,
               pageSize: PDF_PAGE_CHUNK_SIZE,
@@ -116,7 +133,43 @@ export function usePdfHtmlConversion(pdfUrl: string | undefined, fileName: strin
     return () => {
       cancelled = true
     }
-  }, [pdfUrl, fileName])
+  }, [pdfUrl, fileName, isSinglePageMode])
+
+  const completedJobId = conversion?.state === 'success' ? conversion.jobId : null
+
+  useEffect(() => {
+    if (!completedJobId || onlyPage == null) return
+
+    let cancelled = false
+    // Ignore the response if a different document or page has been requested meanwhile
+    const updateIfSameJob = (update: (current: Conversion) => Conversion) => {
+      if (!cancelled) {
+        setConversion((current) => (current?.jobId === completedJobId ? update(current) : current))
+      }
+    }
+
+    getPdfConvertPages(completedJobId, { page: onlyPage, pageSize: 1 })
+      .then((response) => {
+        if (response.items.length === 0) {
+          throw new Error(`pdf-page-cast returned no page ${onlyPage}`)
+        }
+        updateIfSameJob((current) => ({
+          ...current,
+          baseStyle: response.baseStyle,
+          pages: response.items.map((item) => item.html),
+          totalPages: response.items.length,
+          loadedPage: onlyPage,
+        }))
+      })
+      .catch((error) => {
+        console.error('Error loading converted PDF page:', error)
+        updateIfSameJob((current) => ({ ...current, state: 'error' }))
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [completedJobId, onlyPage])
 
   const loadMore = useCallback(async () => {
     if (
@@ -162,11 +215,15 @@ export function usePdfHtmlConversion(pdfUrl: string | undefined, fileName: strin
   // A result belongs to the URL it was converted from; while a new URL is still
   // being picked up, report it as loading instead of exposing the previous document
   const current = pdfUrl && conversion?.pdfUrl === pdfUrl ? conversion : null
+  // In single-page mode the result is only ready once the requested page has arrived
+  const isWaitingForPage =
+    isSinglePageMode && current?.state === 'success' && current.loadedPage !== onlyPage
+  const currentState = isWaitingForPage ? 'loading' : current?.state
 
   return {
-    state: !pdfUrl ? null : (current?.state ?? ('loading' as ProgressState)),
+    state: !pdfUrl ? null : (currentState ?? ('loading' as ProgressState)),
     result:
-      current?.state === 'success'
+      currentState === 'success' && current
         ? { baseStyle: current.baseStyle, pages: current.pages, totalPages: current.totalPages }
         : null,
     isLoadingMore: current?.isLoadingMore ?? false,

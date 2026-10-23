@@ -23,6 +23,8 @@ interface PratontonSearchResultProps {
   onMatchPagesChange?: (pages: PdfMatchPage[]) => void
   onDocumentLoad?: () => void
   isIndexing: boolean
+  // Only fetch and show this PDF page (null while it is not known yet)
+  page: number | null
 }
 
 export default function PratontonSearchResult({
@@ -36,6 +38,7 @@ export default function PratontonSearchResult({
   onMatchPagesChange,
   onDocumentLoad,
   isIndexing,
+  page,
 }: PratontonSearchResultProps) {
   const documentInfo = useSearchStore((state) => state.documentInfo)
   // const documentRecords = useSearchStore((state) => state.documentRecords)
@@ -94,6 +97,7 @@ export default function PratontonSearchResult({
           onSearchStateChange={onSearchStateChange}
           onMatchPagesChange={onMatchPagesChange}
           onDocumentLoad={handleDocumentLoad}
+          page={page}
         />
       </div>
     </div>

@@ -12,8 +12,8 @@ interface DocumentHtmlPreviewProps {
   fileUrl?: string
   searchKeyword: string
   searchMatchMode?: SearchMatchMode
-  // Page to show when the search keyword is not found
-  fallbackPage?: number
+  // Only fetch and show this PDF page (null while it is not known yet)
+  page?: number | null
   navigationRequest?: PdfSearchNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
   onMatchPagesChange?: (pages: PdfMatchPage[]) => void
@@ -25,7 +25,7 @@ export default function DocumentHtmlPreview({
   fileUrl,
   searchKeyword,
   searchMatchMode,
-  fallbackPage,
+  page,
   navigationRequest,
   onSearchStateChange,
   onMatchPagesChange,
@@ -33,7 +33,8 @@ export default function DocumentHtmlPreview({
 }: DocumentHtmlPreviewProps) {
   const { state, result, isLoadingMore, loadMoreFailed, loadMore } = usePdfHtmlConversion(
     fileUrl,
-    `${documentId ?? 'document'}.pdf`
+    `${documentId ?? 'document'}.pdf`,
+    page
   )
 
   const statusMessage = !fileUrl
@@ -57,7 +58,6 @@ export default function DocumentHtmlPreview({
             searchKeyword={searchKeyword}
             searchMatchMode={searchMatchMode}
             singlePage
-            fallbackPage={fallbackPage}
             navigationRequest={navigationRequest}
             onSearchStateChange={onSearchStateChange}
             onMatchPagesChange={onMatchPagesChange}

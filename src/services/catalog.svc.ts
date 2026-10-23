@@ -522,3 +522,55 @@ export const getHybridSearchRecords = async ({
     throw error
   }
 }
+
+export interface RecordMatchPage {
+  pageNumber: number
+  occurrences: number
+}
+
+export interface RecordMatchPagesResponse {
+  items: RecordMatchPage[]
+  meta: CatalogListMeta
+}
+
+// Pages of a single record that contain the full-text search keyword
+export const getRecordMatchPages = async ({
+  recordId,
+  query,
+  page = 1,
+  limit = 10,
+}: {
+  recordId: string
+  query: string
+  page?: number
+  limit?: number
+}): Promise<RecordMatchPagesResponse> => {
+  const params = new URLSearchParams({
+    search: query,
+    page: String(page),
+    limit: String(limit),
+  })
+
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/search/${encodeURIComponent(recordId)}?${params.toString()}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data ?? {}
+    const items: RecordMatchPage[] = Array.isArray(payload?.items)
+      ? payload.items.map((item: { pageNumber?: number; occurrences?: number }) => ({
+          pageNumber: Number(item?.pageNumber ?? 0),
+          occurrences: Number(item?.occurrences ?? 0),
+        }))
+      : []
+
+    return {
+      items,
+      meta: {
+        ...DEFAULT_CATALOG_LIST_META,
+        ...payload?.meta,
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching record match pages : ', error)
+    throw error
+  }
+}

@@ -32,9 +32,8 @@ interface PdfHtmlDocumentViewerProps {
   baseStyle?: PdfConvertResult['baseStyle']
   searchKeyword: string
   searchMatchMode?: SearchMatchMode
-  // Show only the page holding the active match (fallbackPage when nothing matches)
+  // Show only the page holding the active match (page 1 when nothing matches)
   singlePage?: boolean
-  fallbackPage?: number
   navigationRequest?: PdfSearchNavigationRequest | null
   pageNavigationRequest?: PdfPageNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
@@ -71,7 +70,6 @@ export default function PdfHtmlDocumentViewer({
   searchKeyword,
   searchMatchMode = 'exact',
   singlePage = false,
-  fallbackPage = 1,
   navigationRequest,
   pageNavigationRequest,
   onSearchStateChange,
@@ -140,17 +138,12 @@ export default function PdfHtmlDocumentViewer({
   const totalMatches = searchState?.totalMatches ?? 0
   const activeIndex = searchState?.activeIndex ?? -1
   const matchPages = searchState?.matchPages
-  const activeMatchPage = matchPages?.find(
-    ({ firstMatchIndex, matchCount }) =>
-      activeIndex >= firstMatchIndex && activeIndex < firstMatchIndex + matchCount
-  )?.page
-  const singlePageTarget =
-    totalMatches > 0 && activeMatchPage
-      ? activeMatchPage
-      : Math.max(1, Math.min(fallbackPage, totalPages))
-  const visiblePage = singlePage ? singlePageTarget : null
-  // In single-page mode the shown page may be in a chunk that has not loaded yet
-  const isWaitingForVisiblePage = singlePage && singlePageTarget > pages.length
+  const activeMatchPage =
+    matchPages?.find(
+      ({ firstMatchIndex, matchCount }) =>
+        activeIndex >= firstMatchIndex && activeIndex < firstMatchIndex + matchCount
+    )?.page ?? 1
+  const visiblePage = singlePage ? activeMatchPage : null
 
   // A newly loaded chunk is appended so the pages already shown are left alone;
   // a different document replaces the content
@@ -201,10 +194,10 @@ export default function PdfHtmlDocumentViewer({
   }, [singlePage, canLoadMore, onLoadMore])
 
   useEffect(() => {
-    if ((isSearching || isWaitingForVisiblePage) && canLoadMore) {
+    if (isSearching && canLoadMore) {
       onLoadMore?.()
     }
-  }, [isSearching, isWaitingForVisiblePage, canLoadMore, onLoadMore])
+  }, [isSearching, canLoadMore, onLoadMore])
 
   useEffect(() => {
     if (editor) {
@@ -398,7 +391,7 @@ export default function PdfHtmlDocumentViewer({
       style={{ '--pdf-page-scale': pageScale } as CSSProperties}
     >
       <EditorContent editor={editor} />
-      {hasMorePages && (!singlePage || loadMoreFailed || isWaitingForVisiblePage) && (
+      {hasMorePages && (!singlePage || loadMoreFailed) && (
         <div
           ref={loadMoreSentinelRef}
           role={loadMoreFailed ? 'alert' : 'status'}

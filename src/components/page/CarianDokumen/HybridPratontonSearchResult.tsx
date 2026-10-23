@@ -102,7 +102,7 @@ export default function HybridPratontonSearchResult() {
           fileUrl={documentInfo?.path}
           searchKeyword={selectedSnippet}
           searchMatchMode="passage"
-          fallbackPage={selectedRecord?.pageNumber}
+          page={selectedRecord?.pageNumber ?? null}
         />
       </div>
     </div>
