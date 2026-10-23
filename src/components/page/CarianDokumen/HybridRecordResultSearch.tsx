@@ -12,18 +12,21 @@ import CompactPagination from './CompactPagination'
 import DocumentMetaTags from './DocumentMetaTags'
 import { SEARCH_PAGE_SIZE_OPTIONS, useSearchPage } from './useSearchPage'
 
-// Temporary placeholders until the hybrid search API returns the matched passage and
-// relevance score for each record.
-const PLACEHOLDER_PASSAGE =
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-const PLACEHOLDER_SCORE = 90
+// Relevance dot colour: 0–50 red, 51–69 yellow, 70–100 green
+const HIGH_RELEVANCE_SCORE = 70
+const LOW_RELEVANCE_SCORE = 50
 
-const HIGH_RELEVANCE_SCORE = 80
+const getRelevanceDotClass = (score: number) =>
+  score >= HIGH_RELEVANCE_SCORE
+    ? 'bg-success-600'
+    : score >= LOW_RELEVANCE_SCORE
+      ? 'bg-warning-600'
+      : 'bg-danger-600'
 
 export default function HybridRecordResultSearch() {
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const totalItems = useSearchStore((state) => state.searchMeta?.totalItems ?? 0)
-  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
+  const selectedResultIndex = useSearchStore((state) => state.selectedResultIndex)
   const selectDocument = useSearchStore((state) => state.selectDocument)
   const { pageNumber, pageSize, goToPage, changePageSize } = useSearchPage()
   const selectedItemRef = useRef<HTMLButtonElement>(null)
@@ -31,7 +34,7 @@ export default function HybridRecordResultSearch() {
   // Keep the selection visible when it is moved from the preview card's record navigation
   useEffect(() => {
     selectedItemRef.current?.scrollIntoView({ block: 'nearest' })
-  }, [selectedDocumentId])
+  }, [selectedResultIndex])
 
   return (
     <div className="flex w-full flex-col gap-3 md:min-h-0 md:flex-1">
@@ -43,16 +46,17 @@ export default function HybridRecordResultSearch() {
         className="flex max-h-[640px] flex-col gap-3 overflow-y-auto md:max-h-none md:min-h-0 md:flex-1"
         aria-label="Senarai hasil carian"
       >
-        {documentRecords.map((record) => {
-          const isSelected = selectedDocumentId === record.documentId
-          const score = PLACEHOLDER_SCORE
+        {documentRecords.map((record, index) => {
+          const isSelected = selectedResultIndex === index
+          const score = record.relevancePercent ?? 0
           return (
-            <li key={record.documentId}>
+            // Hybrid results are per matched page, so a record can appear more than once
+            <li key={`${record.documentId}-${record.pageNumber}`}>
               <button
                 ref={isSelected ? selectedItemRef : undefined}
                 type="button"
                 aria-current={isSelected ? 'true' : undefined}
-                onClick={() => selectDocument(record.documentId)}
+                onClick={() => selectDocument(record.documentId, index)}
                 className={clx(
                   'relative flex w-full flex-col gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-primary',
                   isSelected
@@ -62,16 +66,15 @@ export default function HybridRecordResultSearch() {
               >
                 <span className="flex items-center gap-1.5 self-end text-body-xs font-semibold text-txt-black-900">
                   <span
-                    className={clx(
-                      'size-2 rounded-full',
-                      score >= HIGH_RELEVANCE_SCORE ? 'bg-success-600' : 'bg-warning-600'
-                    )}
+                    className={clx('size-2 rounded-full', getRelevanceDotClass(score))}
                     aria-hidden="true"
                   />
                   <span className="sr-only">Skor relevan</span>
                   {score}%
                 </span>
-                <p className="text-body-sm text-txt-black-700">“{PLACEHOLDER_PASSAGE}”</p>
+                {record.snippet && (
+                  <p className="text-body-sm text-txt-black-700">“{record.snippet}”</p>
+                )}
                 <p className="text-body-sm font-semibold text-txt-primary underline underline-offset-2">
                   {record.title}
                 </p>

@@ -4,12 +4,16 @@ import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
+import type { SearchMatchMode } from '@/components/shared/searchHighlight'
 import { usePdfHtmlConversion } from '@/hooks/usePdfHtmlConversion'
 
 interface DocumentHtmlPreviewProps {
   documentId?: string
   fileUrl?: string
   searchKeyword: string
+  searchMatchMode?: SearchMatchMode
+  // Page to show when the search keyword is not found
+  fallbackPage?: number
   navigationRequest?: PdfSearchNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
   onMatchPagesChange?: (pages: PdfMatchPage[]) => void
@@ -20,6 +24,8 @@ export default function DocumentHtmlPreview({
   documentId,
   fileUrl,
   searchKeyword,
+  searchMatchMode,
+  fallbackPage,
   navigationRequest,
   onSearchStateChange,
   onMatchPagesChange,
@@ -49,7 +55,9 @@ export default function DocumentHtmlPreview({
             onLoadMore={loadMore}
             baseStyle={result.baseStyle}
             searchKeyword={searchKeyword}
+            searchMatchMode={searchMatchMode}
             singlePage
+            fallbackPage={fallbackPage}
             navigationRequest={navigationRequest}
             onSearchStateChange={onSearchStateChange}
             onMatchPagesChange={onMatchPagesChange}

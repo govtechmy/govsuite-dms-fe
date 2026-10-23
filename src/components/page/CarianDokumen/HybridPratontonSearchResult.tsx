@@ -6,25 +6,20 @@ import DocumentHtmlPreview from './DocumentHtmlPreview'
 import DocumentPreviewHeader from './DocumentPreviewHeader'
 import { useSearchPage } from './useSearchPage'
 
-interface HybridPratontonSearchResultProps {
-  searchKeyword: string
-}
-
-export default function HybridPratontonSearchResult({
-  searchKeyword,
-}: HybridPratontonSearchResultProps) {
+export default function HybridPratontonSearchResult() {
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const documentRecords = useSearchStore((state) => state.documentRecords)
-  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
+  const selectedResultIndex = useSearchStore((state) => state.selectedResultIndex)
   const totalItems = useSearchStore((state) => state.searchMeta?.totalItems ?? 0)
   const dropdownUnits = useSearchStore((state) => state.dropdownUnits)
   const selectDocument = useSearchStore((state) => state.selectDocument)
   const setSelectLastOnNextLoad = useSearchStore((state) => state.setSelectLastOnNextLoad)
   const { pageNumber, pageSize, goToPage } = useSearchPage()
 
-  const indexInPage = documentRecords.findIndex(
-    (record) => record.documentId === selectedDocumentId
-  )
+  const indexInPage = selectedResultIndex ?? -1
+  // Highlight only the passage that matched for the selected result
+  const selectedRecord = documentRecords[indexInPage]
+  const selectedSnippet = selectedRecord?.snippet ?? ''
   const recordPosition = indexInPage >= 0 ? (pageNumber - 1) * pageSize + indexInPage + 1 : 0
   const isPreviousDisabled = recordPosition <= 1
   const isNextDisabled = recordPosition === 0 || recordPosition >= totalItems
@@ -36,7 +31,7 @@ export default function HybridPratontonSearchResult({
 
   const handlePreviousRecord = () => {
     if (indexInPage > 0) {
-      selectDocument(documentRecords[indexInPage - 1].documentId)
+      selectDocument(documentRecords[indexInPage - 1].documentId, indexInPage - 1)
       return
     }
 
@@ -48,7 +43,7 @@ export default function HybridPratontonSearchResult({
 
   const handleNextRecord = () => {
     if (indexInPage < documentRecords.length - 1) {
-      selectDocument(documentRecords[indexInPage + 1].documentId)
+      selectDocument(documentRecords[indexInPage + 1].documentId, indexInPage + 1)
       return
     }
 
@@ -105,7 +100,9 @@ export default function HybridPratontonSearchResult({
         <DocumentHtmlPreview
           documentId={documentInfo?.documentID}
           fileUrl={documentInfo?.path}
-          searchKeyword={searchKeyword}
+          searchKeyword={selectedSnippet}
+          searchMatchMode="passage"
+          fallbackPage={selectedRecord?.pageNumber}
         />
       </div>
     </div>

@@ -10,8 +10,13 @@ type SearchMatchRange = {
   index: number
 }
 
+// 'passage' compares letters and digits only, so a backend snippet still matches the
+// page when its spacing, punctuation or line-break hyphenation differs from the HTML
+export type SearchMatchMode = 'exact' | 'passage'
+
 interface SearchHighlightState {
   keyword: string
+  matchMode: SearchMatchMode
   activeIndex: number
   totalMatches: number
   ranges: SearchMatchRange[]
@@ -21,6 +26,7 @@ interface SearchHighlightState {
 
 type SearchHighlightMeta = {
   keyword?: string
+  matchMode?: SearchMatchMode
   activeIndex?: number
 }
 
@@ -30,7 +36,26 @@ export const searchHighlightKey = new PluginKey<SearchHighlightState>('searchHig
 // string and map each match back to document positions. A match spanning
 // several text nodes becomes several ranges sharing the same index.
 // Matches are grouped by the 1-based page they start on.
-const findMatches = (doc: ProseMirrorNode, keyword: string) => {
+const PASSAGE_CHARACTER = /[\p{L}\p{N}]/u
+
+// Returns the text to search and, in passage mode, the fullText index of each character
+const toSearchableText = (text: string, matchMode: SearchMatchMode) => {
+  if (matchMode === 'exact') {
+    return { text: text.toLocaleLowerCase(), offsets: null }
+  }
+
+  let searchable = ''
+  const offsets: number[] = []
+  for (let index = 0; index < text.length; index += 1) {
+    if (PASSAGE_CHARACTER.test(text[index])) {
+      searchable += text[index]
+      offsets.push(index)
+    }
+  }
+  return { text: searchable.toLocaleLowerCase(), offsets }
+}
+
+const findMatches = (doc: ProseMirrorNode, keyword: string, matchMode: SearchMatchMode) => {
   const ranges: SearchMatchRange[] = []
   const matchPages: PdfMatchPage[] = []
 
@@ -70,13 +95,22 @@ const findMatches = (doc: ProseMirrorNode, keyword: string) => {
     fullText += text
   })
 
-  const normalizedText = fullText.toLocaleLowerCase()
+  const searchable = toSearchableText(fullText, matchMode)
+  const searchKeyword = toSearchableText(keyword, matchMode).text
+  if (!searchKeyword) {
+    return { ranges, matchPages, totalMatches: 0 }
+  }
+
   let totalMatches = 0
   let segmentPointer = 0
-  let searchPosition = normalizedText.indexOf(keyword)
+  let searchableMatchStart = searchable.text.indexOf(searchKeyword)
 
-  while (searchPosition >= 0) {
-    const matchEnd = searchPosition + keyword.length
+  while (searchableMatchStart >= 0) {
+    const searchableMatchEnd = searchableMatchStart + searchKeyword.length
+    const searchPosition = searchable.offsets?.[searchableMatchStart] ?? searchableMatchStart
+    const matchEnd = searchable.offsets
+      ? searchable.offsets[searchableMatchEnd - 1] + 1
+      : searchableMatchEnd
 
     while (segmentPointer < segments.length && segments[segmentPointer].end <= searchPosition) {
       segmentPointer += 1
@@ -105,7 +139,7 @@ const findMatches = (doc: ProseMirrorNode, keyword: string) => {
     }
 
     totalMatches += 1
-    searchPosition = normalizedText.indexOf(keyword, matchEnd)
+    searchableMatchStart = searchable.text.indexOf(searchKeyword, searchableMatchEnd)
   }
 
   return { ranges, matchPages, totalMatches }
@@ -140,6 +174,7 @@ export const SearchHighlight = Extension.create({
         state: {
           init: () => ({
             keyword: '',
+            matchMode: 'exact',
             activeIndex: -1,
             totalMatches: 0,
             ranges: [],
@@ -154,9 +189,12 @@ export const SearchHighlight = Extension.create({
             }
 
             const keyword = meta?.keyword?.trim().toLocaleLowerCase() ?? previous.keyword
-            const isNewKeyword = keyword !== previous.keyword
+            const matchMode = meta?.matchMode ?? previous.matchMode
+            const isNewKeyword = keyword !== previous.keyword || matchMode !== previous.matchMode
             const { ranges, matchPages, totalMatches } =
-              isNewKeyword || tr.docChanged ? findMatches(newState.doc, keyword) : previous
+              isNewKeyword || tr.docChanged
+                ? findMatches(newState.doc, keyword, matchMode)
+                : previous
             // Pages loaded later are appended, which leaves earlier match indexes
             // unchanged, so the active match is kept while the keyword stays the same
             const keepsActiveMatch =
@@ -167,6 +205,7 @@ export const SearchHighlight = Extension.create({
 
             return {
               keyword,
+              matchMode,
               activeIndex,
               totalMatches,
               ranges,

@@ -11,7 +11,7 @@ import {
   SEARCH_PAGE_SIZE_OPTIONS,
 } from '@/components/page/CarianDokumen/useSearchPage'
 import { SEARCH_MODE, SEARCH_MODE_PARAM } from '@/components/page/CarianDokumen/searchMode'
-import { getSearchRecordCarianDokumen } from '@/services/catalog.svc'
+import { getHybridSearchRecords, getSearchRecordCarianDokumen } from '@/services/catalog.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
 import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -58,6 +58,7 @@ export default function CarianDokumenPage() {
   const [searchParams] = useSearchParams()
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
+  const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
 
   const query = useSearchStore((state) => state.query)
   const jenisDokumen = useSearchStore((state) => state.jenisDokumen)
@@ -88,16 +89,18 @@ export default function CarianDokumenPage() {
     setIsLoadingSearch(true)
 
     try {
-      const backendResponse = await getSearchRecordCarianDokumen({
-        query,
-        unit,
-        jenisDokumen,
-        dateFrom,
-        dateTo,
-        sort,
-        page: pageNumber,
-        limit: pageSize,
-      })
+      const backendResponse = isHybridSearch
+        ? await getHybridSearchRecords({ query, page: pageNumber, limit: pageSize })
+        : await getSearchRecordCarianDokumen({
+            query,
+            unit,
+            jenisDokumen,
+            dateFrom,
+            dateTo,
+            sort,
+            page: pageNumber,
+            limit: pageSize,
+          })
 
       if (requestToken !== latestSearchRequestTokenRef.current) {
         return
@@ -112,6 +115,9 @@ export default function CarianDokumenPage() {
         recordDate: item.recordDate,
         fileType: item.fileType,
         fileExtension: item.fileExtension,
+        pageNumber: item.pageNumber,
+        snippet: item.snippet,
+        relevancePercent: item.relevancePercent,
       }))
 
       setDocumentRecords(documents)
@@ -120,10 +126,9 @@ export default function CarianDokumenPage() {
       setSelectLastOnNextLoad(false)
 
       if (documents.length > 0) {
-        const initialDocument = selectLastOnNextLoad
-          ? documents[documents.length - 1]
-          : documents[0]
-        setSelectedDocumentId(initialDocument.documentId)
+        const initialIndex = selectLastOnNextLoad ? documents.length - 1 : 0
+        const initialDocument = documents[initialIndex]
+        setSelectedDocumentId(initialDocument.documentId, initialIndex)
         await Promise.allSettled([fetchDocumentInfo(initialDocument.documentId)])
       } else {
         setSelectedDocumentId(null)
@@ -147,6 +152,7 @@ export default function CarianDokumenPage() {
     dateFrom,
     dateTo,
     fetchDocumentInfo,
+    isHybridSearch,
     jenisDokumen,
     pageNumber,
     pageSize,
