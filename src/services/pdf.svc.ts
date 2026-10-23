@@ -1,5 +1,5 @@
 import { getEnv } from '@/config/runtimeEnv'
-import { authAxios } from './http'
+import { authAxios, resolveApiUrl } from './http'
 
 type GetPdfGarageParams = {
   id: string
@@ -64,7 +64,7 @@ export const getPdfGarage = async ({ id }: GetPdfGarageParams): Promise<GetPdfGa
     const payload = response.data
 
     if (payload.success) {
-      return payload
+      return { ...payload, data: { ...payload.data, url: resolveApiUrl(payload.data.url) } }
     }
 
     return {

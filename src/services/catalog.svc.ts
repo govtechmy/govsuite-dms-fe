@@ -77,6 +77,13 @@ export interface CatalogSearchResponse {
 export interface RecordSearchItem {
   recordId: string
   title: string
+  documentProfile?: string
+  recordDate?: string
+  fileType?: string
+  fileExtension?: string
+  pageNumber?: number
+  snippet?: string
+  relevancePercent?: number
 }
 
 export interface RecordSearchResponse {
@@ -403,10 +410,22 @@ export const getSearchRecordCarianDokumen = async ({
     const response = await authAxios.get(url)
     const payload = response.data?.data ?? response.data ?? {}
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
-      ? payload.items.map((item: { recordId?: string; title?: string }) => ({
-          recordId: String(item?.recordId ?? ''),
-          title: String(item?.title ?? ''),
-        }))
+      ? payload.items.map(
+          (item: {
+            recordId?: string
+            title?: string
+            documentProfile?: string
+            recordDate?: string
+            file?: { type?: string; extension?: string }
+          }) => ({
+            recordId: String(item?.recordId ?? ''),
+            title: String(item?.title ?? ''),
+            documentProfile: item?.documentProfile ?? '',
+            recordDate: item?.recordDate ?? '',
+            fileType: item?.file?.type ?? '',
+            fileExtension: item?.file?.extension ?? '',
+          })
+        )
       : []
     const apiMeta = payload?.meta ?? {}
     const currentPage = Number(apiMeta.currentPage ?? page)
@@ -438,6 +457,120 @@ export const getSearchRecordCarianDokumen = async ({
     }
   } catch (error) {
     console.error('Error fetching searched catalog items : ', error)
+    throw error
+  }
+}
+
+// Hybrid (semantic) search only accepts the keyword and pagination; each item is a matched
+// page, so the same record can appear more than once.
+export const getHybridSearchRecords = async ({
+  query,
+  page = 1,
+  limit = 10,
+}: {
+  query: string
+  page?: number
+  limit?: number
+}): Promise<RecordSearchResponse> => {
+  const params = new URLSearchParams({
+    search: query,
+    page: String(page),
+    limit: String(limit),
+  })
+
+  const url = `${getEnv('VITE_API_BASE_URL')}/search/?${params.toString()}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data ?? {}
+    const items: RecordSearchItem[] = Array.isArray(payload?.items)
+      ? payload.items.map(
+          (item: {
+            recordId?: string
+            title?: string
+            pageNumber?: number
+            documentProfile?: string
+            recordDate?: string
+            file?: { type?: string; extension?: string }
+            snippet?: string | null
+            relevance_percent?: number
+          }) => ({
+            recordId: String(item?.recordId ?? ''),
+            title: String(item?.title ?? ''),
+            pageNumber: item?.pageNumber,
+            documentProfile: item?.documentProfile ?? '',
+            recordDate: item?.recordDate ?? '',
+            fileType: item?.file?.type ?? '',
+            fileExtension: item?.file?.extension ?? '',
+            snippet: item?.snippet ?? '',
+            relevancePercent: Number(item?.relevance_percent ?? 0),
+          })
+        )
+      : []
+
+    return {
+      search: {
+        keyword: String(payload?.search ?? query),
+      },
+      items,
+      meta: {
+        ...DEFAULT_CATALOG_LIST_META,
+        ...payload?.meta,
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching hybrid search records : ', error)
+    throw error
+  }
+}
+
+export interface RecordMatchPage {
+  pageNumber: number
+  occurrences: number
+}
+
+export interface RecordMatchPagesResponse {
+  items: RecordMatchPage[]
+  meta: CatalogListMeta
+}
+
+// Pages of a single record that contain the full-text search keyword
+export const getRecordMatchPages = async ({
+  recordId,
+  query,
+  page = 1,
+  limit = 10,
+}: {
+  recordId: string
+  query: string
+  page?: number
+  limit?: number
+}): Promise<RecordMatchPagesResponse> => {
+  const params = new URLSearchParams({
+    search: query,
+    page: String(page),
+    limit: String(limit),
+  })
+
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/search/${encodeURIComponent(recordId)}?${params.toString()}`
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data ?? {}
+    const items: RecordMatchPage[] = Array.isArray(payload?.items)
+      ? payload.items.map((item: { pageNumber?: number; occurrences?: number }) => ({
+          pageNumber: Number(item?.pageNumber ?? 0),
+          occurrences: Number(item?.occurrences ?? 0),
+        }))
+      : []
+
+    return {
+      items,
+      meta: {
+        ...DEFAULT_CATALOG_LIST_META,
+        ...payload?.meta,
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching record match pages : ', error)
     throw error
   }
 }

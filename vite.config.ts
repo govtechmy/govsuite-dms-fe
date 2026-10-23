@@ -48,6 +48,16 @@ export default defineConfig({
             target: process.env.DEV_API_PROXY_TARGET ?? 'http://localhost:3000',
             changeOrigin: true,
           },
+          // Mirrors the nginx /<bucket>/ proxy used when the backend runs with S3_PROXY=true
+          // (path-only presigned upload URLs). Connects to DEV_STORAGE_PROXY_TARGET (Garage as
+          // reachable from this machine) but sends STORAGE_INTERNAL_URL's host:port as Host,
+          // because that must equal the backend's S3_ENDPOINT for the signature to match.
+          [`/${process.env.S3_BUCKET_NAME ?? 'dms-documents'}/`]: {
+            target: process.env.DEV_STORAGE_PROXY_TARGET ?? 'http://localhost:3900',
+            headers: {
+              host: new URL(process.env.STORAGE_INTERNAL_URL ?? 'http://localhost:3900').host,
+            },
+          },
         }
       : undefined,
   },

@@ -5,11 +5,17 @@ import SearchLoadingState from '@/components/page/CarianDokumen/SearchLoadingSta
 import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCarianDokumen'
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
-import { getSearchRecordCarianDokumen } from '@/services/catalog.svc'
+import SearchModeRadio from '@/components/page/CarianDokumen/SearchModeRadio'
+import {
+  SEARCH_PAGE_SIZE,
+  SEARCH_PAGE_SIZE_OPTIONS,
+} from '@/components/page/CarianDokumen/useSearchPage'
+import { SEARCH_MODE, SEARCH_MODE_PARAM } from '@/components/page/CarianDokumen/searchMode'
+import { getHybridSearchRecords, getSearchRecordCarianDokumen } from '@/services/catalog.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useSearchStore } from '@/store/SearchStore'
+import { toDocumentRecord, useSearchStore } from '@/store/SearchStore'
 import { AutoToast } from '@govtechmy/myds-react/toast'
 
 export interface DocumentRecord {
@@ -37,16 +43,28 @@ export interface DocumentInfoResponse {
   }
 }
 
-const LAZY_BATCH_SIZE = 10
-const APPEND_LOAD_COOLDOWN_MS = 300
+// Full-text search lazy loads further pages into the list, so it always starts at page 1
+const getSearchPageNumber = (searchParams: URLSearchParams) =>
+  searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
+    ? Math.max(1, Number(searchParams.get('page')) || 1)
+    : 1
+
+// Only hybrid search lets the user pick rows per page ("Baris Setiap Halaman");
+// full-text search always shows a fixed page size.
+const getSearchPageSize = (searchParams: URLSearchParams) => {
+  if (searchParams.get(SEARCH_MODE_PARAM) !== SEARCH_MODE.HIBRID) {
+    return SEARCH_PAGE_SIZE
+  }
+
+  const limit = Number(searchParams.get('limit'))
+  return SEARCH_PAGE_SIZE_OPTIONS.includes(limit) ? limit : SEARCH_PAGE_SIZE
+}
 
 export default function CarianDokumenPage() {
   const [searchParams] = useSearchParams()
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
-  const appendRequestInFlightRef = useRef(false)
-  const lastAppendTriggerAtRef = useRef(0)
-  const currentPageRef = useRef(1)
+  const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
 
   const query = useSearchStore((state) => state.query)
   const jenisDokumen = useSearchStore((state) => state.jenisDokumen)
@@ -54,10 +72,10 @@ export default function CarianDokumenPage() {
   const dateFrom = useSearchStore((state) => state.dateFrom)
   const dateTo = useSearchStore((state) => state.dateTo)
   const sort = useSearchStore((state) => state.sort)
+  const pageNumber = useSearchStore((state) => state.pageNumber)
+  const pageSize = useSearchStore((state) => state.pageSize)
   const isLoadingSearch = useSearchStore((state) => state.isLoadingSearch)
   const documentRecords = useSearchStore((state) => state.documentRecords)
-  const searchMeta = useSearchStore((state) => state.searchMeta)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const setFromSearchParams = useSearchStore((state) => state.setFromSearchParams)
   const setIsLoadingSearch = useSearchStore((state) => state.setIsLoadingSearch)
   const setDocumentRecords = useSearchStore((state) => state.setDocumentRecords)
@@ -70,114 +88,80 @@ export default function CarianDokumenPage() {
   const resetSearchState = useSearchStore((state) => state.resetSearchState)
   const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
-  const fetchAndSetDocumentRecords = useCallback(
-    async (options?: { append?: boolean }) => {
-      const append = options?.append ?? false
-      const nextPage = append ? currentPageRef.current + 1 : 1
-      const requestToken = ++latestSearchRequestTokenRef.current
+  const fetchAndSetDocumentRecords = useCallback(async () => {
+    const requestToken = ++latestSearchRequestTokenRef.current
 
-      if (append) {
-        setIsLoadingMore(true)
+    setSelectedKeywordId(null)
+    setIsLoadingSearch(true)
+
+    try {
+      const backendResponse = isHybridSearch
+        ? await getHybridSearchRecords({ query, page: pageNumber, limit: pageSize })
+        : await getSearchRecordCarianDokumen({
+            query,
+            unit,
+            jenisDokumen,
+            dateFrom,
+            dateTo,
+            sort,
+            page: pageNumber,
+            limit: pageSize,
+          })
+
+      if (requestToken !== latestSearchRequestTokenRef.current) {
+        return
+      }
+
+      setSearchMeta(backendResponse.meta)
+
+      const documents = backendResponse.items.map(toDocumentRecord)
+
+      setDocumentRecords(documents)
+
+      const { selectLastOnNextLoad, setSelectLastOnNextLoad } = useSearchStore.getState()
+      setSelectLastOnNextLoad(false)
+
+      if (documents.length > 0) {
+        const initialIndex = selectLastOnNextLoad ? documents.length - 1 : 0
+        const initialDocument = documents[initialIndex]
+        setSelectedDocumentId(initialDocument.documentId, initialIndex)
+        await Promise.allSettled([fetchDocumentInfo(initialDocument.documentId)])
       } else {
-        setSelectedKeywordId(null)
-        setIsLoadingSearch(true)
+        setSelectedDocumentId(null)
+        setDocumentInfo(null)
+      }
+    } catch (error) {
+      if (requestToken !== latestSearchRequestTokenRef.current) {
+        return
       }
 
-      try {
-        const backendResponse = await getSearchRecordCarianDokumen({
-          query,
-          unit,
-          jenisDokumen,
-          dateFrom,
-          dateTo,
-          sort,
-          page: nextPage,
-          limit: LAZY_BATCH_SIZE,
-        })
-
-        if (requestToken !== latestSearchRequestTokenRef.current) {
-          return
-        }
-
-        currentPageRef.current = backendResponse.meta.currentPage || nextPage
-        setSearchMeta(backendResponse.meta)
-
-        const documents = backendResponse.items.map((item) => ({
-          documentId: item.recordId,
-          title: item.title,
-        }))
-
-        if (append) {
-          const currentRecords = useSearchStore.getState().documentRecords
-          setDocumentRecords([...currentRecords, ...documents])
-          return
-        }
-
-        setDocumentRecords(documents)
-
-        if (documents.length > 0) {
-          setSelectedDocumentId(documents[0].documentId)
-          await Promise.allSettled([fetchDocumentInfo(documents[0].documentId)])
-        } else {
-          setSelectedDocumentId(null)
-          setDocumentInfo(null)
-        }
-      } catch (error) {
-        if (requestToken !== latestSearchRequestTokenRef.current) {
-          return
-        }
-
-        console.error('Search error:', error)
-        if (!append) {
-          setDocumentRecords([])
-          setSearchMeta(null)
-        }
-      } finally {
-        if (append) {
-          setIsLoadingMore(false)
-        }
-
-        if (!append && requestToken === latestSearchRequestTokenRef.current) {
-          setIsLoadingSearch(false)
-        }
+      console.error('Search error:', error)
+      useSearchStore.getState().setSelectLastOnNextLoad(false)
+      setDocumentRecords([])
+      setSearchMeta(null)
+    } finally {
+      if (requestToken === latestSearchRequestTokenRef.current) {
+        setIsLoadingSearch(false)
       }
-    },
-    [
-      dateFrom,
-      dateTo,
-      fetchDocumentInfo,
-      jenisDokumen,
-      query,
-      sort,
-      setDocumentInfo,
-      setDocumentRecords,
-      setIsLoadingSearch,
-      setSearchMeta,
-      setSelectedDocumentId,
-      setSelectedKeywordId,
-      unit,
-    ]
-  )
-
-  const triggerAppendLoad = useCallback(() => {
-    const now = Date.now()
-
-    if (
-      !searchMeta?.hasNextPage ||
-      isLoadingSearch ||
-      isLoadingMore ||
-      appendRequestInFlightRef.current ||
-      now - lastAppendTriggerAtRef.current < APPEND_LOAD_COOLDOWN_MS
-    ) {
-      return
     }
-
-    lastAppendTriggerAtRef.current = now
-    appendRequestInFlightRef.current = true
-    void fetchAndSetDocumentRecords({ append: true }).finally(() => {
-      appendRequestInFlightRef.current = false
-    })
-  }, [fetchAndSetDocumentRecords, isLoadingMore, isLoadingSearch, searchMeta?.hasNextPage])
+  }, [
+    dateFrom,
+    dateTo,
+    fetchDocumentInfo,
+    isHybridSearch,
+    jenisDokumen,
+    pageNumber,
+    pageSize,
+    query,
+    sort,
+    setDocumentInfo,
+    setDocumentRecords,
+    setIsLoadingSearch,
+    setSearchMeta,
+    setSelectedDocumentId,
+    setSelectedKeywordId,
+    unit,
+  ])
 
   useEffect(() => {
     setFromSearchParams({
@@ -187,8 +171,8 @@ export default function CarianDokumenPage() {
       dateFrom: searchParams.get('dateFrom') || '',
       dateTo: searchParams.get('dateTo') || '',
       sort: searchParams.get('sort') || 'desc',
-      pageNumber: Math.max(1, Number(searchParams.get('page')) || 1),
-      pageSize: LAZY_BATCH_SIZE,
+      pageNumber: getSearchPageNumber(searchParams),
+      pageSize: getSearchPageSize(searchParams),
     })
   }, [searchParams, setFromSearchParams])
 
@@ -215,24 +199,12 @@ export default function CarianDokumenPage() {
         resetSearchState()
       }
       hadSearchQueryRef.current = false
-      currentPageRef.current = 1
       return
     }
 
     hadSearchQueryRef.current = true
-    currentPageRef.current = 1
-    lastAppendTriggerAtRef.current = 0
-    void fetchAndSetDocumentRecords({ append: false })
-  }, [
-    fetchAndSetDocumentRecords,
-    dateFrom,
-    dateTo,
-    query,
-    resetSearchState,
-    sort,
-    unit,
-    jenisDokumen,
-  ])
+    void fetchAndSetDocumentRecords()
+  }, [fetchAndSetDocumentRecords, query, resetSearchState])
 
   // Homepage with no search, currently imitating a single page of page search instead of 2
   if (!query) {
@@ -261,6 +233,7 @@ export default function CarianDokumenPage() {
           <SearchBarCarianDokumen />
           <SelectCarianDokumenWithStore />
         </div>
+        <SearchModeRadio />
       </RightSidePageLayoutWrapper>
 
       {isLoadingSearch ? (
@@ -274,8 +247,8 @@ export default function CarianDokumenPage() {
           </div>
         </div>
       ) : (
-        <div className="min-h-0 min-w-0">
-          <DisplaySearchResults onLazyLoad={triggerAppendLoad} />
+        <div className="min-h-0 min-w-0 flex-1">
+          <DisplaySearchResults />
         </div>
       )}
       <AutoToast />

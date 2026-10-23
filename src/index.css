@@ -157,3 +157,41 @@
   padding-right: 0;
   margin: 0;
 }
+
+/* Converted PDF HTML from pdf-page-cast (PdfHtmlDocumentViewer). Page and frame
+   positions/sizes are inline styles from the converter; these rules reset the
+   default block spacing inside frames so text lands where it is in the PDF. */
+.pdf-html-document [data-type='page'] {
+  /* bg-white (fixed palette white), not bg-bg-white (theme surface): a rendered
+     PDF sheet stays white in dark mode, like the pdf.js canvas */
+  @apply relative mx-auto box-border shrink-0 scroll-mt-16 overflow-hidden rounded-md border border-otl-gray-200 bg-white;
+  /* Set by PdfHtmlDocumentViewer so pages fit narrow containers */
+  zoom: var(--pdf-page-scale, 1);
+}
+
+.pdf-html-document [data-type='page'] [data-type='frame'] {
+  @apply absolute box-border;
+}
+
+.pdf-html-document [data-type='page'] [data-type='frame'] > * {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.pdf-html-document [data-type='page'] [data-type='frame'] > ul {
+  padding-left: 1.5em;
+  list-style-type: disc;
+}
+
+.pdf-html-document [data-type='page'] [data-type='frame'] > ol {
+  padding-left: 1.5em;
+  list-style-type: decimal;
+}
+
+.pdf-html-document [data-type='page'] [data-type='frame'] img {
+  @apply m-0 block h-full w-full max-w-none;
+}

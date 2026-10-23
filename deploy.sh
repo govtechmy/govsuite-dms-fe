@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+# Deploys the edge (frontend nginx) on BM1. Reads frontend.env.
+#   DEPLOY_ENV=development -> plain HTTP on 0.0.0.0:80 (plan.md Phase A)
+#   DEPLOY_ENV=production  -> refused: TLS edge not implemented yet (plan.md B4)
+# Unset falls back to development with a warning; any other value is refused.
+# (The compose profile is called "production"; that's only its name, not DEPLOY_ENV.)
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/frontend.env"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
@@ -63,7 +69,24 @@ if [ ! -f "$COMPOSE_FILE" ]; then
   exit 1
 fi
 
-echo "✓ All prerequisites met"
+DEPLOY_ENV=$(grep -E '^DEPLOY_ENV=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2- | tr -d '[:space:]"'"'"'' || true)
+case "$DEPLOY_ENV" in
+  development) ;;
+  "")
+    echo "⚠️  DEPLOY_ENV not set: running development (no TLS)"
+    DEPLOY_ENV=development
+    ;;
+  production)
+    echo "❌ Error: DEPLOY_ENV=production is not implemented for the edge yet (plan.md Phase B, B4)"
+    exit 1
+    ;;
+  *)
+    echo "❌ Error: DEPLOY_ENV must be 'development' or 'production' (got '$DEPLOY_ENV')"
+    exit 1
+    ;;
+esac
+
+echo "✓ All prerequisites met (DEPLOY_ENV=$DEPLOY_ENV)"
 echo ""
 
 echo "📦 Loading frontend image from $TAR_FILE..."
@@ -72,9 +95,17 @@ docker tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" "$IMAGE_NAME:$IMAGE_TAG"
 echo "✓ Image loaded successfully"
 echo ""
 
-echo "🚀 Starting frontend with docker compose..."
+# Caddy is retired (../govsuitedms-caddy/RETIRED.md) and would hold port 80.
+# Its caddy_data volume is left alone until plan.md B4.
+if docker container inspect govsuite-caddy > /dev/null 2>&1; then
+  echo "🧹 Removing the retired govsuite-caddy container (it holds port 80)..."
+  docker rm -f govsuite-caddy > /dev/null
+fi
+
+echo "🚀 Starting the edge with docker compose..."
 cd "$SCRIPT_DIR"
-docker compose -f "$COMPOSE_FILE" --profile production up -d
+# --force-recreate: env changes (and the old container name) need a new container.
+docker compose -f "$COMPOSE_FILE" --profile production up -d --force-recreate
 
 echo ""
 echo "⏳ Waiting for frontend to be healthy..."
@@ -108,9 +139,8 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
 fi
 
 echo ""
-echo "✅ Deployment complete!"
+echo "✅ Deployment complete! (DEPLOY_ENV=$DEPLOY_ENV)"
 echo ""
 docker compose -f "$COMPOSE_FILE" --profile production ps
 echo ""
-echo "Frontend is available at:"
-echo "  http://localhost"
+echo "Edge (plain HTTP, no TLS) is available on port 80 of this server's LAN IP."
