@@ -5,11 +5,10 @@ import type {
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
 import type { SearchMatchMode } from '@/components/shared/searchHighlight'
-import { usePdfHtmlConversion } from '@/hooks/usePdfHtmlConversion'
+import { useRecordHtmlView } from '@/hooks/useRecordHtmlView'
 
 interface DocumentHtmlPreviewProps {
   documentId?: string
-  fileUrl?: string
   searchKeyword: string
   searchMatchMode?: SearchMatchMode
   // Only fetch and show this PDF page (null while it is not known yet)
@@ -22,7 +21,6 @@ interface DocumentHtmlPreviewProps {
 
 export default function DocumentHtmlPreview({
   documentId,
-  fileUrl,
   searchKeyword,
   searchMatchMode,
   page,
@@ -31,13 +29,17 @@ export default function DocumentHtmlPreview({
   onMatchPagesChange,
   onDocumentLoad,
 }: DocumentHtmlPreviewProps) {
-  const { state, result, isLoadingMore, loadMoreFailed, loadMore } = usePdfHtmlConversion(
-    fileUrl,
-    `${documentId ?? 'document'}.pdf`,
+  // TEMPORARY (dev only): preview a fixed record while real contentEditor HTML is not ready.
+  // Set VITE_RECORD_VIEW_TEST_ID in frontend.env; remove once the API returns real HTML
+  const testRecordId = import.meta.env.DEV
+    ? (import.meta.env.VITE_RECORD_VIEW_TEST_ID as string | undefined)
+    : undefined
+  const { state, result, isLoadingMore, loadMoreFailed, loadMore } = useRecordHtmlView(
+    documentId && (testRecordId || documentId),
     page
   )
 
-  const statusMessage = !fileUrl
+  const statusMessage = !documentId
     ? 'Tiada dokumen untuk dipaparkan.'
     : state === 'error'
       ? 'Dokumen gagal dimuatkan, sila cuba lagi atau hubungi pentadbir sistem.'
@@ -46,15 +48,14 @@ export default function DocumentHtmlPreview({
   return (
     <div className="min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
       <div className="h-full min-h-0 overflow-auto">
-        {fileUrl && state === 'success' && result ? (
+        {documentId && state === 'success' && result ? (
           <PdfHtmlDocumentViewer
-            key={fileUrl}
+            key={documentId}
             pages={result.pages}
             totalPages={result.totalPages}
             isLoadingMore={isLoadingMore}
             loadMoreFailed={loadMoreFailed}
             onLoadMore={loadMore}
-            baseStyle={result.baseStyle}
             searchKeyword={searchKeyword}
             searchMatchMode={searchMatchMode}
             singlePage

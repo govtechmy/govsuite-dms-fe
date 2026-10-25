@@ -12,7 +12,6 @@ import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from './PdfJsDocumentViewer'
-import type { PdfConvertResult } from '@/services/pdfConvert.svc'
 import { PageVisibility, setVisiblePage } from './pageVisibility'
 import { FrameNode, PageDocument, PageNode } from './pdfPageNodes'
 import {
@@ -29,7 +28,6 @@ interface PdfHtmlDocumentViewerProps {
   isLoadingMore?: boolean
   loadMoreFailed?: boolean
   onLoadMore?: () => void
-  baseStyle?: PdfConvertResult['baseStyle']
   searchKeyword: string
   searchMatchMode?: SearchMatchMode
   // Show only the page holding the active match (page 1 when nothing matches)
@@ -41,17 +39,6 @@ interface PdfHtmlDocumentViewerProps {
   onDocumentLoad?: () => void
   onPageChange?: (currentPage: number, totalPages: number) => void
 }
-
-// The converter leaves the document's most common font/size/colour off each span,
-// so it is applied once on the editor root instead
-const toBaseCss = (baseStyle?: PdfConvertResult['baseStyle']) =>
-  [
-    baseStyle?.fontFamily && `font-family: ${baseStyle.fontFamily}`,
-    baseStyle?.fontSize && `font-size: ${baseStyle.fontSize}`,
-    baseStyle?.color && `color: ${baseStyle.color}`,
-  ]
-    .filter(Boolean)
-    .join('; ')
 
 const findScrollParent = (element: HTMLElement) => {
   for (let parent = element.parentElement; parent; parent = parent.parentElement) {
@@ -66,7 +53,6 @@ export default function PdfHtmlDocumentViewer({
   isLoadingMore = false,
   loadMoreFailed = false,
   onLoadMore,
-  baseStyle,
   searchKeyword,
   searchMatchMode = 'exact',
   singlePage = false,
@@ -118,7 +104,6 @@ export default function PdfHtmlDocumentViewer({
     editorProps: {
       attributes: {
         class: 'pdf-html-document flex flex-col gap-3 focus:outline-none',
-        style: toBaseCss(baseStyle),
         'aria-label': 'Kandungan dokumen',
       },
     },

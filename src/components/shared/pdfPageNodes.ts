@@ -9,7 +9,7 @@ const rawStyle = {
 }
 
 /**
- * One PDF page from pdf-page-cast:
+ * One PDF page from the record view API (`contentEditor`):
  * `<div data-type="page" data-page="1" style="position: relative; width: …; height: …">`.
  */
 export const PageNode = Node.create({

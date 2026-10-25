@@ -91,7 +91,6 @@ export default function PratontonSearchResult({
         </DocumentPreviewHeader>
         <DocumentHtmlPreview
           documentId={documentInfo?.documentID}
-          fileUrl={documentInfo?.path}
           searchKeyword={searchKeyword}
           navigationRequest={navigationRequest}
           onSearchStateChange={onSearchStateChange}

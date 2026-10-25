@@ -158,13 +158,13 @@
   margin: 0;
 }
 
-/* Converted PDF HTML from pdf-page-cast (PdfHtmlDocumentViewer). Page and frame
-   positions/sizes are inline styles from the converter; these rules reset the
+/* Record page HTML from the record view API (PdfHtmlDocumentViewer). Page and frame
+   positions/sizes are inline styles in that HTML; these rules reset the
    default block spacing inside frames so text lands where it is in the PDF. */
 .pdf-html-document [data-type='page'] {
-  /* bg-white (fixed palette white), not bg-bg-white (theme surface): a rendered
-     PDF sheet stays white in dark mode, like the pdf.js canvas */
-  @apply relative mx-auto box-border shrink-0 scroll-mt-16 overflow-hidden rounded-md border border-otl-gray-200 bg-white;
+  /* bg-white / text-gray-900 (fixed palette), not theme tokens: a rendered PDF
+     sheet stays black on white in dark mode, like the pdf.js canvas */
+  @apply relative mx-auto box-border shrink-0 scroll-mt-16 overflow-hidden rounded-md border border-otl-gray-200 bg-white text-gray-900;
   /* Set by PdfHtmlDocumentViewer so pages fit narrow containers */
   zoom: var(--pdf-page-scale, 1);
 }

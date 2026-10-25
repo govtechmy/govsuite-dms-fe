@@ -99,7 +99,6 @@ export default function HybridPratontonSearchResult() {
         </DocumentPreviewHeader>
         <DocumentHtmlPreview
           documentId={documentInfo?.documentID}
-          fileUrl={documentInfo?.path}
           searchKeyword={selectedSnippet}
           searchMatchMode="passage"
           page={selectedRecord?.pageNumber ?? null}

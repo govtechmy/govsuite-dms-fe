@@ -28,7 +28,7 @@ import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval
 import extractBackendError from '@/utils/extractBackendError'
 import { useShareDocumentStore } from '@/store/ShareDocumentStore'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
-import { usePdfHtmlConversion } from '@/hooks/usePdfHtmlConversion'
+import { useRecordHtmlView } from '@/hooks/useRecordHtmlView'
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
@@ -395,14 +395,14 @@ export default function DokumenIDPage() {
       .catch(() => setUnits([]))
   }, [])
 
-  // To processed html from pdf-page-cast
+  // Every page of the record as HTML, loaded in chunks
   const {
     state: htmlConvertState,
     result: htmlResult,
     isLoadingMore: isLoadingMorePages,
     loadMoreFailed: loadMorePagesFailed,
     loadMore: loadMorePages,
-  } = usePdfHtmlConversion(pdfData?.url, `${DokumenID ?? 'document'}.pdf`)
+  } = useRecordHtmlView(DokumenID)
 
   useEffect(() => {
     setSearchKeyword('')
@@ -476,7 +476,6 @@ export default function DokumenIDPage() {
               isLoadingMore={isLoadingMorePages}
               loadMoreFailed={loadMorePagesFailed}
               onLoadMore={loadMorePages}
-              baseStyle={htmlResult.baseStyle}
               searchKeyword={searchKeyword}
               navigationRequest={navigationRequest}
               pageNavigationRequest={pageNavigationRequest}
