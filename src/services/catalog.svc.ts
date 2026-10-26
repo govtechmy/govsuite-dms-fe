@@ -492,7 +492,7 @@ export const getHybridSearchRecords = async ({
             recordDate?: string
             file?: { type?: string; extension?: string }
             snippet?: string | null
-            relevance_percent?: number
+            relevance_score?: number
           }) => ({
             recordId: String(item?.recordId ?? ''),
             title: String(item?.title ?? ''),
@@ -502,7 +502,7 @@ export const getHybridSearchRecords = async ({
             fileType: item?.file?.type ?? '',
             fileExtension: item?.file?.extension ?? '',
             snippet: item?.snippet ?? '',
-            relevancePercent: Number(item?.relevance_percent ?? 0),
+            relevancePercent: Number(item?.relevance_score ?? 0),
           })
         )
       : []
