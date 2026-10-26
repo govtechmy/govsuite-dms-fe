@@ -70,8 +70,8 @@ export default function PratontonSearchResult({
   // }
 
   return (
-    <div className="flex h-full min-h-[480px] min-w-0 flex-1 flex-col border-y border-otl-gray-200 p-4 sm:p-6 md:min-h-0">
-      <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-md border border-otl-gray-200 bg-bg-dialog p-4 shadow-sm">
+    <div className="flex h-full min-h-[480px] min-w-0 flex-1 flex-col border-y border-otl-gray-200 p-4 sm:p-6 md:min-h-0 md:py-3 md:pr-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 rounded-md border border-otl-gray-200 bg-bg-dialog p-3 shadow-sm">
         <SearchInPdf
           searchKeyword={searchKeyword}
           currentMatchIndex={currentMatchIndex}

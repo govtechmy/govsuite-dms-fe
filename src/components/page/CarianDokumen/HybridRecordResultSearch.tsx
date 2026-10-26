@@ -1,16 +1,8 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/shared/SelectMydsFix'
+import { Button } from '@govtechmy/myds-react/button'
 import { clx } from '@govtechmy/myds-react/utils'
 import { useSearchStore } from '@/store/SearchStore'
 import { useEffect, useRef } from 'react'
-import CompactPagination from './CompactPagination'
 import DocumentMetaTags from './DocumentMetaTags'
-import { SEARCH_PAGE_SIZE_OPTIONS, useSearchPage } from './useSearchPage'
 
 // Relevance dot colour: 0–50 red, 51–69 yellow, 70–100 green
 const HIGH_RELEVANCE_SCORE = 70
@@ -26,10 +18,34 @@ const getRelevanceDotClass = (score: number) =>
 export default function HybridRecordResultSearch() {
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const totalItems = useSearchStore((state) => state.searchMeta?.totalItems ?? 0)
+  const hasNextPage = useSearchStore((state) => state.searchMeta?.hasNextPage ?? false)
+  const isLoadingMoreRecords = useSearchStore((state) => state.isLoadingMoreRecords)
+  const loadMoreRecordsFailed = useSearchStore((state) => state.loadMoreRecordsFailed)
+  const loadMoreDocumentRecords = useSearchStore((state) => state.loadMoreDocumentRecords)
   const selectedResultIndex = useSearchStore((state) => state.selectedResultIndex)
   const selectDocument = useSearchStore((state) => state.selectDocument)
-  const { pageNumber, pageSize, goToPage, changePageSize } = useSearchPage()
   const selectedItemRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const loadMoreSentinelRef = useRef<HTMLLIElement>(null)
+
+  const canLoadMore = hasNextPage && !isLoadingMoreRecords && !loadMoreRecordsFailed
+
+  // Load the next page when the end of the list scrolls near the bottom of the list
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel || !canLoadMore) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          void loadMoreDocumentRecords(true)
+        }
+      },
+      { root: listRef.current, rootMargin: '0px 0px 200px 0px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [canLoadMore, loadMoreDocumentRecords])
 
   // Keep the selection visible when it is moved from the preview card's record navigation
   useEffect(() => {
@@ -43,8 +59,10 @@ export default function HybridRecordResultSearch() {
       </h2>
 
       <ul
+        ref={listRef}
         className="flex max-h-[640px] flex-col gap-3 overflow-y-auto md:max-h-none md:min-h-0 md:flex-1"
         aria-label="Senarai hasil carian"
+        aria-busy={isLoadingMoreRecords}
       >
         {documentRecords.map((record, index) => {
           const isSelected = selectedResultIndex === index
@@ -73,7 +91,7 @@ export default function HybridRecordResultSearch() {
                   {score}%
                 </span>
                 {record.snippet && (
-                  <p className="text-body-sm text-txt-black-700">“{record.snippet}”</p>
+                  <p className="text-body-xs font-normal text-txt-black-700">“{record.snippet}”</p>
                 )}
                 <p className="text-body-sm font-semibold text-txt-primary underline underline-offset-2">
                   {record.title}
@@ -88,41 +106,29 @@ export default function HybridRecordResultSearch() {
             </li>
           )
         })}
-      </ul>
-
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className="text-body-xs leading-tight text-txt-black-500">
-            Baris Setiap Halaman
-          </span>
-          <Select
-            size="small"
-            variant="outline"
-            value={String(pageSize)}
-            onValueChange={(value) => changePageSize(Number(value))}
+        {hasNextPage && (
+          <li
+            ref={loadMoreSentinelRef}
+            role={loadMoreRecordsFailed ? 'alert' : 'status'}
+            className="flex flex-col items-center gap-2 py-4 text-center text-body-sm text-txt-black-500"
           >
-            <SelectTrigger aria-label="Baris setiap halaman">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SEARCH_PAGE_SIZE_OPTIONS.map((option) => (
-                <SelectItem key={option} value={String(option)}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {totalItems > pageSize && (
-          <CompactPagination
-            page={pageNumber}
-            pageSize={pageSize}
-            totalItems={totalItems}
-            onPageChange={goToPage}
-            size="small"
-          />
+            {loadMoreRecordsFailed ? (
+              <>
+                <span>Rekod seterusnya gagal dimuatkan.</span>
+                <Button
+                  variant="default-outline"
+                  size="small"
+                  onClick={() => void loadMoreDocumentRecords(true)}
+                >
+                  Cuba Lagi
+                </Button>
+              </>
+            ) : (
+              'Memuatkan rekod seterusnya...'
+            )}
+          </li>
         )}
-      </div>
+      </ul>
     </div>
   )
 }

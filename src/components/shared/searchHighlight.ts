@@ -145,14 +145,24 @@ const findMatches = (doc: ProseMirrorNode, keyword: string, matchMode: SearchMat
   return { ranges, matchPages, totalMatches }
 }
 
-const buildDecorations = (doc: ProseMirrorNode, ranges: SearchMatchRange[], activeIndex: number) =>
+// Passage matches stay unstyled; the viewer outlines the whole active passage instead
+const getMatchClassName = (matchMode: SearchMatchMode, isActive: boolean) => {
+  if (matchMode === 'passage') return 'pdf-search-match-passage'
+  return isActive ? 'pdf-search-match pdf-search-match-active' : 'pdf-search-match'
+}
+
+const buildDecorations = (
+  doc: ProseMirrorNode,
+  ranges: SearchMatchRange[],
+  activeIndex: number,
+  matchMode: SearchMatchMode
+) =>
   DecorationSet.create(
     doc,
     ranges.map(({ from, to, index }) =>
       Decoration.inline(from, to, {
         nodeName: 'mark',
-        class:
-          index === activeIndex ? 'pdf-search-match pdf-search-match-active' : 'pdf-search-match',
+        class: getMatchClassName(matchMode, index === activeIndex),
         'data-search-match-index': String(index),
       })
     )
@@ -210,7 +220,7 @@ export const SearchHighlight = Extension.create({
               totalMatches,
               ranges,
               matchPages,
-              decorations: buildDecorations(newState.doc, ranges, activeIndex),
+              decorations: buildDecorations(newState.doc, ranges, activeIndex, matchMode),
             }
           },
         },

@@ -64,7 +64,7 @@ export default function RecordResultSearch() {
   }
 
   return (
-    <div className="flex max-h-[640px] w-full flex-col gap-3 rounded-lg border border-otl-gray-200 bg-bg-dialog p-4 shadow-sm md:max-h-none md:min-h-0 md:flex-1">
+    <div className="flex max-h-[640px] w-full flex-col gap-2 rounded-lg border border-otl-gray-200 bg-bg-dialog p-3 shadow-sm md:max-h-none md:min-h-0 md:flex-1">
       <div className="flex w-full items-center gap-6">
         <p className="flex-1 text-body-sm font-medium text-txt-black-700">
           {totalItems > 0 ? `${totalItems} rekod ditemui` : 'Tiada rekod ditemui'}
@@ -95,17 +95,17 @@ export default function RecordResultSearch() {
                 aria-current={isSelected ? 'true' : undefined}
                 onClick={() => selectDocument(record.documentId)}
                 className={clx(
-                  'flex w-full items-center gap-2 border-l-2 px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus-primary',
+                  'flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus-primary',
                   isSelected
                     ? 'rounded-r-lg border-l-primary-600 bg-bg-primary-50'
                     : 'border-l-transparent hover:bg-bg-washed'
                 )}
               >
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <p
                     title={record.title}
                     className={clx(
-                      'line-clamp-2 break-words text-body-sm font-medium',
+                      'line-clamp-1 break-words text-body-sm font-medium',
                       isSelected ? 'text-txt-primary' : 'text-txt-black-900'
                     )}
                   >

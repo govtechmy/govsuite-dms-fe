@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import {
+  getHybridSearchRecords,
   getSearchRecordCarianDokumen,
   type CatalogListMeta,
   type RecordSearchItem,
@@ -95,9 +96,6 @@ type SearchStore = {
   searchMeta: CatalogListMeta | null
   dropdownUnits: DropdownUnit[]
   dropdownJenisDokumen: DropdownJenisDokumen[]
-  // One-off: the next search results load selects its last record instead of its first
-  // (used when navigating backwards across a results page boundary)
-  selectLastOnNextLoad: boolean
   setFromSearchParams: (payload: SearchParamsPayload) => void
   setQuery: (query: string) => void
   setJenisDokumen: (jenisDokumen: string) => void
@@ -115,11 +113,10 @@ type SearchStore = {
   setSearchMeta: (searchMeta: CatalogListMeta | null) => void
   setDropdownUnits: (dropdownUnits: DropdownUnit[]) => void
   setDropdownJenisDokumen: (dropdownJenisDokumen: DropdownJenisDokumen[]) => void
-  setSelectLastOnNextLoad: (selectLastOnNextLoad: boolean) => void
   resetSearchState: () => void
   fetchDocumentInfo: (documentId: string) => Promise<void>
-  // Appends the next page of full-text search results (lazy loading)
-  loadMoreDocumentRecords: () => Promise<void>
+  // Appends the next page of full-text or hybrid search results (lazy loading)
+  loadMoreDocumentRecords: (isHybridSearch?: boolean) => Promise<void>
   selectDocument: (documentId: string, resultIndex?: number) => void
 }
 
@@ -144,7 +141,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   searchMeta: null,
   dropdownUnits: [],
   dropdownJenisDokumen: [],
-  selectLastOnNextLoad: false,
 
   setFromSearchParams: (payload) =>
     set({
@@ -187,7 +183,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setSearchMeta: (searchMeta) => set({ searchMeta }),
   setDropdownUnits: (dropdownUnits) => set({ dropdownUnits }),
   setDropdownJenisDokumen: (dropdownJenisDokumen) => set({ dropdownJenisDokumen }),
-  setSelectLastOnNextLoad: (selectLastOnNextLoad) => set({ selectLastOnNextLoad }),
   resetSearchState: () => {
     documentRecordsVersion += 1
     set({
@@ -257,7 +252,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       set({ documentInfo: null })
     }
   },
-  loadMoreDocumentRecords: async () => {
+  loadMoreDocumentRecords: async (isHybridSearch = false) => {
     const { searchMeta, isLoadingMoreRecords, isLoadingSearch } = get()
     if (!searchMeta?.hasNextPage || isLoadingMoreRecords || isLoadingSearch) {
       return
@@ -268,25 +263,32 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
 
     try {
       const { query, unit, jenisDokumen, dateFrom, dateTo, sort, pageSize } = get()
-      const response = await getSearchRecordCarianDokumen({
-        query,
-        unit,
-        jenisDokumen,
-        dateFrom,
-        dateTo,
-        sort,
-        page: searchMeta.currentPage + 1,
-        limit: pageSize,
-      })
+      const page = searchMeta.currentPage + 1
+      const response = isHybridSearch
+        ? await getHybridSearchRecords({ query, page, limit: pageSize })
+        : await getSearchRecordCarianDokumen({
+            query,
+            unit,
+            jenisDokumen,
+            dateFrom,
+            dateTo,
+            sort,
+            page,
+            limit: pageSize,
+          })
       if (version !== documentRecordsVersion) return
+
+      // Hybrid results are per matched page, so a record repeats with a different page
+      const getRecordKey = (record: DocumentRecord) =>
+        isHybridSearch ? `${record.documentId}-${record.pageNumber}` : record.documentId
 
       set((state) => {
         // Pages are offset-based, so a record published meanwhile shifts the results and
         // the next page can repeat records already in the list
-        const loadedIds = new Set(state.documentRecords.map((record) => record.documentId))
+        const loadedKeys = new Set(state.documentRecords.map(getRecordKey))
         const newRecords = response.items
           .map(toDocumentRecord)
-          .filter((record) => !loadedIds.has(record.documentId))
+          .filter((record) => !loadedKeys.has(getRecordKey(record)))
 
         return {
           documentRecords: [...state.documentRecords, ...newRecords],

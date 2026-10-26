@@ -56,7 +56,7 @@ export default function MatchPageSearch({
   }, [activePage])
 
   return (
-    <div className="flex h-full max-h-[320px] w-full flex-col gap-3 rounded-lg border border-otl-gray-200 bg-bg-dialog py-2 shadow-sm md:h-[590px] md:max-h-full">
+    <div className="flex h-full max-h-[320px] w-full flex-col gap-2 rounded-lg border border-otl-gray-200 bg-bg-dialog py-2 shadow-sm md:h-[590px] md:max-h-full">
       <p className="px-4 pt-2 text-sm font-medium leading-5 tracking-normal text-txt-black-900">
         {status === 'success' ? `${totalItems} muka surat ditemui` : 'Muka surat ditemui'}
       </p>
@@ -92,7 +92,7 @@ export default function MatchPageSearch({
                 aria-current={isActive ? 'true' : undefined}
                 onClick={() => onSelect(matchPage.pageNumber)}
                 className={clx(
-                  'flex w-full shrink-0 flex-col items-start gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-primary',
+                  'flex w-full shrink-0 flex-col items-start gap-2 rounded-lg border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-primary',
                   isActive
                     ? 'border-otl-primary-200 bg-bg-primary-50'
                     : 'border-otl-gray-200 hover:bg-bg-washed'

@@ -5,6 +5,7 @@ import { TextAlign } from '@tiptap/extension-text-align'
 import { TextStyleKit } from '@tiptap/extension-text-style'
 import { Image } from '@tiptap/extension-image'
 import { Button } from '@govtechmy/myds-react/button'
+import { clx } from '@govtechmy/myds-react/utils'
 import type { CSSProperties } from 'react'
 import type {
   PdfMatchPage,
@@ -38,7 +39,13 @@ interface PdfHtmlDocumentViewerProps {
   onMatchPagesChange?: (pages: PdfMatchPage[]) => void
   onDocumentLoad?: () => void
   onPageChange?: (currentPage: number, totalPages: number) => void
+  className?: string
 }
+
+// Space between the passage text and its outline, in screen pixels
+const PASSAGE_OUTLINE_PADDING = 6
+
+type PassageOutline = { top: number; left: number; width: number; height: number }
 
 const findScrollParent = (element: HTMLElement) => {
   for (let parent = element.parentElement; parent; parent = parent.parentElement) {
@@ -62,10 +69,12 @@ export default function PdfHtmlDocumentViewer({
   onMatchPagesChange,
   onDocumentLoad,
   onPageChange,
+  className,
 }: PdfHtmlDocumentViewerProps) {
   const [pageElements, setPageElements] = useState<HTMLElement[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageScale, setPageScale] = useState(1)
+  const [passageOutline, setPassageOutline] = useState<PassageOutline | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const pageScaleRef = useRef(1)
   const handledNavigationTokenRef = useRef<number | null>(null)
@@ -237,6 +246,50 @@ export default function PdfHtmlDocumentViewer({
       ?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' })
   }, [editor, activeIndex, searchKeyword])
 
+  // A passage is split across positioned frames and styled spans, so there is no single
+  // element to wrap; outline the area covered by the active match's text instead.
+  // Measured on screen, so it follows the page zoom, the visible page and resizes
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!editor || !viewport || searchMatchMode !== 'passage' || activeIndex < 0) {
+      setPassageOutline(null)
+      return
+    }
+
+    const updatePassageOutline = () => {
+      const textRects = Array.from(
+        editor.view.dom.querySelectorAll(`[data-search-match-index="${activeIndex}"]`)
+      )
+        .flatMap((mark) => Array.from(mark.getClientRects()))
+        // Marks on hidden pages measure 0
+        .filter((rect) => rect.width > 0 && rect.height > 0)
+
+      if (textRects.length === 0) {
+        setPassageOutline(null)
+        return
+      }
+
+      const viewportRect = viewport.getBoundingClientRect()
+      const top = Math.min(...textRects.map((rect) => rect.top))
+      const left = Math.min(...textRects.map((rect) => rect.left))
+      const right = Math.max(...textRects.map((rect) => rect.right))
+      const bottom = Math.max(...textRects.map((rect) => rect.bottom))
+
+      setPassageOutline({
+        top: top - viewportRect.top - PASSAGE_OUTLINE_PADDING,
+        left: left - viewportRect.left - PASSAGE_OUTLINE_PADDING,
+        width: right - left + PASSAGE_OUTLINE_PADDING * 2,
+        height: bottom - top + PASSAGE_OUTLINE_PADDING * 2,
+      })
+    }
+
+    updatePassageOutline()
+
+    const resizeObserver = new ResizeObserver(updatePassageOutline)
+    resizeObserver.observe(viewport)
+    return () => resizeObserver.disconnect()
+  }, [editor, searchMatchMode, activeIndex, searchKeyword, pageScale, visiblePage, pageElements])
+
   useEffect(() => {
     onSearchStateChange?.({
       totalMatches,
@@ -372,10 +425,19 @@ export default function PdfHtmlDocumentViewer({
   return (
     <div
       ref={viewportRef}
-      className="w-full overflow-x-auto p-3"
+      className={clx('relative w-full overflow-x-auto p-3', className)}
       style={{ '--pdf-page-scale': pageScale } as CSSProperties}
     >
       <EditorContent editor={editor} />
+      {passageOutline && (
+        // success-* primitives (not bg-* tokens) because the page sheet stays white in
+        // dark mode; multiply keeps the text above the green fill readable
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute rounded-md border border-success-300 bg-success-50 mix-blend-multiply"
+          style={passageOutline}
+        />
+      )}
       {hasMorePages && (!singlePage || loadMoreFailed) && (
         <div
           ref={loadMoreSentinelRef}

@@ -158,6 +158,13 @@
   margin: 0;
 }
 
+/* Hybrid passage matches: the text is left as is and PdfHtmlDocumentViewer draws
+   one outline around the whole passage */
+.pdf-search-match-passage {
+  background-color: transparent;
+  color: inherit;
+}
+
 /* Record page HTML from the record view API (PdfHtmlDocumentViewer). Page and frame
    positions/sizes are inline styles in that HTML; these rules reset the
    default block spacing inside frames so text lands where it is in the PDF. */

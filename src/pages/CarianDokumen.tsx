@@ -6,10 +6,7 @@ import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCar
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
 import SearchModeRadio from '@/components/page/CarianDokumen/SearchModeRadio'
-import {
-  SEARCH_PAGE_SIZE,
-  SEARCH_PAGE_SIZE_OPTIONS,
-} from '@/components/page/CarianDokumen/useSearchPage'
+import { SEARCH_PAGE_SIZE } from '@/components/page/CarianDokumen/useSearchPage'
 import { SEARCH_MODE, SEARCH_MODE_PARAM } from '@/components/page/CarianDokumen/searchMode'
 import { getHybridSearchRecords, getSearchRecordCarianDokumen } from '@/services/catalog.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
@@ -41,23 +38,6 @@ export interface DocumentInfoResponse {
     documentID: string
     path: string
   }
-}
-
-// Full-text search lazy loads further pages into the list, so it always starts at page 1
-const getSearchPageNumber = (searchParams: URLSearchParams) =>
-  searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
-    ? Math.max(1, Number(searchParams.get('page')) || 1)
-    : 1
-
-// Only hybrid search lets the user pick rows per page ("Baris Setiap Halaman");
-// full-text search always shows a fixed page size.
-const getSearchPageSize = (searchParams: URLSearchParams) => {
-  if (searchParams.get(SEARCH_MODE_PARAM) !== SEARCH_MODE.HIBRID) {
-    return SEARCH_PAGE_SIZE
-  }
-
-  const limit = Number(searchParams.get('limit'))
-  return SEARCH_PAGE_SIZE_OPTIONS.includes(limit) ? limit : SEARCH_PAGE_SIZE
 }
 
 export default function CarianDokumenPage() {
@@ -118,13 +98,9 @@ export default function CarianDokumenPage() {
 
       setDocumentRecords(documents)
 
-      const { selectLastOnNextLoad, setSelectLastOnNextLoad } = useSearchStore.getState()
-      setSelectLastOnNextLoad(false)
-
       if (documents.length > 0) {
-        const initialIndex = selectLastOnNextLoad ? documents.length - 1 : 0
-        const initialDocument = documents[initialIndex]
-        setSelectedDocumentId(initialDocument.documentId, initialIndex)
+        const initialDocument = documents[0]
+        setSelectedDocumentId(initialDocument.documentId, 0)
         await Promise.allSettled([fetchDocumentInfo(initialDocument.documentId)])
       } else {
         setSelectedDocumentId(null)
@@ -136,7 +112,6 @@ export default function CarianDokumenPage() {
       }
 
       console.error('Search error:', error)
-      useSearchStore.getState().setSelectLastOnNextLoad(false)
       setDocumentRecords([])
       setSearchMeta(null)
     } finally {
@@ -171,8 +146,9 @@ export default function CarianDokumenPage() {
       dateFrom: searchParams.get('dateFrom') || '',
       dateTo: searchParams.get('dateTo') || '',
       sort: searchParams.get('sort') || 'desc',
-      pageNumber: getSearchPageNumber(searchParams),
-      pageSize: getSearchPageSize(searchParams),
+      // Both search modes lazy load further pages into the list, so they always start at page 1
+      pageNumber: 1,
+      pageSize: SEARCH_PAGE_SIZE,
     })
   }, [searchParams, setFromSearchParams])
 
@@ -226,14 +202,16 @@ export default function CarianDokumenPage() {
 
   // Re-query or results view
   return (
-    <div className="flex flex-col gap-6 w-full h-full">
+    <div className="flex flex-col gap-4 w-full h-full">
       <RightSidePageLayoutWrapper className="pb-0 flex flex-col gap-6">
         <MainHeading>Carian Kandungan</MainHeading>
-        <div className="flex flex-col gap-3">
-          <SearchBarCarianDokumen />
-          <SelectCarianDokumenWithStore />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
+            <SearchBarCarianDokumen />
+            <SelectCarianDokumenWithStore />
+          </div>
+          <SearchModeRadio />
         </div>
-        <SearchModeRadio />
       </RightSidePageLayoutWrapper>
 
       {isLoadingSearch ? (

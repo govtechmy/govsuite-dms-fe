@@ -29,13 +29,8 @@ export default function DocumentHtmlPreview({
   onMatchPagesChange,
   onDocumentLoad,
 }: DocumentHtmlPreviewProps) {
-  // TEMPORARY (dev only): preview a fixed record while real contentEditor HTML is not ready.
-  // Set VITE_RECORD_VIEW_TEST_ID in frontend.env; remove once the API returns real HTML
-  const testRecordId = import.meta.env.DEV
-    ? (import.meta.env.VITE_RECORD_VIEW_TEST_ID as string | undefined)
-    : undefined
   const { state, result, isLoadingMore, loadMoreFailed, loadMore } = useRecordHtmlView(
-    documentId && (testRecordId || documentId),
+    documentId,
     page
   )
 
@@ -46,7 +41,7 @@ export default function DocumentHtmlPreview({
       : 'Dokumen sedang diproses...'
 
   return (
-    <div className="min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
+    <div className="min-h-0 w-full flex-1 overflow-hidden">
       <div className="h-full min-h-0 overflow-auto">
         {documentId && state === 'success' && result ? (
           <PdfHtmlDocumentViewer
@@ -59,6 +54,7 @@ export default function DocumentHtmlPreview({
             searchKeyword={searchKeyword}
             searchMatchMode={searchMatchMode}
             singlePage
+            className="p-0"
             navigationRequest={navigationRequest}
             onSearchStateChange={onSearchStateChange}
             onMatchPagesChange={onMatchPagesChange}
