@@ -472,21 +472,18 @@ export const getHybridSearchRecords = async ({
   page?: number
   limit?: number
 }): Promise<RecordSearchResponse> => {
-  const params = new URLSearchParams({
-    search: query,
-    page: String(page),
-    limit: String(limit),
-  })
-
-  const url = `${getEnv('VITE_API_BASE_URL')}/search/?${params.toString()}`
+  const url = `${getEnv('VITE_API_BASE_URL')}/search/`
   try {
-    const response = await authAxios.get(url)
+    // The workspace backend only accepts POST for this endpoint (GET returns 405)
+    const response = await authAxios.post(url, { query, page, limit })
     const payload = response.data?.data ?? response.data ?? {}
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
       ? payload.items.map(
           (item: {
+            record_id?: string
             recordId?: string
             title?: string
+            page_number?: number
             pageNumber?: number
             documentProfile?: string
             recordDate?: string
@@ -494,9 +491,9 @@ export const getHybridSearchRecords = async ({
             snippet?: string | null
             relevance_score?: number
           }) => ({
-            recordId: String(item?.recordId ?? ''),
+            recordId: String(item?.record_id ?? item?.recordId ?? ''),
             title: String(item?.title ?? ''),
-            pageNumber: item?.pageNumber,
+            pageNumber: item?.page_number ?? item?.pageNumber,
             documentProfile: item?.documentProfile ?? '',
             recordDate: item?.recordDate ?? '',
             fileType: item?.file?.type ?? '',

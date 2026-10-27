@@ -172,7 +172,22 @@ export default function DokumenIDPage() {
     try {
       const response = await fetch(pdfData.url, { headers: apiAuthHeaders() })
       if (!response.ok) {
-        throw new Error(`Failed to fetch PDF (${response.status})`)
+        throw new Error(`Failed to fetch document (${response.status})`)
+      }
+
+      const fileName = resolveDownloadFileName({
+        fileName: recordTitle,
+        fallback: `dokumen-${DokumenID}`,
+        fileExtension: pdfData.meta?.fileExtension,
+      })
+      const isPdf =
+        pdfData.meta?.fileExtension?.replace(/^\./, '').toLowerCase() === 'pdf' ||
+        response.headers.get('content-type')?.includes('application/pdf')
+
+      // Only PDFs can be watermarked; other formats (images, Office files) are saved as is
+      if (!isPdf) {
+        downloadBlob(await response.blob(), fileName)
+        return
       }
 
       // /units may only list units this user can access; fall back to the raw code
@@ -199,16 +214,9 @@ export default function DokumenIDPage() {
 
       const watermarkedPdf = await watermarkPdf(await response.arrayBuffer(), watermarkText)
 
-      downloadBlob(
-        new Blob([watermarkedPdf], { type: 'application/pdf' }),
-        resolveDownloadFileName({
-          fileName: recordTitle,
-          fallback: `dokumen-${DokumenID}`,
-          fileExtension: pdfData.meta?.fileExtension,
-        })
-      )
+      downloadBlob(new Blob([watermarkedPdf], { type: 'application/pdf' }), fileName)
     } catch (error) {
-      console.error('Error downloading watermarked document:', error)
+      console.error('Error downloading document:', error)
       toast({
         variant: 'error',
         title: 'Dokumen Gagal Dimuat Turun',
