@@ -3,7 +3,7 @@ import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
-import DokumenContentID from '@/components/page/KatalogDokumen/DokumenID/DokumenContentID'
+import PdfHtmlDocumentViewer from '@/components/shared/PdfHtmlDocumentViewer'
 import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/HeaderDokumenID'
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
@@ -12,18 +12,23 @@ import { useParams } from 'react-router-dom'
 import { AutoToast } from '@govtechmy/myds-react/toast'
 import { useToast } from '@govtechmy/myds-react/hooks'
 import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
+import { apiAuthHeaders } from '@/services/http'
 import normalizeWord from '@/utils/NormalizeWord'
 import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
+import { getDropdownUnits, type DropdownUnit } from '@/services/dropdown.svc'
 import {
   getAvailableUserGroups,
   getAvailableUsers,
   getCurrentApprovedUsers,
 } from '@/services/shareDocument.svc'
-import { downloadFile } from '@/utils/downloadFile'
+import { downloadBlob, resolveDownloadFileName } from '@/utils/downloadFile'
+import { watermarkPdf } from '@/utils/watermarkPdf'
+import { useAuthStore } from '@/store/AuthStore'
 import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval.svc'
 import extractBackendError from '@/utils/extractBackendError'
 import { useShareDocumentStore } from '@/store/ShareDocumentStore'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
+import { useRecordHtmlView } from '@/hooks/useRecordHtmlView'
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
@@ -55,6 +60,10 @@ export default function DokumenIDPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [units, setUnits] = useState<DropdownUnit[]>([])
+  const username = useAuthStore((state) => state.user?.username)
+  const userUnitId = useAuthStore((state) => state.user?.unitId)
 
   const setAvailableUsers = useShareDocumentStore((state) => state.setAvailableUsers)
   const setAvailableUserGroups = useShareDocumentStore((state) => state.setAvailableUserGroups)
@@ -154,17 +163,68 @@ export default function DokumenIDPage() {
     }
   }
 
-  const handleDownloadDokumen = (recordTitle: string) => {
-    if (!pdfData?.url) {
+  const handleDownloadDokumen = async (recordTitle: string) => {
+    if (!pdfData?.url || isDownloading) {
       return
     }
 
-    downloadFile({
-      url: pdfData.url,
-      fileName: recordTitle,
-      fallback: `dokumen-${DokumenID}`,
-      fileExtension: pdfData.meta?.fileExtension,
-    })
+    setIsDownloading(true)
+    try {
+      const response = await fetch(pdfData.url, { headers: apiAuthHeaders() })
+      if (!response.ok) {
+        throw new Error(`Failed to fetch document (${response.status})`)
+      }
+
+      const fileName = resolveDownloadFileName({
+        fileName: recordTitle,
+        fallback: `dokumen-${DokumenID}`,
+        fileExtension: pdfData.meta?.fileExtension,
+      })
+      const isPdf =
+        pdfData.meta?.fileExtension?.replace(/^\./, '').toLowerCase() === 'pdf' ||
+        response.headers.get('content-type')?.includes('application/pdf')
+
+      // Only PDFs can be watermarked; other formats (images, Office files) are saved as is
+      if (!isPdf) {
+        downloadBlob(await response.blob(), fileName)
+        return
+      }
+
+      // /units may only list units this user can access; fall back to the raw code
+      const getUnitName = (code = '') => units.find((unit) => unit.code === code)?.codeName ?? code
+
+      const watermarkText = [
+        'MYGOVSUITEDMS',
+        getUnitName(pdfData.document?.unit),
+        recordTitle,
+        `${username ?? ''}@${getUnitName(userUnitId)}`,
+        // dd/mm/yyyy HH:mm:ss (24-hour, local time)
+        new Intl.DateTimeFormat('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        })
+          .format(new Date())
+          .replace(',', ''),
+      ].join(' ')
+
+      const watermarkedPdf = await watermarkPdf(await response.arrayBuffer(), watermarkText)
+
+      downloadBlob(new Blob([watermarkedPdf], { type: 'application/pdf' }), fileName)
+    } catch (error) {
+      console.error('Error downloading document:', error)
+      toast({
+        variant: 'error',
+        title: 'Dokumen Gagal Dimuat Turun',
+        description: 'Sila cuba lagi atau hubungi pentadbir sistem.',
+      })
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   const handleToggleFavorite = async () => {
@@ -336,6 +396,22 @@ export default function DokumenIDPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [DokumenID])
 
+  // Unit names for the download watermark; not tied to the document, so loaded once
+  useEffect(() => {
+    getDropdownUnits()
+      .then(setUnits)
+      .catch(() => setUnits([]))
+  }, [])
+
+  // Every page of the record as HTML, loaded in chunks
+  const {
+    state: htmlConvertState,
+    result: htmlResult,
+    isLoadingMore: isLoadingMorePages,
+    loadMoreFailed: loadMorePagesFailed,
+    loadMore: loadMorePages,
+  } = useRecordHtmlView(DokumenID)
+
   useEffect(() => {
     setSearchKeyword('')
     setPdfSearchState({
@@ -379,6 +455,7 @@ export default function DokumenIDPage() {
               unit={normalizeWord(pdfData.document?.unit || 'Unit tidak dijumpai')}
               isFavorite={isFavorite}
               isFavoriteLoading={isFavoriteLoading}
+              isDownloading={isDownloading}
               onApproveDokumen={handleApproveDokumen}
               onNotApproveDokumen={handleNotApproveDokumen}
               onDownloadDokumen={handleDownloadDokumen}
@@ -400,15 +477,30 @@ export default function DokumenIDPage() {
             onPreviousPage={handlePreviousPage}
             onNextPage={handleNextPage}
           />
-          <DokumenContentID
-            pdfUrl={pdfData.url}
-            searchKeyword={searchKeyword}
-            navigationRequest={navigationRequest}
-            pageNavigationRequest={pageNavigationRequest}
-            onSearchStateChange={setPdfSearchState}
-            onDocumentLoad={() => setIsPdfLoaded(true)}
-            onPageChange={handlePageChange}
-          />
+          {htmlConvertState === 'success' && htmlResult ? (
+            <PdfHtmlDocumentViewer
+              pages={htmlResult.pages}
+              totalPages={htmlResult.totalPages}
+              isLoadingMore={isLoadingMorePages}
+              loadMoreFailed={loadMorePagesFailed}
+              onLoadMore={loadMorePages}
+              searchKeyword={searchKeyword}
+              navigationRequest={navigationRequest}
+              pageNavigationRequest={pageNavigationRequest}
+              onSearchStateChange={setPdfSearchState}
+              onDocumentLoad={() => setIsPdfLoaded(true)}
+              onPageChange={handlePageChange}
+            />
+          ) : (
+            <div
+              role={htmlConvertState === 'error' ? 'alert' : 'status'}
+              className="flex w-full items-center justify-center py-8 text-body-sm text-txt-black-500"
+            >
+              {htmlConvertState === 'error'
+                ? 'Dokumen gagal dimuatkan, sila cuba lagi atau hubungi pentadbir sistem.'
+                : 'Dokumen sedang diproses...'}
+            </div>
+          )}
         </div>
       )}
 

@@ -42,12 +42,19 @@ export type PdfPageNavigationRequest = {
   token: number
 }
 
+export type PdfMatchPage = {
+  page: number
+  firstMatchIndex: number
+  matchCount: number
+}
+
 interface PdfJsDocumentViewerProps {
   fileUrl: string
   searchKeyword?: string
   navigationRequest?: PdfSearchNavigationRequest | null
   pageNavigationRequest?: PdfPageNavigationRequest | null
   onSearchStateChange?: (state: PdfSearchState) => void
+  onMatchPagesChange?: (pages: PdfMatchPage[]) => void
   onDocumentLoad?: () => void
   onPageChange?: (currentPage: number, totalPages: number) => void
 }
@@ -97,6 +104,7 @@ export default function PdfJsDocumentViewer({
   navigationRequest,
   pageNavigationRequest,
   onSearchStateChange,
+  onMatchPagesChange,
   onDocumentLoad,
   onPageChange,
 }: PdfJsDocumentViewerProps) {
@@ -111,6 +119,9 @@ export default function PdfJsDocumentViewer({
   // injected asynchronously by react-pdf), so the highlight/scroll effect
   // below can retry once the target <mark> actually exists in the DOM.
   const [textLayerRenderTick, setTextLayerRenderTick] = useState(0)
+  // Bumped on every handled navigation request so re-selecting the already
+  // active match (e.g. clicking the same page card again) still scrolls to it.
+  const [navigationTick, setNavigationTick] = useState(0)
   const handledNavigationTokenRef = useRef<number | null>(null)
   const handledPageNavigationTokenRef = useRef<number | null>(null)
   // While a programmatic page-navigation scroll is animating, the
@@ -121,6 +132,7 @@ export default function PdfJsDocumentViewer({
   const pendingPageScrollTargetRef = useRef<number | null>(null)
   const previousKeywordRef = useRef('')
   const lastEmittedSearchStateRef = useRef<PdfSearchState | null>(null)
+  const lastEmittedMatchPagesRef = useRef<PdfMatchPage[] | null>(null)
   const lastActiveMatchElementsRef = useRef<HTMLElement[]>([])
   const lastNavigationActionRef = useRef<PdfSearchNavigationRequest['action'] | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -129,11 +141,13 @@ export default function PdfJsDocumentViewer({
 
   const matchesData = useMemo(() => {
     const matchesByPage: MatchesByPage = {}
+    const matchPages: PdfMatchPage[] = []
     let runningMatchIndex = 0
 
     if (!normalizedKeyword) {
       return {
         matchesByPage,
+        matchPages,
         totalMatches: 0,
       }
     }
@@ -218,6 +232,13 @@ export default function PdfJsDocumentViewer({
           })
         }
 
+        const lastMatchPage = matchPages[matchPages.length - 1]
+        if (lastMatchPage?.page === pageNumber) {
+          lastMatchPage.matchCount += 1
+        } else {
+          matchPages.push({ page: pageNumber, firstMatchIndex: globalMatchIndex, matchCount: 1 })
+        }
+
         runningMatchIndex += 1
         searchPosition = matchEnd
       }
@@ -225,6 +246,7 @@ export default function PdfJsDocumentViewer({
 
     return {
       matchesByPage,
+      matchPages,
       totalMatches: runningMatchIndex,
     }
   }, [normalizedKeyword, numPages, pageTextItems])
@@ -250,6 +272,7 @@ export default function PdfJsDocumentViewer({
     pendingPageScrollTargetRef.current = null
     previousKeywordRef.current = ''
     lastEmittedSearchStateRef.current = null
+    lastEmittedMatchPagesRef.current = null
     lastNavigationActionRef.current = null
     if (lastActiveMatchElementsRef.current.length > 0) {
       lastActiveMatchElementsRef.current.forEach((element) => {
@@ -296,6 +319,7 @@ export default function PdfJsDocumentViewer({
 
     handledNavigationTokenRef.current = navigationRequest.token
     lastNavigationActionRef.current = navigationRequest.action
+    setNavigationTick((previousTick) => previousTick + 1)
 
     if (matchesData.totalMatches === 0) {
       setCurrentMatchIndex(-1)
@@ -390,6 +414,26 @@ export default function PdfJsDocumentViewer({
   }, [currentMatchIndex, matchesData.totalMatches, isIndexing, onSearchStateChange])
 
   useEffect(() => {
+    const nextMatchPages = matchesData.matchPages
+    const previousMatchPages = lastEmittedMatchPagesRef.current
+    if (
+      previousMatchPages &&
+      previousMatchPages.length === nextMatchPages.length &&
+      previousMatchPages.every(
+        (matchPage, index) =>
+          matchPage.page === nextMatchPages[index].page &&
+          matchPage.firstMatchIndex === nextMatchPages[index].firstMatchIndex &&
+          matchPage.matchCount === nextMatchPages[index].matchCount
+      )
+    ) {
+      return
+    }
+
+    lastEmittedMatchPagesRef.current = nextMatchPages
+    onMatchPagesChange?.(nextMatchPages)
+  }, [matchesData.matchPages, onMatchPagesChange])
+
+  useEffect(() => {
     const container = viewportRef.current
 
     if (!container) {
@@ -427,7 +471,7 @@ export default function PdfJsDocumentViewer({
       behavior: isManualNavigation ? 'smooth' : 'auto',
     })
     lastNavigationActionRef.current = null
-  }, [currentMatchIndex, normalizedKeyword, textLayerRenderTick])
+  }, [currentMatchIndex, normalizedKeyword, textLayerRenderTick, navigationTick])
 
   useEffect(() => {
     const container = viewportRef.current
