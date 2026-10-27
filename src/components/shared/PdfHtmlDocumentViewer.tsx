@@ -4,6 +4,7 @@ import { StarterKit } from '@tiptap/starter-kit'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { TextStyleKit } from '@tiptap/extension-text-style'
 import { Image } from '@tiptap/extension-image'
+import { TableKit } from '@tiptap/extension-table'
 import { Button } from '@govtechmy/myds-react/button'
 import { clx } from '@govtechmy/myds-react/utils'
 import type { CSSProperties } from 'react'
@@ -106,6 +107,7 @@ export default function PdfHtmlDocumentViewer({
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyleKit,
       Image.configure({ inline: false, allowBase64: true }),
+      TableKit.configure({ table: { resizable: false } }),
       SearchHighlight,
       PageVisibility,
     ],

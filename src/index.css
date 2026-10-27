@@ -199,6 +199,25 @@
   list-style-type: decimal;
 }
 
+/* Fixed palette like the page sheet, so tables stay legible on white in dark mode */
+.pdf-html-document [data-type='page'] [data-type='frame'] table {
+  @apply w-full table-fixed border-collapse;
+}
+
+.pdf-html-document [data-type='page'] [data-type='frame'] th,
+.pdf-html-document [data-type='page'] [data-type='frame'] td {
+  @apply border border-gray-300 px-2 py-1 text-left align-top;
+}
+
+.pdf-html-document [data-type='page'] [data-type='frame'] th {
+  @apply bg-gray-50 font-semibold;
+}
+
+.pdf-html-document [data-type='page'] [data-type='frame'] td > p,
+.pdf-html-document [data-type='page'] [data-type='frame'] th > p {
+  margin: 0;
+}
+
 .pdf-html-document [data-type='page'] [data-type='frame'] img {
   @apply m-0 block h-full w-full max-w-none;
 }
