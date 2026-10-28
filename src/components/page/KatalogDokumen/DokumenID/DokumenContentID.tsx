@@ -3,6 +3,8 @@ import PdfJsDocumentViewer, {
   type PdfSearchNavigationRequest,
   type PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
+import PdfHtmlDocumentViewer from './PdfHtmlDocumentViewer'
+import { SAMPLE_DOKUMEN_PAGES } from './sampleDokumenHtml'
 
 interface DokumenContentIDProps {
   pdfUrl: string
@@ -24,9 +26,12 @@ export default function DokumenContentID({
   onPageChange,
 }: DokumenContentIDProps) {
   return (
-    <div className="w-full">
-      <PdfJsDocumentViewer
-        fileUrl={pdfUrl}
+    <div className="flex w-full flex-col">
+      {/* The header's search and page navigation drive the HTML view; the PDF
+          below is display only, so the header's page counter shows TipTap pages
+          only, not PDF pages. TODO: replace the sample pages with the record view API */}
+      <PdfHtmlDocumentViewer
+        pages={SAMPLE_DOKUMEN_PAGES}
         searchKeyword={searchKeyword}
         navigationRequest={navigationRequest}
         pageNavigationRequest={pageNavigationRequest}
@@ -34,6 +39,8 @@ export default function DokumenContentID({
         onDocumentLoad={onDocumentLoad}
         onPageChange={onPageChange}
       />
+
+      <PdfJsDocumentViewer fileUrl={pdfUrl} />
     </div>
   )
 }
