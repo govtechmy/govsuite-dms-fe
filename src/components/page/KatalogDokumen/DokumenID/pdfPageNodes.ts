@@ -1,16 +1,5 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { Document } from '@tiptap/extension-document'
-import type { RecordViewPage } from '@/services/recordView.svc'
-
-// An A4 sheet (96 DPI) that grows with its content, and one frame in normal flow
-// instead of the converter's absolute positioning
-const PAGE_STYLE = 'width: 794px; min-height: 1123px'
-const FRAME_STYLE = 'position: relative; padding: 72px; font-size: 14px; line-height: 1.6'
-
-// The record view API's `contentEditor` is plain HTML; wrap it in the page/frame
-// nodes below so each API item becomes one viewer page
-export const toPageHtml = ({ pageNumber, contentEditor }: RecordViewPage) =>
-  `<div data-type="page" data-page="${pageNumber}" style="${PAGE_STYLE}"><div data-type="frame" style="${FRAME_STYLE}">${contentEditor}</div></div>`
 
 // Keep the converter's inline style (position, size, font) exactly as written
 const rawStyle = {

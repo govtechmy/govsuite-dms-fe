@@ -1,7 +1,19 @@
-import type { RecordViewPagesResponse } from '@/services/recordView.svc'
+import type { CatalogListMeta } from '@/services/catalog.svc'
 
-// Sample GET /record/view/:recordId?page=1&pageSize=3 response
-const dataSample: { success: boolean; data: RecordViewPagesResponse } = {
+export interface RecordViewPage {
+  pageNumber: number
+  contentEditor: string
+}
+
+export interface RecordViewResponse {
+  success: boolean
+  data: {
+    items: RecordViewPage[]
+    meta: CatalogListMeta
+  }
+}
+
+const dataSample: RecordViewResponse = {
   success: true,
   data: {
     items: [
