@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { AutoToast } from '@govtechmy/myds-react/toast'
 import { useToast } from '@govtechmy/myds-react/hooks'
-import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
+import { getPdfGarage, getDokumenView, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
 import normalizeWord from '@/utils/NormalizeWord'
 import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
 import {
@@ -208,6 +208,22 @@ export default function DokumenIDPage() {
       console.error('Error refetching share data:', error)
     }
   }
+
+  useEffect(() => {
+    const fetchDokumenView = async () => {
+        if (!DokumenID) return
+
+        const result = await getDokumenView({ id: DokumenID })
+
+        if (!result.success) {
+          console.error('Error fetching Html data:', result.error)
+          return
+        }
+        const data = result.data
+        console.log(data)
+    }
+    fetchDokumenView()
+  }, [DokumenID])
 
   useEffect(() => {
     const fetchPDFData = async () => {
