@@ -11,7 +11,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { AutoToast } from '@govtechmy/myds-react/toast'
 import { useToast } from '@govtechmy/myds-react/hooks'
-import { getPdfGarage, type PdfGarageBase, type PdfGarageError } from '@/services/pdf.svc'
+import {
+  getPdfGarage,
+  getDokumenView,
+  type PdfGarageBase,
+  type PdfGarageError,
+  type RecordViewError,
+  type RecordViewPage,
+} from '@/services/pdf.svc'
 import normalizeWord from '@/utils/NormalizeWord'
 import { getMetadata, type MetadataDocument } from '@/services/metadata.svc'
 import {
@@ -33,6 +40,11 @@ export default function DokumenIDPage() {
   const [dokumenFetchState, setDokumenFetchState] = useState<ProgressState>(null)
   const [dokumenFetchError, setDokumenFetchError] = useState<PdfGarageError | null>(null)
   const [pdfData, setPdfData] = useState<PdfGarageBase | null>(null)
+  /* eslint-disable @typescript-eslint/no-unused-vars -- TODO: remove once the HTML view UI reads this state */
+  const [dokumenViewFetchState, setDokumenViewFetchState] = useState<ProgressState>(null)
+  const [dokumenViewFetchError, setDokumenViewFetchError] = useState<RecordViewError | null>(null)
+  const [dokumenViewPages, setDokumenViewPages] = useState<RecordViewPage[] | null>(null)
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   const [metadataDocument, setMetadataDocument] = useState<MetadataDocument | null>(null)
   const [approvalError, setApprovalError] = useState<{ code: string; message: string } | null>(null)
   const [disapprovalError, setDisapprovalError] = useState<{
@@ -208,6 +220,44 @@ export default function DokumenIDPage() {
       console.error('Error refetching share data:', error)
     }
   }
+
+  useEffect(() => {
+    const fetchDokumenView = async () => {
+      try {
+        setDokumenViewFetchState('loading')
+        setDokumenViewFetchError(null)
+        setDokumenViewPages(null)
+
+        if (!DokumenID) {
+          setDokumenViewFetchState('error')
+          setDokumenViewFetchError({
+            code: 'BAD_REQUEST',
+            message: 'Dokumen ID tidak ditemui.',
+          })
+          return
+        }
+
+        const result = await getDokumenView({ id: DokumenID })
+
+        if (!result.success) {
+          setDokumenViewFetchState('error')
+          setDokumenViewFetchError(result.error)
+          return
+        }
+
+        setDokumenViewPages(result.data.items)
+        setDokumenViewFetchState('success')
+      } catch (err) {
+        setDokumenViewFetchState('error')
+        setDokumenViewFetchError({
+          code: 'REQUEST_FAILED',
+          message: err instanceof Error ? err.message : 'Gagal memuatkan paparan dokumen.',
+        })
+        console.error('Error fetching dokumen view:', err)
+      }
+    }
+    fetchDokumenView()
+  }, [DokumenID])
 
   useEffect(() => {
     const fetchPDFData = async () => {
