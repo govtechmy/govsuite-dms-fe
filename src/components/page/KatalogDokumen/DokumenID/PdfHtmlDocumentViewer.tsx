@@ -75,6 +75,7 @@ export default function PdfHtmlDocumentViewer({
       attributes: {
         class: 'pdf-html-document flex flex-col gap-3 focus:outline-none',
         'aria-label': 'Kandungan dokumen',
+        'aria-readonly': 'true',
       },
     },
   })
