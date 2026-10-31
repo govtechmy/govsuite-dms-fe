@@ -72,6 +72,13 @@ export default function DokumenIDPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+  const [previousDokumenID, setPreviousDokumenID] = useState(DokumenID)
+
+  // Avoid requests the new document with the previous document's page number
+  if (DokumenID !== previousDokumenID) {
+    setPreviousDokumenID(DokumenID)
+    setDokumenViewPageNumber(1)
+  }
 
   const setAvailableUsers = useShareDocumentStore((state) => state.setAvailableUsers)
   const setAvailableUserGroups = useShareDocumentStore((state) => state.setAvailableUserGroups)
@@ -246,11 +253,7 @@ export default function DokumenIDPage() {
           return
         }
 
-        const result = await getDokumenView({
-          id: DokumenID,
-          page: dokumenViewPageNumber,
-          limit: dokumenViewPageSize,
-        })
+        const result = await getDokumenView(DokumenID, dokumenViewPageNumber, dokumenViewPageSize)
 
         if (ignore) return
 
@@ -421,7 +424,6 @@ export default function DokumenIDPage() {
     setIsPdfLoaded(false)
     setCurrentPage(1)
     setTotalPages(0)
-    setDokumenViewPageNumber(1)
   }, [DokumenID])
 
   const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {

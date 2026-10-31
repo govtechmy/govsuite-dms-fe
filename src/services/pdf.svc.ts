@@ -86,12 +86,6 @@ export const getPdfGarage = async ({ id }: GetPdfGarageParams): Promise<GetPdfGa
 }
 
 // HTML View Section
-type GetDokumenViewParams = {
-  id: string
-  page: number
-  limit: number
-}
-
 export interface RecordViewError {
   code: string
   message: string
@@ -115,11 +109,11 @@ export type RecordViewResponse =
       error: RecordViewError
     }
 
-export const getDokumenView = async ({
-  id,
-  page,
-  limit,
-}: GetDokumenViewParams): Promise<RecordViewResponse> => {
+export const getDokumenView = async (
+  id: string,
+  page: number,
+  limit: number
+): Promise<RecordViewResponse> => {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) })
   const url = `${getEnv('VITE_API_BASE_URL')}/record/view/${encodeURIComponent(id)}?${params.toString()}`
 
