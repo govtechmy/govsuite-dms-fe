@@ -246,7 +246,11 @@ export default function DokumenIDPage() {
           return
         }
 
-        const result = await getDokumenView({ id: DokumenID, page: dokumenViewPageNumber, limit: dokumenViewPageSize })
+        const result = await getDokumenView({
+          id: DokumenID,
+          page: dokumenViewPageNumber,
+          limit: dokumenViewPageSize,
+        })
 
         if (ignore) return
 

@@ -115,8 +115,12 @@ export type RecordViewResponse =
       error: RecordViewError
     }
 
-export const getDokumenView = async ({ id, page, limit }: GetDokumenViewParams): Promise<RecordViewResponse> => {
-  const params = new URLSearchParams({ page:String(page), limit: String(limit) })
+export const getDokumenView = async ({
+  id,
+  page,
+  limit,
+}: GetDokumenViewParams): Promise<RecordViewResponse> => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) })
   const url = `${getEnv('VITE_API_BASE_URL')}/record/view/${encodeURIComponent(id)}?${params.toString()}`
 
   try {
