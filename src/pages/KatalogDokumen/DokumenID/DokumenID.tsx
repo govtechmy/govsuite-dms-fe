@@ -40,11 +40,9 @@ export default function DokumenIDPage() {
   const [dokumenFetchState, setDokumenFetchState] = useState<ProgressState>(null)
   const [dokumenFetchError, setDokumenFetchError] = useState<PdfGarageError | null>(null)
   const [pdfData, setPdfData] = useState<PdfGarageBase | null>(null)
-  /* eslint-disable @typescript-eslint/no-unused-vars -- TODO: remove once the HTML view UI reads this state */
   const [dokumenViewFetchState, setDokumenViewFetchState] = useState<ProgressState>(null)
   const [dokumenViewFetchError, setDokumenViewFetchError] = useState<RecordViewError | null>(null)
   const [dokumenViewPages, setDokumenViewPages] = useState<RecordViewPage[] | null>(null)
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   const [metadataDocument, setMetadataDocument] = useState<MetadataDocument | null>(null)
   const [approvalError, setApprovalError] = useState<{ code: string; message: string } | null>(null)
   const [disapprovalError, setDisapprovalError] = useState<{
@@ -222,6 +220,10 @@ export default function DokumenIDPage() {
   }
 
   useEffect(() => {
+    // Ignore a response that resolves after DokumenID has changed, so an older
+    // document's pages never overwrite the current one
+    let ignore = false
+
     const fetchDokumenView = async () => {
       try {
         setDokumenViewFetchState('loading')
@@ -239,6 +241,8 @@ export default function DokumenIDPage() {
 
         const result = await getDokumenView({ id: DokumenID })
 
+        if (ignore) return
+
         if (!result.success) {
           setDokumenViewFetchState('error')
           setDokumenViewFetchError(result.error)
@@ -248,6 +252,7 @@ export default function DokumenIDPage() {
         setDokumenViewPages(result.data.items)
         setDokumenViewFetchState('success')
       } catch (err) {
+        if (ignore) return
         setDokumenViewFetchState('error')
         setDokumenViewFetchError({
           code: 'REQUEST_FAILED',
@@ -257,6 +262,10 @@ export default function DokumenIDPage() {
       }
     }
     fetchDokumenView()
+
+    return () => {
+      ignore = true
+    }
   }, [DokumenID])
 
   useEffect(() => {
@@ -451,7 +460,9 @@ export default function DokumenIDPage() {
             onNextPage={handleNextPage}
           />
           <DokumenContentID
-            pdfUrl={pdfData.url}
+            dokumenViewPages={dokumenViewPages}
+            dokumenViewFetchState={dokumenViewFetchState}
+            dokumenViewFetchError={dokumenViewFetchError}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
             pageNavigationRequest={pageNavigationRequest}

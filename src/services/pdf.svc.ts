@@ -1,6 +1,7 @@
 import { getEnv } from '@/config/runtimeEnv'
 import { authAxios, resolveApiUrl } from './http'
 import type { CatalogListMeta } from '@/services/catalog.svc'
+import extractBackendError from '@/utils/extractBackendError'
 
 // PDF Garage Section
 type GetPdfGarageParams = {
@@ -76,7 +77,7 @@ export const getPdfGarage = async ({ id }: GetPdfGarageParams): Promise<GetPdfGa
   } catch (error) {
     return {
       success: false,
-      error: {
+      error: extractBackendError(error) ?? {
         code: 'REQUEST_FAILED',
         message: error instanceof Error ? error.message : 'Failed to fetch PDF download URL',
       },
@@ -130,7 +131,7 @@ export const getDokumenView = async ({ id }: GetDokumenViewParams): Promise<Reco
   } catch (error) {
     return {
       success: false,
-      error: {
+      error: extractBackendError(error) ?? {
         code: 'REQUEST_FAILED',
         message: error instanceof Error ? error.message : 'Failed to fetch dokumen HTML view',
       },
