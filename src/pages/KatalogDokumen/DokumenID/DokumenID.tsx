@@ -31,6 +31,10 @@ import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval
 import extractBackendError from '@/utils/extractBackendError'
 import { useShareDocumentStore } from '@/store/ShareDocumentStore'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
+import type { CatalogListMeta } from '@/services/catalog.svc'
+
+// Default Page Size for Pagination
+const DEFAULT_PAGE_SIZE = 10
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
@@ -43,6 +47,9 @@ export default function DokumenIDPage() {
   const [dokumenViewFetchState, setDokumenViewFetchState] = useState<ProgressState>(null)
   const [dokumenViewFetchError, setDokumenViewFetchError] = useState<RecordViewError | null>(null)
   const [dokumenViewPages, setDokumenViewPages] = useState<RecordViewPage[] | null>(null)
+  const [dokumenViewPageNumber, setDokumenViewPageNumber] = useState(1)
+  const [dokumenViewPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [dokumenViewMeta, setDokumenViewMeta] = useState<CatalogListMeta | null>(null)
   const [metadataDocument, setMetadataDocument] = useState<MetadataDocument | null>(null)
   const [approvalError, setApprovalError] = useState<{ code: string; message: string } | null>(null)
   const [disapprovalError, setDisapprovalError] = useState<{
@@ -239,7 +246,7 @@ export default function DokumenIDPage() {
           return
         }
 
-        const result = await getDokumenView({ id: DokumenID })
+        const result = await getDokumenView(DokumenID, dokumenViewPageNumber, dokumenViewPageSize)
 
         if (ignore) return
 
@@ -250,6 +257,7 @@ export default function DokumenIDPage() {
         }
 
         setDokumenViewPages(result.data.items)
+        setDokumenViewMeta(result.data.meta)
         setDokumenViewFetchState('success')
       } catch (err) {
         if (ignore) return
@@ -266,7 +274,7 @@ export default function DokumenIDPage() {
     return () => {
       ignore = true
     }
-  }, [DokumenID])
+  }, [DokumenID, dokumenViewPageNumber, dokumenViewPageSize])
 
   useEffect(() => {
     const fetchPDFData = async () => {
@@ -409,6 +417,7 @@ export default function DokumenIDPage() {
     setIsPdfLoaded(false)
     setCurrentPage(1)
     setTotalPages(0)
+    setDokumenViewPageNumber(1)
   }, [DokumenID])
 
   const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {
@@ -463,6 +472,8 @@ export default function DokumenIDPage() {
             dokumenViewPages={dokumenViewPages}
             dokumenViewFetchState={dokumenViewFetchState}
             dokumenViewFetchError={dokumenViewFetchError}
+            dokumenViewMeta={dokumenViewMeta}
+            onDokumenViewPageChange={setDokumenViewPageNumber}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
             pageNavigationRequest={pageNavigationRequest}
