@@ -9,6 +9,8 @@ import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/S
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { Callout, CalloutTitle } from '@govtechmy/myds-react/callout'
+import { Spinner } from '@govtechmy/myds-react/spinner'
 import { AutoToast } from '@govtechmy/myds-react/toast'
 import { useToast } from '@govtechmy/myds-react/hooks'
 import {
@@ -31,9 +33,8 @@ import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval
 import extractBackendError from '@/utils/extractBackendError'
 import { useShareDocumentStore } from '@/store/ShareDocumentStore'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
-import type { CatalogListMeta } from '@/services/catalog.svc'
 
-// Default Page Size for Pagination
+// Pages fetched per request
 const DEFAULT_PAGE_SIZE = 10
 
 export default function DokumenIDPage() {
@@ -47,9 +48,10 @@ export default function DokumenIDPage() {
   const [dokumenViewFetchState, setDokumenViewFetchState] = useState<ProgressState>(null)
   const [dokumenViewFetchError, setDokumenViewFetchError] = useState<RecordViewError | null>(null)
   const [dokumenViewPages, setDokumenViewPages] = useState<RecordViewPage[] | null>(null)
-  const [dokumenViewPageNumber, setDokumenViewPageNumber] = useState(1)
   const [dokumenViewPageSize] = useState(DEFAULT_PAGE_SIZE)
-  const [dokumenViewMeta, setDokumenViewMeta] = useState<CatalogListMeta | null>(null)
+  const [dokumenViewLoadMoreError, setDokumenViewLoadMoreError] = useState<RecordViewError | null>(
+    null
+  )
   const [metadataDocument, setMetadataDocument] = useState<MetadataDocument | null>(null)
   const [approvalError, setApprovalError] = useState<{ code: string; message: string } | null>(null)
   const [disapprovalError, setDisapprovalError] = useState<{
@@ -72,6 +74,7 @@ export default function DokumenIDPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+  const [isDokumenViewFetchingAll, setIsDokumenViewFetchingAll] = useState(false)
 
   const setAvailableUsers = useShareDocumentStore((state) => state.setAvailableUsers)
   const setAvailableUserGroups = useShareDocumentStore((state) => state.setAvailableUserGroups)
@@ -234,7 +237,9 @@ export default function DokumenIDPage() {
     const fetchDokumenView = async () => {
       try {
         setDokumenViewFetchState('loading')
+        setIsDokumenViewFetchingAll(true)
         setDokumenViewFetchError(null)
+        setDokumenViewLoadMoreError(null)
         setDokumenViewPages(null)
 
         if (!DokumenID) {
@@ -246,19 +251,33 @@ export default function DokumenIDPage() {
           return
         }
 
-        const result = await getDokumenView(DokumenID, dokumenViewPageNumber, dokumenViewPageSize)
+        let page = 1
+        let hasNextPage = true
 
-        if (ignore) return
+        while (hasNextPage) {
+          const result = await getDokumenView({
+            id: DokumenID,
+            page,
+            limit: dokumenViewPageSize,
+          })
 
-        if (!result.success) {
-          setDokumenViewFetchState('error')
-          setDokumenViewFetchError(result.error)
-          return
+          if (ignore) return
+
+          if (!result.success) {
+            if (page === 1) {
+              setDokumenViewFetchState('error')
+              setDokumenViewFetchError(result.error)
+            } else {
+              setDokumenViewLoadMoreError(result.error)
+            }
+            return
+          }
+
+          setDokumenViewPages((previous) => [...(previous ?? []), ...result.data.items])
+          setDokumenViewFetchState('success')
+          page += 1
+          hasNextPage = result.data.meta.hasNextPage && result.data.items.length > 0
         }
-
-        setDokumenViewPages(result.data.items)
-        setDokumenViewMeta(result.data.meta)
-        setDokumenViewFetchState('success')
       } catch (err) {
         if (ignore) return
         setDokumenViewFetchState('error')
@@ -267,6 +286,8 @@ export default function DokumenIDPage() {
           message: err instanceof Error ? err.message : 'Gagal memuatkan paparan dokumen.',
         })
         console.error('Error fetching dokumen view:', err)
+      } finally {
+        if (!ignore) setIsDokumenViewFetchingAll(false)
       }
     }
     fetchDokumenView()
@@ -274,7 +295,7 @@ export default function DokumenIDPage() {
     return () => {
       ignore = true
     }
-  }, [DokumenID, dokumenViewPageNumber, dokumenViewPageSize])
+  }, [DokumenID, dokumenViewPageSize])
 
   useEffect(() => {
     const fetchPDFData = async () => {
@@ -417,7 +438,6 @@ export default function DokumenIDPage() {
     setIsPdfLoaded(false)
     setCurrentPage(1)
     setTotalPages(0)
-    setDokumenViewPageNumber(1)
   }, [DokumenID])
 
   const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {
@@ -454,26 +474,47 @@ export default function DokumenIDPage() {
               onToggleFavorite={handleToggleFavorite}
             />
           )}
-          <SearchBarDokumenID
-            searchKeyword={searchKeyword}
-            onSearchKeywordChange={setSearchKeyword}
-            currentMatchIndex={pdfSearchState.currentMatchIndex}
-            totalMatches={pdfSearchState.totalMatches}
-            onPreviousMatch={() => queueNavigationRequest('previous')}
-            onNextMatch={() => queueNavigationRequest('next')}
-            isPdfLoaded={isPdfLoaded}
-            isIndexing={pdfSearchState.isIndexing}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPreviousPage={handlePreviousPage}
-            onNextPage={handleNextPage}
-          />
+          <div className="sticky top-0 z-10 w-full shrink-0">
+            <SearchBarDokumenID
+              searchKeyword={searchKeyword}
+              onSearchKeywordChange={setSearchKeyword}
+              currentMatchIndex={pdfSearchState.currentMatchIndex}
+              totalMatches={pdfSearchState.totalMatches}
+              onPreviousMatch={() => queueNavigationRequest('previous')}
+              onNextMatch={() => queueNavigationRequest('next')}
+              isPdfLoaded={isPdfLoaded}
+              isIndexing={pdfSearchState.isIndexing}
+              isDokumenViewFetchingAll={isDokumenViewFetchingAll}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPreviousPage={handlePreviousPage}
+              onNextPage={handleNextPage}
+            />
+            {isDokumenViewFetchingAll && dokumenViewFetchState === 'success' && (
+              <div className="bg-bg-white px-4 py-3 sm:px-8">
+                <Callout variant="info" role="status" className="w-full">
+                  <CalloutTitle>
+                    Kandungan dokumen sedang dimuatkan. Carian tersedia selepas selesai.
+                  </CalloutTitle>
+                  <Spinner size="small" />
+                </Callout>
+              </div>
+            )}
+            {dokumenViewLoadMoreError && (
+              <div className="bg-bg-white px-4 py-3 sm:px-8">
+                <Callout variant="danger" className="w-full">
+                  <CalloutTitle>
+                    Sebahagian kandungan gagal dimuatkan. Carian hanya merangkumi halaman yang
+                    dipaparkan.
+                  </CalloutTitle>
+                </Callout>
+              </div>
+            )}
+          </div>
           <DokumenContentID
             dokumenViewPages={dokumenViewPages}
             dokumenViewFetchState={dokumenViewFetchState}
             dokumenViewFetchError={dokumenViewFetchError}
-            dokumenViewMeta={dokumenViewMeta}
-            onDokumenViewPageChange={setDokumenViewPageNumber}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
             pageNavigationRequest={pageNavigationRequest}

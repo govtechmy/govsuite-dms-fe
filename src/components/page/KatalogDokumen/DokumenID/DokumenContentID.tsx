@@ -9,21 +9,11 @@ import {
 import { ProgressResult, type ProgressState } from '@/components/shared/ProgressResult'
 import type { RecordViewError, RecordViewPage } from '@/services/pdf.svc'
 import PdfHtmlDocumentViewer from './PdfHtmlDocumentViewer'
-import { AutoPagination } from '@govtechmy/myds-react/pagination'
-import type { CatalogListMeta } from '@/services/catalog.svc'
-
-// The backend's `contentEditor` is plain HTML, so wrap each item in the page/frame
-// nodes the viewer expects: an A4 sheet (96 DPI) that grows with its content, and
-// one frame in normal flow instead of the converter's absolute positioning
-const PAGE_STYLE = 'width: 794px; min-height: 1123px'
-const FRAME_STYLE = 'position: relative; padding: 72px; font-size: 14px; line-height: 1.6'
 
 interface DokumenContentIDProps {
   dokumenViewPages: RecordViewPage[] | null
   dokumenViewFetchState: ProgressState
   dokumenViewFetchError: RecordViewError | null
-  dokumenViewMeta: CatalogListMeta | null
-  onDokumenViewPageChange: (page: number) => void
   searchKeyword: string
   navigationRequest?: PdfSearchNavigationRequest | null
   pageNavigationRequest?: PdfPageNavigationRequest | null
@@ -36,22 +26,16 @@ export default function DokumenContentID({
   dokumenViewPages,
   dokumenViewFetchState,
   dokumenViewFetchError,
-  dokumenViewMeta,
   searchKeyword,
   navigationRequest,
   pageNavigationRequest,
   onSearchStateChange,
   onDocumentLoad,
   onPageChange,
-  onDokumenViewPageChange,
 }: DokumenContentIDProps) {
   // Viewer's `pages` reference stays stable across renders
   const pages = useMemo(
-    () =>
-      (dokumenViewPages ?? []).map(
-        ({ pageNumber, contentEditor }) =>
-          `<div data-type="page" data-page="${pageNumber}" style="${PAGE_STYLE}"><div data-type="frame" style="${FRAME_STYLE}">${contentEditor}</div></div>`
-      ),
+    () => (dokumenViewPages ?? []).map(({ contentEditor }) => contentEditor),
     [dokumenViewPages]
   )
 
@@ -119,19 +103,6 @@ export default function DokumenContentID({
 
       {/* Pdf Viewer for previous viewer*/}
       {/* <PdfJsDocumentViewer fileUrl={pdfUrl} /> */}
-
-      {dokumenViewMeta && dokumenViewMeta.totalPages > 1 && (
-        <div className="sticky bottom-0 bg-bg-white py-3">
-          <AutoPagination
-            page={dokumenViewMeta.currentPage}
-            limit={dokumenViewMeta.pageSize}
-            count={dokumenViewMeta.totalItems}
-            type="default"
-            maxDisplay={4}
-            onPageChange={onDokumenViewPageChange}
-          />
-        </div>
-      )}
     </div>
   )
 }
