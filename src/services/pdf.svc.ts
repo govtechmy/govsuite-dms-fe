@@ -1,6 +1,9 @@
 import { getEnv } from '@/config/runtimeEnv'
 import { authAxios, resolveApiUrl } from './http'
+import type { CatalogListMeta } from '@/services/catalog.svc'
+import extractBackendError from '@/utils/extractBackendError'
 
+// PDF Garage Section
 type GetPdfGarageParams = {
   id: string
 }
@@ -74,9 +77,63 @@ export const getPdfGarage = async ({ id }: GetPdfGarageParams): Promise<GetPdfGa
   } catch (error) {
     return {
       success: false,
-      error: {
+      error: extractBackendError(error) ?? {
         code: 'REQUEST_FAILED',
         message: error instanceof Error ? error.message : 'Failed to fetch PDF download URL',
+      },
+    }
+  }
+}
+
+// HTML View Section
+type GetDokumenViewParams = {
+  id: string
+}
+
+export interface RecordViewError {
+  code: string
+  message: string
+}
+
+export interface RecordViewPage {
+  pageNumber: number
+  contentEditor: string
+}
+
+export type RecordViewResponse =
+  | {
+      success: true
+      data: {
+        items: RecordViewPage[]
+        meta: CatalogListMeta
+      }
+    }
+  | {
+      success: false
+      error: RecordViewError
+    }
+
+export const getDokumenView = async ({ id }: GetDokumenViewParams): Promise<RecordViewResponse> => {
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/view/${encodeURIComponent(id)}`
+
+  try {
+    const response = await authAxios.get<RecordViewResponse>(url)
+    const payload = response.data
+
+    if (payload.success) {
+      return payload
+    }
+
+    return {
+      success: payload.success,
+      error: payload.error,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: extractBackendError(error) ?? {
+        code: 'REQUEST_FAILED',
+        message: error instanceof Error ? error.message : 'Failed to fetch dokumen HTML view',
       },
     }
   }
