@@ -14,6 +14,7 @@ import type {
 } from '@/components/shared/PdfJsDocumentViewer'
 import { FrameNode, PageDocument, PageNode } from './pdfPageNodes'
 import { SearchHighlight, searchHighlightKey, setSearchHighlight } from './searchHighlight'
+import { createDocument } from '@tiptap/core'
 
 interface PdfHtmlDocumentViewerProps {
   // HTML of each page, in page order
@@ -93,14 +94,26 @@ export default function PdfHtmlDocumentViewer({
   const totalMatches = searchState?.totalMatches ?? 0
   const activeIndex = searchState?.activeIndex ?? -1
 
-  // A different document replaces the content
+  // New pages from the same document are appended; different content replaces it
   useEffect(() => {
     if (!editor) return
 
-    if (pages !== renderedPagesRef.current) {
+    const renderedPages = renderedPagesRef.current
+
+    if (pages !== renderedPages) {
+      const isAppend =
+        pages.length > renderedPages.length &&
+        renderedPages.every((page, index) => page === pages[index])
       renderedPagesRef.current = pages
-      editor.commands.setContent(pages.join('\n'), { emitUpdate: false })
-      setCurrentPage(1)
+      if (isAppend) {
+        const newPages = createDocument(pages.slice(renderedPages.length).join(''), editor.schema)
+        editor.commands.insertContentAt(editor.state.doc.content.size, newPages.content, {
+          updateSelection: false,
+        })
+      } else {
+        editor.commands.setContent(pages.join('\n'), { emitUpdate: false })
+        setCurrentPage(1)
+      }
     }
 
     setPageElements(

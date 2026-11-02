@@ -4,11 +4,13 @@ import type {
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
 import DokumenContentID from '@/components/page/KatalogDokumen/DokumenID/DokumenContentID'
+import { DokumenLoadProgress } from '@/components/page/KatalogDokumen/DokumenID/DokumenLoadProgress'
 import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/HeaderDokumenID'
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
 import ProgressResultChecker, { type ProgressState } from '@/components/shared/ProgressResult'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { Callout, CalloutContent, CalloutTitle } from '@govtechmy/myds-react/callout'
 import { AutoToast } from '@govtechmy/myds-react/toast'
 import { useToast } from '@govtechmy/myds-react/hooks'
 import {
@@ -31,10 +33,9 @@ import { putDocumentApproval, putDocumentNotApproved } from '@/services/approval
 import extractBackendError from '@/utils/extractBackendError'
 import { useShareDocumentStore } from '@/store/ShareDocumentStore'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
-import type { CatalogListMeta } from '@/services/catalog.svc'
 
-// Default Page Size for Pagination
-const DEFAULT_PAGE_SIZE = 10
+// Pages fetched per request
+const DEFAULT_PAGE_SIZE = 2
 
 export default function DokumenIDPage() {
   const { lang = 'en', DokumenID } = useParams<{ lang: string; DokumenID: string }>()
@@ -47,9 +48,11 @@ export default function DokumenIDPage() {
   const [dokumenViewFetchState, setDokumenViewFetchState] = useState<ProgressState>(null)
   const [dokumenViewFetchError, setDokumenViewFetchError] = useState<RecordViewError | null>(null)
   const [dokumenViewPages, setDokumenViewPages] = useState<RecordViewPage[] | null>(null)
-  const [dokumenViewPageNumber, setDokumenViewPageNumber] = useState(1)
+  const [dokumenViewTotalItems, setDokumenViewTotalItems] = useState(0)
   const [dokumenViewPageSize] = useState(DEFAULT_PAGE_SIZE)
-  const [dokumenViewMeta, setDokumenViewMeta] = useState<CatalogListMeta | null>(null)
+  const [dokumenViewLoadMoreError, setDokumenViewLoadMoreError] = useState<RecordViewError | null>(
+    null
+  )
   const [metadataDocument, setMetadataDocument] = useState<MetadataDocument | null>(null)
   const [approvalError, setApprovalError] = useState<{ code: string; message: string } | null>(null)
   const [disapprovalError, setDisapprovalError] = useState<{
@@ -72,6 +75,7 @@ export default function DokumenIDPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+  const [isDokumenViewFetchingAll, setIsDokumenViewFetchingAll] = useState(false)
 
   const setAvailableUsers = useShareDocumentStore((state) => state.setAvailableUsers)
   const setAvailableUserGroups = useShareDocumentStore((state) => state.setAvailableUserGroups)
@@ -230,12 +234,28 @@ export default function DokumenIDPage() {
     // Ignore a response that resolves after DokumenID has changed, so an older
     // document's pages never overwrite the current one
     let ignore = false
+    const abortController = new AbortController()
 
     const fetchDokumenView = async () => {
+      let hasLoadedContent = false
+
+      // Keep pages already on screen when a later request fails
+      const handleFetchFailure = (error: RecordViewError) => {
+        if (hasLoadedContent) {
+          setDokumenViewLoadMoreError(error)
+          return
+        }
+        setDokumenViewFetchState('error')
+        setDokumenViewFetchError(error)
+      }
+
       try {
         setDokumenViewFetchState('loading')
+        setIsDokumenViewFetchingAll(true)
         setDokumenViewFetchError(null)
+        setDokumenViewLoadMoreError(null)
         setDokumenViewPages(null)
+        setDokumenViewTotalItems(0)
 
         if (!DokumenID) {
           setDokumenViewFetchState('error')
@@ -246,35 +266,51 @@ export default function DokumenIDPage() {
           return
         }
 
-        const result = await getDokumenView(DokumenID, dokumenViewPageNumber, dokumenViewPageSize)
+        let page = 1
+        let hasNextPage = true
 
-        if (ignore) return
+        while (hasNextPage) {
+          const result = await getDokumenView({
+            id: DokumenID,
+            page,
+            limit: dokumenViewPageSize,
+            signal: abortController.signal,
+          })
 
-        if (!result.success) {
-          setDokumenViewFetchState('error')
-          setDokumenViewFetchError(result.error)
-          return
+          if (ignore) return
+
+          if (!result.success) {
+            handleFetchFailure(result.error)
+            return
+          }
+
+          const { items, meta } = result.data
+
+          setDokumenViewPages((previous) => [...(previous ?? []), ...items])
+          setDokumenViewTotalItems(meta.totalItems)
+          setDokumenViewFetchState('success')
+          hasLoadedContent = hasLoadedContent || items.length > 0
+          page += 1
+          hasNextPage = meta.hasNextPage
         }
-
-        setDokumenViewPages(result.data.items)
-        setDokumenViewMeta(result.data.meta)
-        setDokumenViewFetchState('success')
       } catch (err) {
         if (ignore) return
-        setDokumenViewFetchState('error')
-        setDokumenViewFetchError({
+        console.error('Error fetching dokumen view:', err)
+        handleFetchFailure({
           code: 'REQUEST_FAILED',
           message: err instanceof Error ? err.message : 'Gagal memuatkan paparan dokumen.',
         })
-        console.error('Error fetching dokumen view:', err)
+      } finally {
+        if (!ignore) setIsDokumenViewFetchingAll(false)
       }
     }
     fetchDokumenView()
 
     return () => {
       ignore = true
+      abortController.abort()
     }
-  }, [DokumenID, dokumenViewPageNumber, dokumenViewPageSize])
+  }, [DokumenID, dokumenViewPageSize])
 
   useEffect(() => {
     const fetchPDFData = async () => {
@@ -417,7 +453,6 @@ export default function DokumenIDPage() {
     setIsPdfLoaded(false)
     setCurrentPage(1)
     setTotalPages(0)
-    setDokumenViewPageNumber(1)
   }, [DokumenID])
 
   const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {
@@ -454,26 +489,43 @@ export default function DokumenIDPage() {
               onToggleFavorite={handleToggleFavorite}
             />
           )}
-          <SearchBarDokumenID
-            searchKeyword={searchKeyword}
-            onSearchKeywordChange={setSearchKeyword}
-            currentMatchIndex={pdfSearchState.currentMatchIndex}
-            totalMatches={pdfSearchState.totalMatches}
-            onPreviousMatch={() => queueNavigationRequest('previous')}
-            onNextMatch={() => queueNavigationRequest('next')}
-            isPdfLoaded={isPdfLoaded}
-            isIndexing={pdfSearchState.isIndexing}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPreviousPage={handlePreviousPage}
-            onNextPage={handleNextPage}
-          />
+          <div className="sticky top-0 z-10 w-full shrink-0">
+            <SearchBarDokumenID
+              searchKeyword={searchKeyword}
+              onSearchKeywordChange={setSearchKeyword}
+              currentMatchIndex={pdfSearchState.currentMatchIndex}
+              totalMatches={pdfSearchState.totalMatches}
+              onPreviousMatch={() => queueNavigationRequest('previous')}
+              onNextMatch={() => queueNavigationRequest('next')}
+              isPdfLoaded={isPdfLoaded}
+              isIndexing={pdfSearchState.isIndexing}
+              isDokumenViewFetchingAll={isDokumenViewFetchingAll}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPreviousPage={handlePreviousPage}
+              onNextPage={handleNextPage}
+            />
+            {isDokumenViewFetchingAll && dokumenViewFetchState === 'success' && (
+              <div className="bg-bg-white px-4 py-3 sm:px-8">
+                <DokumenLoadProgress
+                  loadedPages={dokumenViewPages?.length ?? 0}
+                  totalPages={dokumenViewTotalItems}
+                />
+              </div>
+            )}
+            {dokumenViewLoadMoreError && (
+              <div className="bg-bg-white px-4 py-3 sm:px-8">
+                <Callout variant="danger" className="w-full">
+                  <CalloutTitle>Sebahagian kandungan gagal dimuatkan</CalloutTitle>
+                  <CalloutContent>Carian hanya merangkumi halaman yang dipaparkan.</CalloutContent>
+                </Callout>
+              </div>
+            )}
+          </div>
           <DokumenContentID
             dokumenViewPages={dokumenViewPages}
             dokumenViewFetchState={dokumenViewFetchState}
             dokumenViewFetchError={dokumenViewFetchError}
-            dokumenViewMeta={dokumenViewMeta}
-            onDokumenViewPageChange={setDokumenViewPageNumber}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
             pageNavigationRequest={pageNavigationRequest}
