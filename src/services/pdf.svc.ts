@@ -90,6 +90,7 @@ type GetDokumenViewParams = {
   id: string
   page: number
   limit: number
+  signal?: AbortSignal
 }
 
 export interface RecordViewError {
@@ -119,12 +120,13 @@ export const getDokumenView = async ({
   id,
   page,
   limit,
+  signal,
 }: GetDokumenViewParams): Promise<RecordViewResponse> => {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) })
   const url = `${getEnv('VITE_API_BASE_URL')}/record/view/${encodeURIComponent(id)}?${params.toString()}`
 
   try {
-    const response = await authAxios.get<RecordViewResponse>(url)
+    const response = await authAxios.get<RecordViewResponse>(url, { signal })
     const payload = response.data
 
     if (payload.success) {
