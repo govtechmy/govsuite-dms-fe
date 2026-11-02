@@ -5,8 +5,6 @@ import SearchLoadingState from '@/components/page/CarianDokumen/SearchLoadingSta
 import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCarianDokumen'
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
-import SearchModeRadio from '@/components/page/CarianDokumen/SearchModeRadio'
-import { SEARCH_MODE, SEARCH_MODE_PARAM } from '@/components/page/CarianDokumen/searchMode'
 import { getSearchRecordCarianDokumen } from '@/services/catalog.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -49,7 +47,6 @@ export default function CarianDokumenPage() {
   const appendRequestInFlightRef = useRef(false)
   const lastAppendTriggerAtRef = useRef(0)
   const currentPageRef = useRef(1)
-  const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
 
   const query = useSearchStore((state) => state.query)
   const jenisDokumen = useSearchStore((state) => state.jenisDokumen)
@@ -223,12 +220,6 @@ export default function CarianDokumenPage() {
     }
 
     hadSearchQueryRef.current = true
-
-    // Hybrid search has no data source yet, so no request is made for it
-    if (isHybridSearch) {
-      return
-    }
-
     currentPageRef.current = 1
     lastAppendTriggerAtRef.current = 0
     void fetchAndSetDocumentRecords({ append: false })
@@ -236,7 +227,6 @@ export default function CarianDokumenPage() {
     fetchAndSetDocumentRecords,
     dateFrom,
     dateTo,
-    isHybridSearch,
     query,
     resetSearchState,
     sort,
@@ -254,7 +244,7 @@ export default function CarianDokumenPage() {
   }
 
   // First-time search loading (centered) - no results yet
-  if (!isHybridSearch && isLoadingSearch && documentRecords.length === 0) {
+  if (isLoadingSearch && documentRecords.length === 0) {
     return (
       <RightSidePageLayoutWrapper className="flex flex-col items-center justify-center h-full">
         <SearchLoadingState />
@@ -264,23 +254,16 @@ export default function CarianDokumenPage() {
 
   // Re-query or results view
   return (
-    <div className="flex flex-col gap-4 w-full h-full">
+    <div className="flex flex-col gap-6 w-full h-full">
       <RightSidePageLayoutWrapper className="pb-0 flex flex-col gap-6">
         <MainHeading>Carian Kandungan</MainHeading>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3">
-            <SearchBarCarianDokumen />
-            <SelectCarianDokumenWithStore />
-          </div>
-          <SearchModeRadio />
+        <div className="flex flex-col gap-3">
+          <SearchBarCarianDokumen />
+          <SelectCarianDokumenWithStore />
         </div>
       </RightSidePageLayoutWrapper>
 
-      {isHybridSearch ? (
-        <div className="min-h-0 min-w-0 flex-1">
-          <DisplaySearchResults onLazyLoad={triggerAppendLoad} />
-        </div>
-      ) : isLoadingSearch ? (
+      {isLoadingSearch ? (
         <div className="flex flex-col items-center justify-center gap-4 py-12 h-full">
           <SearchLoadingState />
         </div>
@@ -291,7 +274,7 @@ export default function CarianDokumenPage() {
           </div>
         </div>
       ) : (
-        <div className="min-h-0 min-w-0 flex-1">
+        <div className="min-h-0 min-w-0">
           <DisplaySearchResults onLazyLoad={triggerAppendLoad} />
         </div>
       )}
