@@ -5,10 +5,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
+import { ChevronRightIcon } from '@govtechmy/myds-react/icon'
 import { clx } from '@govtechmy/myds-react/utils'
 import { useSearchStore } from '@/store/SearchStore'
 import { useRef, type UIEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import DocumentMetaTags from './DocumentMetaTags'
 
 const SCROLL_THRESHOLD = 40
 const LAZY_BATCH_SIZE = 10
@@ -54,7 +56,7 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
     void fetchDocumentInfo(id)
   }
 
-  const handleLazyLoadScroll = (event: UIEvent<HTMLDivElement>) => {
+  const handleLazyLoadScroll = (event: UIEvent<HTMLUListElement>) => {
     const target = event.currentTarget
     const isScrollingDown = target.scrollTop > lastScrollTopRef.current
     lastScrollTopRef.current = target.scrollTop
@@ -71,10 +73,10 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
   }
 
   return (
-    <div className="flex w-full flex-col gap-3">
-      <div className="flex w-full items-center justify-center gap-6">
-        <p className="flex-1 text-body-md font-semibold text-txt-black-900">
-          {totalItems && totalItems > 0 ? `${totalItems} Rekod Ditemui` : 'Tiada '}
+    <div className="flex max-h-[640px] w-full flex-col gap-2 rounded-lg border border-otl-gray-200 bg-bg-dialog p-3 shadow-sm md:max-h-none md:min-h-0 md:flex-1">
+      <div className="flex w-full items-center gap-6">
+        <p className="flex-1 text-body-sm font-medium text-txt-black-700">
+          {totalItems && totalItems > 0 ? `${totalItems} rekod ditemui` : 'Tiada rekod ditemui'}
         </p>
         <Select size="small" variant="outline" value={sortBy} onValueChange={handleSortChange}>
           <SelectTrigger>
@@ -87,25 +89,49 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
         </Select>
       </div>
 
-      {/* Documents List */}
-      <div className="flex w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2 h-[300px]">
-        <div className="flex h-full flex-col gap-0 overflow-y-auto" onScroll={handleLazyLoadScroll}>
-          {documentRecords.map((record) => (
-            <button
-              key={record.documentId}
-              onClick={() => handleDocumentSelect(record.documentId)}
-              className={clx(
-                'flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left transition-colors',
-                selectedDocumentId === record.documentId
-                  ? 'bg-primary-600 text-txt-white'
-                  : 'text-txt-black-900 hover:bg-bg-washed'
-              )}
-            >
-              <p className="flex-1 truncate text-body-xs font-medium">{record.title}</p>
-            </button>
-          ))}
-        </div>
-      </div>
+      <ul
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+        aria-label="Senarai rekod"
+        onScroll={handleLazyLoadScroll}
+      >
+        {documentRecords.map((record) => {
+          const isSelected = selectedDocumentId === record.documentId
+          return (
+            <li key={record.documentId} className="border-b border-otl-gray-200 last:border-b-0">
+              <button
+                type="button"
+                aria-current={isSelected ? 'true' : undefined}
+                onClick={() => handleDocumentSelect(record.documentId)}
+                className={clx(
+                  'flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus-primary',
+                  isSelected
+                    ? 'rounded-r-lg border-l-primary-600 bg-bg-primary-50'
+                    : 'border-l-transparent hover:bg-bg-washed'
+                )}
+              >
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <p
+                    title={record.title}
+                    className={clx(
+                      'line-clamp-1 break-words text-body-sm font-medium',
+                      isSelected ? 'text-txt-primary' : 'text-txt-black-900'
+                    )}
+                  >
+                    {record.title}
+                  </p>
+                  <DocumentMetaTags />
+                </div>
+                {isSelected && (
+                  <ChevronRightIcon
+                    className="size-5 shrink-0 text-txt-black-700"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }
