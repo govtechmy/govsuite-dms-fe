@@ -17,6 +17,7 @@ interface SearchBarDokumenIDProps {
   onNextMatch: () => void
   isPdfLoaded: boolean
   isIndexing: boolean
+  isDokumenViewFetchingAll: boolean
   currentPage: number
   totalPages: number
   onPreviousPage: () => void
@@ -32,6 +33,7 @@ export function SearchBarDokumenID({
   onNextMatch,
   isPdfLoaded,
   isIndexing,
+  isDokumenViewFetchingAll,
   currentPage,
   totalPages,
   onPreviousPage,
@@ -87,7 +89,7 @@ export function SearchBarDokumenID({
         : 'Tiada hasil ditemui'
 
   return (
-    <div className="sticky top-0 z-10 flex min-h-14 w-full items-center border-b border-otl-gray-200 bg-bg-white px-4 py-2 sm:px-8">
+    <div className="flex min-h-14 w-full items-center border-b border-otl-gray-200 bg-bg-white px-4 py-2 sm:px-8">
       <div className="flex w-full max-w-[1000px] flex-wrap items-center gap-3 sm:gap-6">
         {/* Search Input */}
         <div className="min-w-[180px] flex-1">
@@ -97,7 +99,7 @@ export function SearchBarDokumenID({
             value={draftKeyword}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
-            disabled={!isPdfLoaded}
+            disabled={!isPdfLoaded || isDokumenViewFetchingAll}
           >
             <InputIcon position="right">
               <SearchIcon className="size-4 text-txt-black-700" />
