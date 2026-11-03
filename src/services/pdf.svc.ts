@@ -116,6 +116,10 @@ export type RecordViewResponse =
       error: RecordViewError
     }
 
+export type RecordViewPagesResponse =
+  { success: true; data: { items: RecordViewPage[] } } | { success: false; error: RecordViewError }
+
+// Return the document HTML in batches of pages (page + limit)
 export const getDokumenView = async ({
   id,
   page,
@@ -143,6 +147,35 @@ export const getDokumenView = async ({
       error: extractBackendError(error) ?? {
         code: 'REQUEST_FAILED',
         message: error instanceof Error ? error.message : 'Failed to fetch dokumen HTML view',
+      },
+    }
+  }
+}
+
+// Return the HTML of a single page only
+export const getDokumenViewPage = async (input: {
+  id: string
+  page: number
+  signal?: AbortSignal
+}): Promise<RecordViewPagesResponse> => {
+  const params = new URLSearchParams({ pages: String(input.page) })
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/view/${encodeURIComponent(input.id)}/pages?${params.toString()}`
+
+  try {
+    const response = await authAxios.get<RecordViewPagesResponse>(url, { signal: input.signal })
+    const payload = response.data
+
+    if (payload.success) {
+      return payload
+    }
+
+    return { success: false, error: payload.error }
+  } catch (error) {
+    return {
+      success: false,
+      error: extractBackendError(error) ?? {
+        code: 'REQUEST_FAILED',
+        message: error instanceof Error ? error.message : 'Failed to fetch dokumen HTML page',
       },
     }
   }
