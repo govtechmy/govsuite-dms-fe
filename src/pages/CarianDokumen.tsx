@@ -7,7 +7,7 @@ import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchR
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
 import { getSearchRecordCarianDokumen } from '@/services/catalog.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
 import { AutoToast } from '@govtechmy/myds-react/toast'
@@ -38,14 +38,11 @@ export interface DocumentInfoResponse {
 }
 
 const LAZY_BATCH_SIZE = 10
-const APPEND_LOAD_COOLDOWN_MS = 300
 
 export default function CarianDokumenPage() {
   const [searchParams] = useSearchParams()
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
-  const appendRequestInFlightRef = useRef(false)
-  const lastAppendTriggerAtRef = useRef(0)
   const currentPageRef = useRef(1)
 
   const query = useSearchStore((state) => state.query)
@@ -56,8 +53,6 @@ export default function CarianDokumenPage() {
   const sort = useSearchStore((state) => state.sort)
   const isLoadingSearch = useSearchStore((state) => state.isLoadingSearch)
   const documentRecords = useSearchStore((state) => state.documentRecords)
-  const searchMeta = useSearchStore((state) => state.searchMeta)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const setFromSearchParams = useSearchStore((state) => state.setFromSearchParams)
   const setIsLoadingSearch = useSearchStore((state) => state.setIsLoadingSearch)
   const setDocumentRecords = useSearchStore((state) => state.setDocumentRecords)
@@ -70,15 +65,15 @@ export default function CarianDokumenPage() {
   const resetSearchState = useSearchStore((state) => state.resetSearchState)
   const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
+  // TODO: the `append` path (load the next batch) has no caller while lazy loading
+  // is disabled; it is kept so scroll-to-load can be reconnected later.
   const fetchAndSetDocumentRecords = useCallback(
     async (options?: { append?: boolean }) => {
       const append = options?.append ?? false
       const nextPage = append ? currentPageRef.current + 1 : 1
       const requestToken = ++latestSearchRequestTokenRef.current
 
-      if (append) {
-        setIsLoadingMore(true)
-      } else {
+      if (!append) {
         setSelectedKeywordId(null)
         setIsLoadingSearch(true)
       }
@@ -133,10 +128,6 @@ export default function CarianDokumenPage() {
           setSearchMeta(null)
         }
       } finally {
-        if (append) {
-          setIsLoadingMore(false)
-        }
-
         if (!append && requestToken === latestSearchRequestTokenRef.current) {
           setIsLoadingSearch(false)
         }
@@ -158,26 +149,6 @@ export default function CarianDokumenPage() {
       unit,
     ]
   )
-
-  const triggerAppendLoad = useCallback(() => {
-    const now = Date.now()
-
-    if (
-      !searchMeta?.hasNextPage ||
-      isLoadingSearch ||
-      isLoadingMore ||
-      appendRequestInFlightRef.current ||
-      now - lastAppendTriggerAtRef.current < APPEND_LOAD_COOLDOWN_MS
-    ) {
-      return
-    }
-
-    lastAppendTriggerAtRef.current = now
-    appendRequestInFlightRef.current = true
-    void fetchAndSetDocumentRecords({ append: true }).finally(() => {
-      appendRequestInFlightRef.current = false
-    })
-  }, [fetchAndSetDocumentRecords, isLoadingMore, isLoadingSearch, searchMeta?.hasNextPage])
 
   useEffect(() => {
     setFromSearchParams({
@@ -221,7 +192,6 @@ export default function CarianDokumenPage() {
 
     hadSearchQueryRef.current = true
     currentPageRef.current = 1
-    lastAppendTriggerAtRef.current = 0
     void fetchAndSetDocumentRecords({ append: false })
   }, [
     fetchAndSetDocumentRecords,
@@ -255,7 +225,7 @@ export default function CarianDokumenPage() {
   // Re-query or results view
   return (
     <div className="flex flex-col gap-6 w-full h-full">
-      <RightSidePageLayoutWrapper className="pb-0 flex flex-col gap-6">
+      <RightSidePageLayoutWrapper className="pb-0 pr-1 flex flex-col gap-4">
         <MainHeading>Carian Kandungan</MainHeading>
         <div className="flex flex-col gap-3">
           <SearchBarCarianDokumen />
@@ -274,8 +244,8 @@ export default function CarianDokumenPage() {
           </div>
         </div>
       ) : (
-        <div className="min-h-0 min-w-0">
-          <DisplaySearchResults onLazyLoad={triggerAppendLoad} />
+        <div className="min-h-0 min-w-0 flex-1 pb-6 pl-6 pr-1">
+          <DisplaySearchResults />
         </div>
       )}
       <AutoToast />

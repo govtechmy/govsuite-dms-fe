@@ -1,22 +1,30 @@
-import RecordResultSearch from './RecordResultSearch'
+import HybridRecordResultSearch from './HybridRecordResultSearch'
+import PageResultSearch from './PageResultSearch'
+import FullTextRecordResultSearch from './FullTextRecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
+import { useSearchParams } from 'react-router-dom'
+import { SEARCH_MODE, SEARCH_MODE_PARAM, type RecordResultListProps } from './searchMode'
 import type {
+  PdfPageNavigationRequest,
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
 
-interface DisplaySearchResultsProps {
-  onLazyLoad: () => void
-}
-
-export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResultsProps) {
+export default function DisplaySearchResults() {
+  const [searchParams] = useSearchParams()
+  const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
   const previewSearchQuery = useSearchStore((state) => state.query)
   const keywordRecords = useSearchStore((state) => state.keywordRecords)
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
+  const documentRecords = useSearchStore((state) => state.documentRecords)
+  const totalItems = useSearchStore((state) => state.searchMeta?.totalItems)
+  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
+  const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
+  const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -28,6 +36,11 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     null
   )
   const navigationTokenRef = useRef(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
+  const [pageNavigationRequest, setPageNavigationRequest] =
+    useState<PdfPageNavigationRequest | null>(null)
+  const pageNavigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const hasAutoSelectedRef = useRef(false)
@@ -74,6 +87,39 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     queueNavigationRequest('next')
   }, [queueNavigationRequest])
 
+  const handlePageChange = useCallback((nextCurrentPage: number, nextTotalPages: number) => {
+    setCurrentPage(nextCurrentPage)
+    setTotalPages(nextTotalPages)
+  }, [])
+
+  const handlePageSelect = useCallback((page: number) => {
+    pageNavigationTokenRef.current += 1
+    setPageNavigationRequest({ page, token: pageNavigationTokenRef.current })
+  }, [])
+
+  const handleDocumentSelect = useCallback(
+    (documentId: string) => {
+      if (selectedDocumentId === documentId) {
+        return
+      }
+
+      setSelectedDocumentId(documentId)
+      setSelectedKeywordId(null)
+      void fetchDocumentInfo(documentId)
+    },
+    [fetchDocumentInfo, selectedDocumentId, setSelectedDocumentId, setSelectedKeywordId]
+  )
+
+  // TODO: lazy loading is disabled for now, so the lists only hold the first batch
+  // while `totalItems` is the backend's full count. Re-enable it with an onScroll
+  // handler that calls fetchAndSetDocumentRecords({ append: true }) in CarianDokumen.tsx.
+  const recordListProps: RecordResultListProps = {
+    records: documentRecords,
+    totalItems: totalItems ?? documentRecords.length,
+    selectedDocumentId,
+    onDocumentSelect: handleDocumentSelect,
+  }
+
   useEffect(() => {
     setSearchKeyword((previousSearchKeyword) =>
       previousSearchKeyword === previewSearchQuery ? previousSearchKeyword : previewSearchQuery
@@ -95,6 +141,10 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
       })
       setNavigationRequest(null)
       navigationTokenRef.current = 0
+      setCurrentPage(1)
+      setTotalPages(0)
+      setPageNavigationRequest(null)
+      pageNavigationTokenRef.current = 0
     }
   }, [documentInfo?.documentID])
 
@@ -141,30 +191,39 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   }, [selectedKeywordId, keyword, searchKeyword, queueNavigationRequest])
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch lg:flex-row">
-        <PratontonSearchResult
-          searchKeyword={searchKeyword}
-          onSearchKeywordChange={setSearchKeyword}
-          currentMatchIndex={pdfSearchState.currentMatchIndex}
-          totalMatches={pdfSearchState.totalMatches}
-          onPreviousMatch={handlePreviousMatch}
-          onNextMatch={handleNextMatch}
-          navigationRequest={navigationRequest}
-          onSearchStateChange={handleSearchStateChange}
-          onDocumentLoad={handleDocumentLoad}
-          isIndexing={pdfSearchState.isIndexing}
-        />
-        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 border-y py-6 lg:h-full lg:w-[320px] lg:self-stretch lg:pl-6">
-          <RecordResultSearch onLazyLoad={onLazyLoad} />
-
-          {/* <WordsResultSearch
-            keywordRecords={keywordRecords}
-            selectedKeywordId={selectedKeywordId}
-            onKeywordSelect={onKeywordSelect}
-          /> */}
+    <div className="flex flex-col gap-4 lg:h-full lg:min-h-[440px] lg:flex-row">
+      <PratontonSearchResult
+        searchKeyword={searchKeyword}
+        currentMatchIndex={pdfSearchState.currentMatchIndex}
+        totalMatches={pdfSearchState.totalMatches}
+        onPreviousMatch={handlePreviousMatch}
+        onNextMatch={handleNextMatch}
+        navigationRequest={navigationRequest}
+        pageNavigationRequest={pageNavigationRequest}
+        onSearchStateChange={handleSearchStateChange}
+        onDocumentLoad={handleDocumentLoad}
+        onPageChange={handlePageChange}
+        isIndexing={pdfSearchState.isIndexing}
+      />
+      {/* <WordsResultSearch
+        keywordRecords={keywordRecords}
+        selectedKeywordId={selectedKeywordId}
+        onKeywordSelect={onKeywordSelect}
+      /> */}
+      {isHybridSearch ? (
+        <div className="flex w-full shrink-0 lg:h-full lg:w-[320px]">
+          <HybridRecordResultSearch {...recordListProps} />
         </div>
-      </div>
+      ) : (
+        <div className="flex w-full shrink-0 flex-col gap-4 lg:grid lg:h-full lg:w-[320px] lg:grid-rows-[3fr_2fr]">
+          <FullTextRecordResultSearch {...recordListProps} />
+          <PageResultSearch
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageSelect={handlePageSelect}
+          />
+        </div>
+      )}
 
       {/* <div className="flex flex-col items-center justify-center pt-6 gap-8">
         <div className="text-body-md font-semibold font-body">Perkataan Berkaitan "{keyword}"</div>
