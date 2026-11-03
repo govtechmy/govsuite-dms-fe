@@ -8,6 +8,7 @@ import {
 import { Button } from '@govtechmy/myds-react/button'
 import { DatePicker } from '@govtechmy/myds-react/date-picker'
 import { CrossIcon, ReloadIcon } from '@govtechmy/myds-react/icon'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@govtechmy/myds-react/tooltip'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
 import { SEARCH_MODE, SEARCH_MODE_PARAM } from './searchMode'
@@ -221,30 +222,38 @@ export default function SelectCarianDokumenWithStore({
             onValueChange={(date) => handleDateRangeChange(dateFromValue ?? null, date)}
           />
           {(dateFrom || dateTo) && (
-            <Button
-              variant="default-outline"
-              size="small"
-              iconOnly
-              aria-label="Kosongkan tarikh"
-              title="Kosongkan tarikh"
-              onClick={() => handleDateRangeChange(null, null)}
-            >
-              <CrossIcon />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default-outline"
+                  size="small"
+                  iconOnly
+                  aria-label="Kosongkan tarikh"
+                  onClick={() => handleDateRangeChange(null, null)}
+                >
+                  <CrossIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Kosongkan Tarikh</TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
-      <Button
-        variant="default-outline"
-        size="small"
-        iconOnly
-        aria-label="Set semula"
-        title="Set semula"
-        className="shrink-0"
-        onClick={handleReset}
-      >
-        <ReloadIcon />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="default-outline"
+            size="small"
+            iconOnly
+            aria-label="Set semula"
+            className="shrink-0"
+            onClick={handleReset}
+          >
+            <ReloadIcon />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Set Semula</TooltipContent>
+      </Tooltip>
     </div>
   )
 }
