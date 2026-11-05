@@ -74,17 +74,95 @@ export interface CatalogSearchResponse {
   meta: CatalogListMeta
 }
 
+// Search result item used by the UI (full text and hybrid are both mapped into this)
 export interface RecordSearchItem {
   recordId: string
   title: string
+  recordDate?: string
+  documentProfile?: string
+  documentProfileName?: string
+  fileType?: string
+  fileExtension?: string
+  pageNumber?: number
+  snippet?: string
+  relevanceScore?: number
 }
 
+// Search response returned by getSearchRecordCarianDokumen and getHybridSearchRecords
 export interface RecordSearchResponse {
   search: {
     keyword: string
   }
   items: RecordSearchItem[]
   meta: CatalogListMeta
+}
+
+// Full text: one page of a record that contains the keyword
+export interface RecordMatchPage {
+  pageNumber: number
+  occurrences: number
+}
+
+// Full text: response of getRecordMatchPages
+export interface RecordMatchPagesResponse {
+  items: RecordMatchPage[]
+  meta: CatalogListMeta
+}
+
+// API: file info inside a search result item (full text and hybrid)
+export interface RecordViewFile {
+  path?: string
+  type?: string
+  extension?: string
+  sizeMb?: number
+}
+
+// Full text API: one item from GET /record/search
+export interface RecordSearchApiItem {
+  recordId?: string
+  title?: string
+  recordDate?: string
+  documentProfile?: string
+  documentProfileName?: string
+  file?: RecordViewFile
+}
+
+// Hybrid API: one item from POST /search/ (one matched page, not one record)
+export interface RecordViewPassage {
+  record_id?: string
+  page_number?: number
+  accessLevel?: string
+  recordDate?: string
+  documentProfile?: string
+  documentProfileName?: string
+  file?: RecordViewFile
+  score?: number
+  keyword_score?: number
+  rerank_score?: number
+  relevance_score?: number
+  snippet?: string | null
+}
+
+// Hybrid API: rejection info in the POST /search/ response
+export interface RecordPassageRejection {
+  top_reranker_score: number
+  top_reranker_score_gap: number
+  rerank_rejected: boolean
+  rerank_rejection_reason: string | null
+}
+
+// Hybrid API: full response of POST /search/
+export interface RecordPassageResponse {
+  success: boolean
+  data: {
+    request_id: string
+    took_ms: number
+    search: string
+    items: RecordViewPassage[]
+    ranking_mode: string
+    rejection: RecordPassageRejection
+    meta: CatalogListMeta
+  }
 }
 
 export interface CreateFolderPayload {
@@ -347,6 +425,7 @@ export const getFavoriteKatalogItems = async ({
   }
 }
 
+// Full Text Search
 export const getSearchRecordCarianDokumen = async ({
   query,
   unit,
@@ -403,9 +482,14 @@ export const getSearchRecordCarianDokumen = async ({
     const response = await authAxios.get(url)
     const payload = response.data?.data ?? response.data ?? {}
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
-      ? payload.items.map((item: { recordId?: string; title?: string }) => ({
+      ? payload.items.map((item: RecordSearchApiItem): RecordSearchItem => ({
           recordId: String(item?.recordId ?? ''),
           title: String(item?.title ?? ''),
+          recordDate: item?.recordDate ?? '',
+          documentProfile: item?.documentProfile ?? '',
+          documentProfileName: item?.documentProfileName ?? '',
+          fileType: item?.file?.type ?? '',
+          fileExtension: item?.file?.extension ?? '',
         }))
       : []
     const apiMeta = payload?.meta ?? {}
@@ -438,6 +522,87 @@ export const getSearchRecordCarianDokumen = async ({
     }
   } catch (error) {
     console.error('Error fetching searched catalog items : ', error)
+    throw error
+  }
+}
+
+// Full Text Search: pages of one record that contain the keyword,
+// with how many times it appears on each page
+export const getRecordMatchPages = async (input: {
+  recordId: string
+  query: string
+  page?: number
+  limit?: number
+}): Promise<RecordMatchPagesResponse> => {
+  const page = input.page ?? 1
+  const limit = input.limit ?? 10
+
+  const params = new URLSearchParams({
+    search: input.query,
+    page: String(page),
+    limit: String(limit),
+  })
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/search/${encodeURIComponent(input.recordId)}?${params.toString()}`
+
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data ?? {}
+    const items = Array.isArray(payload?.items)
+      ? payload.items.map(
+          (item: { pageNumber?: number; occurrences?: number }): RecordMatchPage => ({
+            pageNumber: Number(item?.pageNumber ?? 0),
+            occurrences: Number(item?.occurrences ?? 0),
+          })
+        )
+      : []
+
+    return {
+      items,
+      meta: { ...DEFAULT_CATALOG_LIST_META, ...payload?.meta },
+    }
+  } catch (error) {
+    console.error('Error fetching record match pages : ', error)
+    throw error
+  }
+}
+
+// Hybrid search
+// Only accepts the keyword and pagination (no filters);
+// each item is a matched page, so the same record can appear more than once
+export const getHybridSearchRecords = async (input: {
+  query: string
+  page?: number
+  limit?: number
+}): Promise<RecordSearchResponse> => {
+  const page = input.page ?? 1
+  const limit = input.limit ?? 10
+  const url = `${getEnv('VITE_API_BASE_URL')}/search/`
+  try {
+    const response = await authAxios.post(url, { query: input.query, page, limit })
+    const payload = response.data?.data ?? response.data ?? {}
+    const items: RecordSearchItem[] = Array.isArray(payload?.items)
+      ? payload.items.map((item: RecordViewPassage): RecordSearchItem => ({
+          recordId: String(item?.record_id ?? ''),
+          // Hybrid API does not return a title.
+          title: '',
+          pageNumber: item?.page_number,
+          recordDate: item?.recordDate ?? '',
+          documentProfile: item?.documentProfile ?? '',
+          documentProfileName: item?.documentProfileName ?? '',
+          fileType: item?.file?.type ?? '',
+          fileExtension: item?.file?.extension ?? '',
+          snippet: item?.snippet ?? '',
+          relevanceScore: Number(item?.relevance_score ?? 0),
+        }))
+      : []
+
+    return {
+      search: { keyword: String(payload?.search ?? input.query) },
+      items,
+      meta: { ...DEFAULT_CATALOG_LIST_META, ...payload?.meta },
+    }
+  } catch (error) {
+    console.error('Error fetching hybrid search records : ', error)
     throw error
   }
 }
