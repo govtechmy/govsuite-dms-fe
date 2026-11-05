@@ -5,12 +5,12 @@ import PratontonSearchResult from './PratontonSearchResult'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
-import { SEARCH_MODE, SEARCH_MODE_PARAM, type RecordResultListProps } from './searchMode'
+import { SEARCH_MODE, SEARCH_MODE_PARAM } from './searchMode'
 import type {
-  PdfPageNavigationRequest,
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
+import dataSampleFulltext from './fullTextHtmlSample'
 
 export default function DisplaySearchResults() {
   const [searchParams] = useSearchParams()
@@ -20,11 +20,6 @@ export default function DisplaySearchResults() {
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
-  const documentRecords = useSearchStore((state) => state.documentRecords)
-  const totalItems = useSearchStore((state) => state.searchMeta?.totalItems)
-  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
-  const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
-  const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -36,11 +31,6 @@ export default function DisplaySearchResults() {
     null
   )
   const navigationTokenRef = useRef(0)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(0)
-  const [pageNavigationRequest, setPageNavigationRequest] =
-    useState<PdfPageNavigationRequest | null>(null)
-  const pageNavigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const hasAutoSelectedRef = useRef(false)
@@ -87,39 +77,6 @@ export default function DisplaySearchResults() {
     queueNavigationRequest('next')
   }, [queueNavigationRequest])
 
-  const handlePageChange = useCallback((nextCurrentPage: number, nextTotalPages: number) => {
-    setCurrentPage(nextCurrentPage)
-    setTotalPages(nextTotalPages)
-  }, [])
-
-  const handlePageSelect = useCallback((page: number) => {
-    pageNavigationTokenRef.current += 1
-    setPageNavigationRequest({ page, token: pageNavigationTokenRef.current })
-  }, [])
-
-  const handleDocumentSelect = useCallback(
-    (documentId: string) => {
-      if (selectedDocumentId === documentId) {
-        return
-      }
-
-      setSelectedDocumentId(documentId)
-      setSelectedKeywordId(null)
-      void fetchDocumentInfo(documentId)
-    },
-    [fetchDocumentInfo, selectedDocumentId, setSelectedDocumentId, setSelectedKeywordId]
-  )
-
-  // TODO: lazy loading is disabled for now, so the lists only hold the first batch
-  // while `totalItems` is the backend's full count. Re-enable it with an onScroll
-  // handler that calls fetchAndSetDocumentRecords({ append: true }) in CarianDokumen.tsx.
-  const recordListProps: RecordResultListProps = {
-    records: documentRecords,
-    totalItems: totalItems ?? documentRecords.length,
-    selectedDocumentId,
-    onDocumentSelect: handleDocumentSelect,
-  }
-
   useEffect(() => {
     setSearchKeyword((previousSearchKeyword) =>
       previousSearchKeyword === previewSearchQuery ? previousSearchKeyword : previewSearchQuery
@@ -141,10 +98,6 @@ export default function DisplaySearchResults() {
       })
       setNavigationRequest(null)
       navigationTokenRef.current = 0
-      setCurrentPage(1)
-      setTotalPages(0)
-      setPageNavigationRequest(null)
-      pageNavigationTokenRef.current = 0
     }
   }, [documentInfo?.documentID])
 
@@ -199,10 +152,9 @@ export default function DisplaySearchResults() {
         onPreviousMatch={handlePreviousMatch}
         onNextMatch={handleNextMatch}
         navigationRequest={navigationRequest}
-        pageNavigationRequest={pageNavigationRequest}
         onSearchStateChange={handleSearchStateChange}
         onDocumentLoad={handleDocumentLoad}
-        onPageChange={handlePageChange}
+        onPageChange={() => {}}
         isIndexing={pdfSearchState.isIndexing}
       />
       {/* <WordsResultSearch
@@ -212,15 +164,15 @@ export default function DisplaySearchResults() {
       /> */}
       {isHybridSearch ? (
         <div className="flex w-full shrink-0 lg:h-full lg:w-[320px]">
-          <HybridRecordResultSearch {...recordListProps} />
+          <HybridRecordResultSearch />
         </div>
       ) : (
         <div className="flex w-full shrink-0 flex-col gap-4 lg:grid lg:h-full lg:w-[320px] lg:grid-rows-[3fr_2fr]">
-          <FullTextRecordResultSearch {...recordListProps} />
+          <FullTextRecordResultSearch />
           <PageResultSearch
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageSelect={handlePageSelect}
+            currentPage={1}
+            totalPages={dataSampleFulltext.data.items.length}
+            onPageSelect={() => {}}
           />
         </div>
       )}

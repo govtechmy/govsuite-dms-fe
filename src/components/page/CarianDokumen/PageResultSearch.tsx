@@ -14,7 +14,8 @@ export default function PageResultSearch({
   return (
     <section className="flex h-[240px] w-full flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-white p-3 lg:h-auto lg:min-h-0">
       <h2 className="p-1 text-body-sm font-semibold text-txt-black-900">
-        {totalPages > 0 ? `${totalPages} muka surat ditemui` : 'Dokumen sedang dimuatkan...'}
+        {/* Placeholder */}
+        12 muka surat ditemui
       </h2>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -35,7 +36,7 @@ export default function PageResultSearch({
                   : 'border-l-transparent text-txt-black-900 hover:bg-bg-washed'
               )}
             >
-              Muka Surat {page}
+              Muka Surat 1
             </button>
           )
         })}

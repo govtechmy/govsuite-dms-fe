@@ -6,7 +6,7 @@ import PdfJsDocumentViewer, {
 } from '@/components/shared/PdfJsDocumentViewer'
 import PdfHtmlDocumentViewer from '@/components/page/KatalogDokumen/DokumenID/PdfHtmlDocumentViewer'
 import SearchInPdf from './SearchInPdf'
-import { SAMPLE_PAGES } from './sampleDokumenHtml'
+import dataSampleFulltext from './fullTextHtmlSample'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
@@ -29,6 +29,18 @@ interface PratontonSearchResultProps {
   onPageChange: (currentPage: number, totalPages: number) => void
   isIndexing: boolean
 }
+
+// The backend's `contentEditor` is plain HTML, so wrap each item in the page/frame
+// nodes the viewer expects: an A4 sheet (96 DPI) that grows with its content, and
+// one frame in normal flow instead of the converter's absolute positioning
+const PAGE_STYLE = 'width: 794px; min-height: 1123px'
+const FRAME_STYLE = 'position: relative; padding: 72px; font-size: 14px; line-height: 1.6'
+
+// Built once so the viewer's `pages` reference stays stable across renders
+const SAMPLE_PAGES = dataSampleFulltext.data.items.map(
+  ({ pageNumber, contentEditor }) =>
+    `<div data-type="page" data-page="${pageNumber}" style="${PAGE_STYLE}"><div data-type="frame" style="${FRAME_STYLE}">${contentEditor}</div></div>`
+)
 
 export default function PratontonSearchResult({
   searchKeyword,
