@@ -74,6 +74,7 @@ export interface CatalogSearchResponse {
   meta: CatalogListMeta
 }
 
+// Search result item used by the UI (full text and hybrid are both mapped into this)
 export interface RecordSearchItem {
   recordId: string
   title: string
@@ -87,6 +88,7 @@ export interface RecordSearchItem {
   relevanceScore?: number
 }
 
+// Search response returned by getSearchRecordCarianDokumen and getHybridSearchRecords
 export interface RecordSearchResponse {
   search: {
     keyword: string
@@ -95,14 +97,72 @@ export interface RecordSearchResponse {
   meta: CatalogListMeta
 }
 
+// Full text: one page of a record that contains the keyword
 export interface RecordMatchPage {
   pageNumber: number
   occurrences: number
 }
 
+// Full text: response of getRecordMatchPages
 export interface RecordMatchPagesResponse {
   items: RecordMatchPage[]
   meta: CatalogListMeta
+}
+
+// API: file info inside a search result item (full text and hybrid)
+export interface RecordViewFile {
+  path?: string
+  type?: string
+  extension?: string
+  sizeMb?: number
+}
+
+// Full text API: one item from GET /record/search
+export interface RecordSearchApiItem {
+  recordId?: string
+  title?: string
+  recordDate?: string
+  documentProfile?: string
+  documentProfileName?: string
+  file?: RecordViewFile
+}
+
+// Hybrid API: one item from POST /search/ (one matched page, not one record)
+export interface RecordViewPassage {
+  record_id?: string
+  page_number?: number
+  accessLevel?: string
+  recordDate?: string
+  documentProfile?: string
+  documentProfileName?: string
+  file?: RecordViewFile
+  score?: number
+  keyword_score?: number
+  rerank_score?: number
+  relevance_score?: number
+  snippet?: string | null
+}
+
+// Hybrid API: rejection info in the POST /search/ response
+export interface RecordPassageRejection {
+  top_reranker_score: number
+  top_reranker_score_gap: number
+  rerank_rejected: boolean
+  rerank_rejection_reason: string | null
+}
+
+// Hybrid API: full response of POST /search/
+export interface RecordPassageResponse {
+  success: boolean
+  data: {
+    request_id: string
+    took_ms: number
+    search: string
+    items: RecordViewPassage[]
+    ranking_mode: string
+    rejection: RecordPassageRejection
+    meta: CatalogListMeta
+  }
 }
 
 export interface CreateFolderPayload {
@@ -422,24 +482,15 @@ export const getSearchRecordCarianDokumen = async ({
     const response = await authAxios.get(url)
     const payload = response.data?.data ?? response.data ?? {}
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
-      ? payload.items.map(
-          (item: {
-            recordId?: string
-            title?: string
-            recordDate?: string
-            documentProfile?: string
-            documentProfileName?: string
-            file?: { type?: string; extension?: string }
-          }) => ({
-            recordId: String(item?.recordId ?? ''),
-            title: String(item?.title ?? ''),
-            recordDate: item?.recordDate ?? '',
-            documentProfile: item?.documentProfile ?? '',
-            documentProfileName: item?.documentProfileName ?? '',
-            fileType: item?.file?.type ?? '',
-            fileExtension: item?.file?.extension ?? '',
-          })
-        )
+      ? payload.items.map((item: RecordSearchApiItem): RecordSearchItem => ({
+          recordId: String(item?.recordId ?? ''),
+          title: String(item?.title ?? ''),
+          recordDate: item?.recordDate ?? '',
+          documentProfile: item?.documentProfile ?? '',
+          documentProfileName: item?.documentProfileName ?? '',
+          fileType: item?.file?.type ?? '',
+          fileExtension: item?.file?.extension ?? '',
+        }))
       : []
     const apiMeta = payload?.meta ?? {}
     const currentPage = Number(apiMeta.currentPage ?? page)
@@ -530,30 +581,19 @@ export const getHybridSearchRecords = async (input: {
     const response = await authAxios.post(url, { query: input.query, page, limit })
     const payload = response.data?.data ?? response.data ?? {}
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
-      ? payload.items.map(
-          (item: {
-            record_id?: string
-            title?: string
-            page_number?: number
-            recordDate?: string
-            documentProfile?: string
-            documentProfileName?: string
-            file?: { type?: string; extension?: string }
-            snippet?: string | null
-            relevance_score?: number
-          }) => ({
-            recordId: String(item?.record_id ?? ''),
-            title: String(item?.title ?? ''),
-            pageNumber: item?.page_number,
-            recordDate: item?.recordDate ?? '',
-            documentProfile: item?.documentProfile ?? '',
-            documentProfileName: item?.documentProfileName ?? '',
-            fileType: item?.file?.type ?? '',
-            fileExtension: item?.file?.extension ?? '',
-            snippet: item?.snippet ?? '',
-            relevanceScore: Number(item?.relevance_score ?? 0),
-          })
-        )
+      ? payload.items.map((item: RecordViewPassage): RecordSearchItem => ({
+          recordId: String(item?.record_id ?? ''),
+          // Hybrid API does not return a title.
+          title: '',
+          pageNumber: item?.page_number,
+          recordDate: item?.recordDate ?? '',
+          documentProfile: item?.documentProfile ?? '',
+          documentProfileName: item?.documentProfileName ?? '',
+          fileType: item?.file?.type ?? '',
+          fileExtension: item?.file?.extension ?? '',
+          snippet: item?.snippet ?? '',
+          relevanceScore: Number(item?.relevance_score ?? 0),
+        }))
       : []
 
     return {
