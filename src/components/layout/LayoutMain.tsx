@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom'
 import MastheadMyds from './MastheadMyds'
 import { NavbarMyds } from './NavbarMyds'
 import SidebarMyds from './SidebarMyds'
-import FooterMyds from './FooterMyds'
+import FooterRahsia from './FooterRahsia'
 
 export default function LayoutMain() {
   return (
@@ -21,7 +21,7 @@ export default function LayoutMain() {
         </div>
       </div>
 
-      <FooterMyds />
+      <FooterRahsia />
     </div>
   )
 }
