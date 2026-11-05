@@ -1,17 +1,20 @@
-import RecordResultSearch from './RecordResultSearch'
+import HybridRecordResultSearch from './HybridRecordResultSearch'
+import PageResultSearch from './PageResultSearch'
+import FullTextRecordResultSearch from './FullTextRecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
+import { useSearchParams } from 'react-router-dom'
+import { SEARCH_MODE, SEARCH_MODE_PARAM } from './searchMode'
 import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
+import dataSampleFulltext from './fullTextHtmlSample'
 
-interface DisplaySearchResultsProps {
-  onLazyLoad: () => void
-}
-
-export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResultsProps) {
+export default function DisplaySearchResults() {
+  const [searchParams] = useSearchParams()
+  const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
   const previewSearchQuery = useSearchStore((state) => state.query)
   const keywordRecords = useSearchStore((state) => state.keywordRecords)
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
@@ -141,30 +144,38 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   }, [selectedKeywordId, keyword, searchKeyword, queueNavigationRequest])
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch lg:flex-row">
-        <PratontonSearchResult
-          searchKeyword={searchKeyword}
-          onSearchKeywordChange={setSearchKeyword}
-          currentMatchIndex={pdfSearchState.currentMatchIndex}
-          totalMatches={pdfSearchState.totalMatches}
-          onPreviousMatch={handlePreviousMatch}
-          onNextMatch={handleNextMatch}
-          navigationRequest={navigationRequest}
-          onSearchStateChange={handleSearchStateChange}
-          onDocumentLoad={handleDocumentLoad}
-          isIndexing={pdfSearchState.isIndexing}
-        />
-        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 border-y py-6 lg:h-full lg:w-[320px] lg:self-stretch lg:pl-6">
-          <RecordResultSearch onLazyLoad={onLazyLoad} />
-
-          {/* <WordsResultSearch
-            keywordRecords={keywordRecords}
-            selectedKeywordId={selectedKeywordId}
-            onKeywordSelect={onKeywordSelect}
-          /> */}
+    <div className="flex flex-col gap-4 lg:h-full lg:min-h-[440px] lg:flex-row">
+      <PratontonSearchResult
+        searchKeyword={searchKeyword}
+        currentMatchIndex={pdfSearchState.currentMatchIndex}
+        totalMatches={pdfSearchState.totalMatches}
+        onPreviousMatch={handlePreviousMatch}
+        onNextMatch={handleNextMatch}
+        navigationRequest={navigationRequest}
+        onSearchStateChange={handleSearchStateChange}
+        onDocumentLoad={handleDocumentLoad}
+        onPageChange={() => {}}
+        isIndexing={pdfSearchState.isIndexing}
+      />
+      {/* <WordsResultSearch
+        keywordRecords={keywordRecords}
+        selectedKeywordId={selectedKeywordId}
+        onKeywordSelect={onKeywordSelect}
+      /> */}
+      {isHybridSearch ? (
+        <div className="flex w-full shrink-0 lg:h-full lg:w-[320px]">
+          <HybridRecordResultSearch />
         </div>
-      </div>
+      ) : (
+        <div className="flex w-full shrink-0 flex-col gap-4 lg:grid lg:h-full lg:w-[320px] lg:grid-rows-[3fr_2fr]">
+          <FullTextRecordResultSearch />
+          <PageResultSearch
+            currentPage={1}
+            totalPages={dataSampleFulltext.data.items.length}
+            onPageSelect={() => {}}
+          />
+        </div>
+      )}
 
       {/* <div className="flex flex-col items-center justify-center pt-6 gap-8">
         <div className="text-body-md font-semibold font-body">Perkataan Berkaitan "{keyword}"</div>

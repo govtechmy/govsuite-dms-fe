@@ -1,15 +1,16 @@
 import { Button } from '@govtechmy/myds-react/button'
-// import { DownloadIcon } from '@govtechmy/myds-react/icon'
 import PdfJsDocumentViewer, {
   type PdfPageNavigationRequest,
   type PdfSearchNavigationRequest,
   type PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
+import PdfHtmlDocumentViewer from '@/components/page/KatalogDokumen/DokumenID/PdfHtmlDocumentViewer'
 import SearchInPdf from './SearchInPdf'
-import { useEffect, useRef, useState } from 'react'
+import dataSampleFulltext from './fullTextHtmlSample'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
-import { HeartIcon } from '@govtechmy/myds-react/icon'
+import { CheckIcon, CopyIcon, EyeShowIcon, HeartIcon } from '@govtechmy/myds-react/icon'
 import { useToast } from '@govtechmy/myds-react/hooks'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
 import extractBackendError from '@/utils/extractBackendError'
@@ -17,27 +18,41 @@ import extractBackendError from '@/utils/extractBackendError'
 
 interface PratontonSearchResultProps {
   searchKeyword: string
-  onSearchKeywordChange: (keyword: string) => void
   currentMatchIndex: number
   totalMatches: number
   onPreviousMatch: () => void
   onNextMatch: () => void
   navigationRequest?: PdfSearchNavigationRequest | null
+  pageNavigationRequest?: PdfPageNavigationRequest | null
   onSearchStateChange: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
+  onPageChange: (currentPage: number, totalPages: number) => void
   isIndexing: boolean
 }
 
+// The backend's `contentEditor` is plain HTML, so wrap each item in the page/frame
+// nodes the viewer expects: an A4 sheet (96 DPI) that grows with its content, and
+// one frame in normal flow instead of the converter's absolute positioning
+const PAGE_STYLE = 'width: 794px; min-height: 1123px'
+const FRAME_STYLE = 'position: relative; padding: 72px; font-size: 14px; line-height: 1.6'
+
+// Built once so the viewer's `pages` reference stays stable across renders
+const SAMPLE_PAGES = dataSampleFulltext.data.items.map(
+  ({ pageNumber, contentEditor }) =>
+    `<div data-type="page" data-page="${pageNumber}" style="${PAGE_STYLE}"><div data-type="frame" style="${FRAME_STYLE}">${contentEditor}</div></div>`
+)
+
 export default function PratontonSearchResult({
   searchKeyword,
-  onSearchKeywordChange,
   currentMatchIndex,
   totalMatches,
   onPreviousMatch,
   onNextMatch,
   navigationRequest,
+  pageNavigationRequest,
   onSearchStateChange,
   onDocumentLoad,
+  onPageChange,
   isIndexing,
 }: PratontonSearchResultProps) {
   const navigate = useNavigate()
@@ -47,11 +62,6 @@ export default function PratontonSearchResult({
   // const documentRecords = useSearchStore((state) => state.documentRecords)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const [isReferenceCopied, setIsReferenceCopied] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(0)
-  const [pageNavigationRequest, setPageNavigationRequest] =
-    useState<PdfPageNavigationRequest | null>(null)
-  const pageNavigationTokenRef = useRef(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
 
@@ -61,10 +71,6 @@ export default function PratontonSearchResult({
 
   useEffect(() => {
     setIsPdfLoaded(false)
-    setCurrentPage(1)
-    setTotalPages(0)
-    setPageNavigationRequest(null)
-    pageNavigationTokenRef.current = 0
   }, [documentInfo?.documentID])
 
   useEffect(() => {
@@ -108,26 +114,6 @@ export default function PratontonSearchResult({
     onDocumentLoad?.()
   }
 
-  const handlePageChange = (nextCurrentPage: number, nextTotalPages: number) => {
-    setCurrentPage(nextCurrentPage)
-    setTotalPages(nextTotalPages)
-  }
-
-  const queuePageNavigationRequest = (targetPage: number) => {
-    pageNavigationTokenRef.current += 1
-    setPageNavigationRequest({
-      page: targetPage,
-      token: pageNavigationTokenRef.current,
-    })
-  }
-
-  const handlePreviousPage = () => {
-    queuePageNavigationRequest(Math.max(1, currentPage - 1))
-  }
-
-  const handleNextPage = () => {
-    queuePageNavigationRequest(Math.min(totalPages, currentPage + 1))
-  }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // const handleDownloadDokumen = () => {
   //   if (!documentInfo?.path) {
@@ -197,72 +183,77 @@ export default function PratontonSearchResult({
     }
   }
 
+  const referenceLabel = isReferenceCopied ? 'Rujukan disalin' : 'Salin rujukan'
+  const favoriteLabel = isFavorite ? 'Buang dari kegemaran' : 'Tambah ke kegemaran'
+
   return (
-    <div className="flex h-full min-h-[480px] min-w-0 flex-1 flex-col border border-otl-gray-200 border-l-0 bg-bg-gray-50 p-4 sm:p-6 lg:min-h-0">
-      <div className="flex justify-between items-center">
-        <p className="flex-1 text-body-md font-semibold text-txt-black-900">Pratonton</p>
-        {/* <Button
-          variant="default-outline"
-          size="small"
-          className="gap-1.5"
-          onClick={handleDownloadDokumen}
-          disabled={!documentInfo?.path}
-        >
-          <DownloadIcon className="size-4" />
-          Muat Turun
-        </Button> */}
-        <Button
-          variant={'default-outline'}
-          className={isFavorite ? 'px-2 text-txt-danger border-otl-danger-300' : 'px-2'}
-          onClick={handleToggleFavorite}
-          disabled={isFavoriteLoading || !documentInfo?.documentID}
-          aria-pressed={isFavorite}
-          aria-label={isFavorite ? 'Buang dari kegemaran' : 'Tambah ke kegemaran'}
-        >
-          <HeartIcon fill={isFavorite ? 'currentColor' : 'none'} />
-        </Button>
+    <section className="flex h-[560px] min-w-0 flex-1 flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-white p-3 lg:h-full">
+      <div className="flex items-center gap-2">
+        <SearchInPdf
+          searchKeyword={searchKeyword}
+          currentMatchIndex={currentMatchIndex}
+          totalMatches={totalMatches}
+          onPreviousMatch={onPreviousMatch}
+          onNextMatch={onNextMatch}
+          isPdfLoaded={isPdfLoaded}
+          isIndexing={isIndexing}
+        />
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant="primary-ghost"
+            size="small"
+            iconOnly
+            aria-label={referenceLabel}
+            title={referenceLabel}
+            onClick={handleCopyReference}
+            disabled={!documentInfo?.referencePath}
+          >
+            {isReferenceCopied ? <CheckIcon /> : <CopyIcon />}
+          </Button>
+          <Button
+            variant="default-ghost"
+            size="small"
+            iconOnly
+            aria-label="Paparan penuh"
+            title="Paparan penuh"
+            onClick={handleBukaPratonton}
+            disabled={!documentInfo?.documentID}
+          >
+            <EyeShowIcon />
+          </Button>
+          <Button
+            variant="danger-ghost"
+            size="small"
+            iconOnly
+            aria-label={favoriteLabel}
+            aria-pressed={isFavorite}
+            title={favoriteLabel}
+            onClick={handleToggleFavorite}
+            disabled={isFavoriteLoading || !documentInfo?.documentID}
+          >
+            <HeartIcon fill={isFavorite ? 'currentColor' : 'none'} />
+          </Button>
+        </div>
       </div>
-      <SearchInPdf
-        searchKeyword={searchKeyword}
-        onSearchKeywordChange={onSearchKeywordChange}
-        currentMatchIndex={currentMatchIndex}
-        totalMatches={totalMatches}
-        onPreviousMatch={onPreviousMatch}
-        onNextMatch={onNextMatch}
-        isPdfLoaded={isPdfLoaded}
-        isIndexing={isIndexing}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPreviousPage={handlePreviousPage}
-        onNextPage={handleNextPage}
-      />
-      <div className="h-full min-h-0 w-full overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-white">
-        <div className="h-full min-h-0 overflow-auto">
-          <PdfJsDocumentViewer
-            fileUrl={documentInfo?.path || ''}
+      <div className="min-h-0 flex-1 overflow-auto rounded-lg bg-bg-gray-50">
+        {/* The HTML view drives search and page navigation; the PDF below is display
+            only, so match counts and the page list cover the HTML pages only.
+            TODO: replace SAMPLE_PAGES with the record view API.
+            Keyed by record so each selection remounts and reports its state again. */}
+        <div className="flex w-full flex-col">
+          <PdfHtmlDocumentViewer
+            key={documentInfo?.documentID}
+            pages={SAMPLE_PAGES}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
             pageNavigationRequest={pageNavigationRequest}
             onSearchStateChange={onSearchStateChange}
             onDocumentLoad={handleDocumentLoad}
-            onPageChange={handlePageChange}
+            onPageChange={onPageChange}
           />
+          <PdfJsDocumentViewer fileUrl={documentInfo?.path || ''} />
         </div>
       </div>
-      <div className="flex justify-between items-center pt-6">
-        <Button
-          variant="default-outline"
-          size="small"
-          className="gap-1.5"
-          onClick={handleCopyReference}
-          disabled={!documentInfo?.referencePath}
-        >
-          {isReferenceCopied ? 'Rujukan Disalin !' : 'Salin Rujukan'}
-        </Button>
-        <Button size="small" className="gap-1.5" onClick={handleBukaPratonton}>
-          Paparan Penuh
-        </Button>
-      </div>
-    </div>
+    </section>
   )
 }

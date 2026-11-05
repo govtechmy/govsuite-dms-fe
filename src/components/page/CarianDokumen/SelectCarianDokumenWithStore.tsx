@@ -6,10 +6,12 @@ import {
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
 import { Button } from '@govtechmy/myds-react/button'
-import { DateRangePicker } from '@govtechmy/myds-react/daterange-picker'
-import { ReloadIcon } from '@govtechmy/myds-react/icon'
+import { DatePicker } from '@govtechmy/myds-react/date-picker'
+import { CrossIcon, ReloadIcon } from '@govtechmy/myds-react/icon'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@govtechmy/myds-react/tooltip'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
+import { SEARCH_MODE, SEARCH_MODE_PARAM } from './searchMode'
 
 interface SelectCarianDokumenWithStoreProps {
   showOnlyWhenSearchQuery?: boolean
@@ -17,6 +19,7 @@ interface SelectCarianDokumenWithStoreProps {
 }
 
 const SEARCH_LIMIT = '10'
+const DATE_FORMAT = 'dd/MM/yyyy'
 
 export default function SelectCarianDokumenWithStore({
   showOnlyWhenSearchQuery = false,
@@ -34,6 +37,21 @@ export default function SelectCarianDokumenWithStore({
   const selectedUnit = searchParams.get('unit') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
+  const selectedSearchMode =
+    searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID ? SEARCH_MODE.HIBRID : ''
+
+  // View only: the search request stays the same, so the page is not reset
+  const handleSearchModeChange = (value: string) => {
+    const params = new URLSearchParams(searchParams)
+
+    if (value === SEARCH_MODE.HIBRID) {
+      params.set(SEARCH_MODE_PARAM, SEARCH_MODE.HIBRID)
+    } else {
+      params.delete(SEARCH_MODE_PARAM)
+    }
+
+    setSearchParams(params)
+  }
 
   const handleJenisDokumenChange = (value: string) => {
     const params = new URLSearchParams(searchParams)
@@ -121,25 +139,24 @@ export default function SelectCarianDokumenWithStore({
     return <div className="flex justify-between items-start" />
   }
 
+  const dateFromValue = dateFrom ? new Date(dateFrom) : undefined
+  const dateToValue = dateTo ? new Date(dateTo) : undefined
+
   return (
     <div className="flex flex-wrap justify-between items-start gap-2">
       <div className="flex flex-row flex-wrap gap-2">
         <Select
           size={'small'}
           variant="outline"
-          value={selectedUnit}
-          onValueChange={handleUnitChange}
+          value={selectedSearchMode}
+          onValueChange={handleSearchModeChange}
         >
           <SelectTrigger>
-            <SelectValue label="Unit" placeholder="Semua" />
+            <SelectValue label="Jenis Carian" placeholder="Teks Penuh" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="semua">Semua</SelectItem>
-            {dropdownUnits.map((unitValue) => (
-              <SelectItem key={unitValue.code} value={unitValue.code}>
-                {unitValue.codeName}
-              </SelectItem>
-            ))}
+            <SelectItem value={SEARCH_MODE.TEKS}>Teks Penuh</SelectItem>
+            <SelectItem value={SEARCH_MODE.HIBRID}>Hibrid</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -160,35 +177,83 @@ export default function SelectCarianDokumenWithStore({
             ))}
           </SelectContent>
         </Select>
+        <Select
+          size={'small'}
+          variant="outline"
+          value={selectedUnit}
+          onValueChange={handleUnitChange}
+        >
+          <SelectTrigger>
+            <SelectValue label="Unit" placeholder="Semua" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="semua">Semua</SelectItem>
+            {dropdownUnits.map((unitValue) => (
+              <SelectItem key={unitValue.code} value={unitValue.code}>
+                {unitValue.codeName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <DateRangePicker
+          {/* DatePicker keeps its own value when given undefined, so remount it to clear. */}
+          <DatePicker
+            key={`dari-${dateFrom}`}
             locale="ms"
-            formatStr="dd MMMM yyy"
-            placeholder="Pilih Tarikh"
-            value={{
-              from: dateFrom ? new Date(dateFrom) : undefined,
-              to: dateTo ? new Date(dateTo) : undefined,
-            }}
-            onValueChange={(range) => handleDateRangeChange(range.from ?? null, range.to ?? null)}
+            size="small"
+            formatStr={`'Dari:' ${DATE_FORMAT}`}
+            placeholder="Dari: Pilih Tarikh"
+            value={dateFromValue}
+            disabled={dateToValue ? { after: dateToValue } : undefined}
+            onValueChange={(date) => handleDateRangeChange(date, dateToValue ?? null)}
+          />
+          <span className="text-body-sm text-txt-black-500" aria-hidden="true">
+            -
+          </span>
+          <DatePicker
+            key={`hingga-${dateTo}`}
+            locale="ms"
+            size="small"
+            formatStr={`'Hingga:' ${DATE_FORMAT}`}
+            placeholder="Hingga: Pilih Tarikh"
+            value={dateToValue}
+            disabled={dateFromValue ? { before: dateFromValue } : undefined}
+            onValueChange={(date) => handleDateRangeChange(dateFromValue ?? null, date)}
           />
           {(dateFrom || dateTo) && (
-            <Button
-              variant="default-outline"
-              size="small"
-              onClick={() => handleDateRangeChange(null, null)}
-            >
-              Kosongkan Tarikh
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default-outline"
+                  size="small"
+                  iconOnly
+                  aria-label="Kosongkan tarikh"
+                  onClick={() => handleDateRangeChange(null, null)}
+                >
+                  <CrossIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Kosongkan Tarikh</TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
-      <div className="w-[126px] shrink-0">
-        <Button variant="default-outline" className="w-full gap-2" onClick={handleReset}>
-          <ReloadIcon />
-          <div>Set Semula</div>
-        </Button>
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="default-outline"
+            size="small"
+            iconOnly
+            aria-label="Set semula"
+            className="shrink-0"
+            onClick={handleReset}
+          >
+            <ReloadIcon />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Set Semula</TooltipContent>
+      </Tooltip>
     </div>
   )
 }
