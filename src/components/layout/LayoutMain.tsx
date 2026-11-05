@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import MastheadMyds from './MastheadMyds'
 import { NavbarMyds } from './NavbarMyds'
 import SidebarMyds from './SidebarMyds'
+import FooterRahsia from './FooterRahsia'
 
 export default function LayoutMain() {
   return (
@@ -19,6 +20,8 @@ export default function LayoutMain() {
           <Outlet />
         </div>
       </div>
+
+      <FooterRahsia />
     </div>
   )
 }
