@@ -11,6 +11,7 @@ import type {
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
 import dataSampleFulltext from './fullTextHtmlSample'
+import type { RecordSearchItem } from '@/services/catalog.svc'
 
 export default function DisplaySearchResults() {
   const [searchParams] = useSearchParams()
@@ -20,6 +21,13 @@ export default function DisplaySearchResults() {
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
+  const documentRecords = useSearchStore((state) => state.documentRecords)
+  const searchMeta = useSearchStore((state) => state.searchMeta)
+  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
+  const selectedPageNumber = useSearchStore((state) => state.selectedPageNumber)
+  const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
+  const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
+  const setSelectedPageNumber = useSearchStore((state) => state.setSelectedPageNumber)
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -76,6 +84,18 @@ export default function DisplaySearchResults() {
   const handleNextMatch = useCallback(() => {
     queueNavigationRequest('next')
   }, [queueNavigationRequest])
+
+  const handlePassageSelect = useCallback(
+    (record: RecordSearchItem) => {
+      const isNewDocument = record.recordId !== selectedDocumentId
+      setSelectedDocumentId(record.recordId)
+      setSelectedPageNumber(record.pageNumber ?? null)
+      if (isNewDocument) {
+        void fetchDocumentInfo(record.recordId)
+      }
+    },
+    [selectedDocumentId, setSelectedDocumentId, setSelectedPageNumber, fetchDocumentInfo]
+  )
 
   useEffect(() => {
     setSearchKeyword((previousSearchKeyword) =>
@@ -164,7 +184,13 @@ export default function DisplaySearchResults() {
       /> */}
       {isHybridSearch ? (
         <div className="flex w-full shrink-0 lg:h-full lg:w-[320px]">
-          <HybridRecordResultSearch />
+          <HybridRecordResultSearch
+            records={documentRecords}
+            totalItems={searchMeta?.totalItems ?? documentRecords.length}
+            selectedRecordId={selectedDocumentId}
+            selectedPageNumber={selectedPageNumber}
+            onPassageSelect={handlePassageSelect}
+          />
         </div>
       ) : (
         <div className="flex w-full shrink-0 flex-col gap-4 lg:grid lg:h-full lg:w-[320px] lg:grid-rows-[3fr_2fr]">

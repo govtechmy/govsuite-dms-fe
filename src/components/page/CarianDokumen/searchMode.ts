@@ -1,7 +1,5 @@
-import type { DocumentRecord } from '@/store/SearchStore'
+import type { RecordSearchItem } from '@/services/catalog.svc'
 
-// TODO: the search mode only switches the result view for now; it is not sent to
-// /record/search. Pass it to the search service once hybrid search exists.
 export const SEARCH_MODE_PARAM = 'searchMode'
 
 export const SEARCH_MODE = {
@@ -13,7 +11,7 @@ export type SearchMode = (typeof SEARCH_MODE)[keyof typeof SEARCH_MODE]
 
 // Props shared by both result lists; DisplaySearchResults owns the data and handlers
 export interface RecordResultListProps {
-  records: DocumentRecord[]
+  records: RecordSearchItem[]
   totalItems: number
   selectedDocumentId: string | null
   onDocumentSelect: (documentId: string) => void

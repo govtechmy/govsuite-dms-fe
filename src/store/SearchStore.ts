@@ -1,12 +1,7 @@
 import { create } from 'zustand'
-import type { CatalogListMeta } from '@/services/catalog.svc'
+import type { CatalogListMeta, RecordSearchItem } from '@/services/catalog.svc'
 import type { DropdownJenisDokumen, DropdownUnit } from '@/services/dropdown.svc'
 import { getPdfGarage } from '@/services/pdf.svc'
-
-export interface DocumentRecord {
-  documentId: string
-  title: string
-}
 
 export interface KeywordRecord {
   keyword: string
@@ -51,8 +46,9 @@ type SearchStore = {
   pageNumber: number
   pageSize: number
   isLoadingSearch: boolean
-  documentRecords: DocumentRecord[]
+  documentRecords: RecordSearchItem[]
   selectedDocumentId: string | null
+  selectedPageNumber: number | null
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
   documentInfo: DocumentInfo | null
@@ -68,8 +64,9 @@ type SearchStore = {
   setPageNumber: (pageNumber: number) => void
   setPageSize: (pageSize: number) => void
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
-  setDocumentRecords: (documentRecords: DocumentRecord[]) => void
+  setDocumentRecords: (documentRecords: RecordSearchItem[]) => void
   setSelectedDocumentId: (selectedDocumentId: string | null) => void
+  setSelectedPageNumber: (selectedPageNumber: number | null) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void
   setDocumentInfo: (documentInfo: DocumentInfo | null) => void
@@ -92,6 +89,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   isLoadingSearch: false,
   documentRecords: [],
   selectedDocumentId: null,
+  selectedPageNumber: null,
   keywordRecords: null,
   selectedKeywordId: null,
   documentInfo: null,
@@ -130,6 +128,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
   setSelectedDocumentId: (selectedDocumentId) => set({ selectedDocumentId }),
+  setSelectedPageNumber: (selectedPageNumber) => set({ selectedPageNumber }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
   setSelectedKeywordId: (selectedKeywordId) => set({ selectedKeywordId }),
   setDocumentInfo: (documentInfo) => set({ documentInfo }),
@@ -149,6 +148,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       documentRecords: [],
       keywordRecords: null,
       selectedDocumentId: null,
+      selectedPageNumber: null,
       selectedKeywordId: null,
       documentInfo: null,
       searchMeta: null,

@@ -177,6 +177,23 @@ export const formatDateTimeDisplay = (value?: string): string => {
 }
 
 /**
+ * Formats an ISO date string for read-only display as "dd/mm/yyyy" (local time),
+ * e.g. "07/11/2026". Returns '-' when the input is missing or invalid.
+ */
+export const formatDateDisplay = (value?: string): string => {
+  if (!value) return '-'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+
+  return `${day}/${month}/${year}`
+}
+
+/**
  * Formats an ISO date-time string for read-only display as "dd/mm/yyyy, hh:mm AM/PM"
  * (12-hour clock, UTC time). Returns '-' when the input is missing or invalid.
  */
