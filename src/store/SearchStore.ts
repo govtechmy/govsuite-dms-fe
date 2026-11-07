@@ -1,12 +1,7 @@
 import { create } from 'zustand'
-import type { CatalogListMeta } from '@/services/catalog.svc'
+import type { CatalogListMeta, RecordSearchItem } from '@/services/catalog.svc'
 import type { DropdownJenisDokumen, DropdownUnit } from '@/services/dropdown.svc'
 import { getPdfGarage } from '@/services/pdf.svc'
-
-export interface DocumentRecord {
-  documentId: string
-  title: string
-}
 
 export interface KeywordRecord {
   keyword: string
@@ -51,7 +46,7 @@ type SearchStore = {
   pageNumber: number
   pageSize: number
   isLoadingSearch: boolean
-  documentRecords: DocumentRecord[]
+  documentRecords: RecordSearchItem[]
   selectedDocumentId: string | null
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
@@ -68,7 +63,7 @@ type SearchStore = {
   setPageNumber: (pageNumber: number) => void
   setPageSize: (pageSize: number) => void
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
-  setDocumentRecords: (documentRecords: DocumentRecord[]) => void
+  setDocumentRecords: (documentRecords: RecordSearchItem[]) => void
   setSelectedDocumentId: (selectedDocumentId: string | null) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void

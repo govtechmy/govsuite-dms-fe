@@ -20,6 +20,8 @@ export default function DisplaySearchResults() {
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
+  const documentRecords = useSearchStore((state) => state.documentRecords)
+  const searchMeta = useSearchStore((state) => state.searchMeta)
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -164,7 +166,10 @@ export default function DisplaySearchResults() {
       /> */}
       {isHybridSearch ? (
         <div className="flex w-full shrink-0 lg:h-full lg:w-[320px]">
-          <HybridRecordResultSearch />
+          <HybridRecordResultSearch
+            records={documentRecords}
+            totalItems={searchMeta?.totalItems ?? documentRecords.length}
+          />
         </div>
       ) : (
         <div className="flex w-full shrink-0 flex-col gap-4 lg:grid lg:h-full lg:w-[320px] lg:grid-rows-[3fr_2fr]">

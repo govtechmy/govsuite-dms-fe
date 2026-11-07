@@ -5,12 +5,17 @@ import SearchLoadingState from '@/components/page/CarianDokumen/SearchLoadingSta
 import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCarianDokumen'
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
-import { getSearchRecordCarianDokumen } from '@/services/catalog.svc'
+import {
+  getHybridSearchRecords,
+  getSearchRecordCarianDokumen,
+  type RecordSearchResponse,
+} from '@/services/catalog.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
 import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
 import { AutoToast } from '@govtechmy/myds-react/toast'
+import { SEARCH_MODE, SEARCH_MODE_PARAM } from '@/components/page/CarianDokumen/searchMode'
 
 export interface DocumentRecord {
   documentId: string
@@ -41,6 +46,7 @@ const LAZY_BATCH_SIZE = 10
 
 export default function CarianDokumenPage() {
   const [searchParams] = useSearchParams()
+  const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
   const currentPageRef = useRef(1)
@@ -79,16 +85,25 @@ export default function CarianDokumenPage() {
       }
 
       try {
-        const backendResponse = await getSearchRecordCarianDokumen({
-          query,
-          unit,
-          jenisDokumen,
-          dateFrom,
-          dateTo,
-          sort,
-          page: nextPage,
-          limit: LAZY_BATCH_SIZE,
-        })
+        let backendResponse: RecordSearchResponse
+        if (isHybridSearch) {
+          backendResponse = await getHybridSearchRecords({
+            query,
+            page: nextPage,
+            limit: LAZY_BATCH_SIZE,
+          })
+        } else {
+          backendResponse = await getSearchRecordCarianDokumen({
+            query,
+            unit,
+            jenisDokumen,
+            dateFrom,
+            dateTo,
+            sort,
+            page: nextPage,
+            limit: LAZY_BATCH_SIZE,
+          })
+        }
 
         if (requestToken !== latestSearchRequestTokenRef.current) {
           return
@@ -97,10 +112,7 @@ export default function CarianDokumenPage() {
         currentPageRef.current = backendResponse.meta.currentPage || nextPage
         setSearchMeta(backendResponse.meta)
 
-        const documents = backendResponse.items.map((item) => ({
-          documentId: item.recordId,
-          title: item.title,
-        }))
+        const documents = backendResponse.items
 
         if (append) {
           const currentRecords = useSearchStore.getState().documentRecords
@@ -111,8 +123,8 @@ export default function CarianDokumenPage() {
         setDocumentRecords(documents)
 
         if (documents.length > 0) {
-          setSelectedDocumentId(documents[0].documentId)
-          await Promise.allSettled([fetchDocumentInfo(documents[0].documentId)])
+          setSelectedDocumentId(documents[0].recordId)
+          await Promise.allSettled([fetchDocumentInfo(documents[0].recordId)])
         } else {
           setSelectedDocumentId(null)
           setDocumentInfo(null)
@@ -147,6 +159,7 @@ export default function CarianDokumenPage() {
       setSelectedDocumentId,
       setSelectedKeywordId,
       unit,
+      isHybridSearch,
     ]
   )
 
