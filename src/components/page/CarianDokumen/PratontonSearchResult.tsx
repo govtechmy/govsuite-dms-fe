@@ -14,6 +14,9 @@ import { CheckIcon, CopyIcon, EyeShowIcon, HeartIcon } from '@govtechmy/myds-rea
 import { useToast } from '@govtechmy/myds-react/hooks'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
 import extractBackendError from '@/utils/extractBackendError'
+import { getDokumenViewPage, type RecordViewError, type RecordViewPage } from '@/services/pdf.svc'
+import type { ProgressState } from '@/components/shared/ProgressResult'
+import DokumenContentID from '@/components/page/KatalogDokumen/DokumenID/DokumenContentID'
 // import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
@@ -28,6 +31,7 @@ interface PratontonSearchResultProps {
   onDocumentLoad?: () => void
   onPageChange: (currentPage: number, totalPages: number) => void
   isIndexing: boolean
+  isHybridSearch: boolean
 }
 
 // The backend's `contentEditor` is plain HTML, so wrap each item in the page/frame
@@ -54,11 +58,17 @@ export default function PratontonSearchResult({
   onDocumentLoad,
   onPageChange,
   isIndexing,
+  isHybridSearch,
 }: PratontonSearchResultProps) {
   const navigate = useNavigate()
   const { lang } = useParams()
   const { toast } = useToast()
   const documentInfo = useSearchStore((state) => state.documentInfo)
+  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
+  const selectedPageNumber = useSearchStore((state) => state.selectedPageNumber)
+  const [hybridPages, setHybridPages] = useState<RecordViewPage[] | null>(null)
+  const [hybridFetchState, setHybridFetchState] = useState<ProgressState>(null)
+  const [hybridFetchError, setHybridFetchError] = useState<RecordViewError | null>(null)
   // const documentRecords = useSearchStore((state) => state.documentRecords)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const [isReferenceCopied, setIsReferenceCopied] = useState(false)
@@ -90,6 +100,45 @@ export default function PratontonSearchResult({
 
     fetchFavoriteStatus()
   }, [documentInfo?.documentID])
+
+  useEffect(() => {
+    if (!isHybridSearch || !selectedDocumentId || selectedPageNumber === null) {
+      return
+    }
+
+    let ignore = false
+    const abortController = new AbortController()
+
+    const fetchHybridPage = async () => {
+      setHybridFetchState('loading')
+      setHybridFetchError(null)
+      setHybridPages(null)
+
+      const result = await getDokumenViewPage({
+        id: selectedDocumentId,
+        page: selectedPageNumber,
+        signal: abortController.signal,
+      })
+
+      if (ignore) return
+
+      if (!result.success) {
+        setHybridFetchState('error')
+        setHybridFetchError(result.error)
+        return
+      }
+
+      setHybridPages(result.data.items)
+      setHybridFetchState('success')
+    }
+
+    void fetchHybridPage()
+
+    return () => {
+      ignore = true
+      abortController.abort()
+    }
+  }, [isHybridSearch, selectedDocumentId, selectedPageNumber])
 
   useEffect(() => {
     if (!isReferenceCopied) {
@@ -236,12 +285,13 @@ export default function PratontonSearchResult({
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-auto rounded-lg bg-bg-gray-50">
-        {/* TODO: replace SAMPLE_PAGES with the record view API.
-            Keyed by record so each selection remounts and reports its state again. */}
-        <div className="flex w-full flex-col">
-          <PdfHtmlDocumentViewer
-            key={documentInfo?.documentID}
-            pages={SAMPLE_PAGES}
+        {isHybridSearch ? (
+          // Keyed by record and page so each selected passage remounts with a clean state
+          <DokumenContentID
+            key={`${selectedDocumentId}-${selectedPageNumber}`}
+            dokumenViewPages={hybridPages}
+            dokumenViewFetchState={hybridFetchState}
+            dokumenViewFetchError={hybridFetchError}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
             pageNavigationRequest={pageNavigationRequest}
@@ -249,7 +299,22 @@ export default function PratontonSearchResult({
             onDocumentLoad={handleDocumentLoad}
             onPageChange={onPageChange}
           />
-        </div>
+        ) : (
+          // TODO: replace SAMPLE_PAGES with the record view API for full text search.
+          // Keyed by record so each selection remounts and reports its state again.
+          <div className="flex w-full flex-col">
+            <PdfHtmlDocumentViewer
+              key={documentInfo?.documentID}
+              pages={SAMPLE_PAGES}
+              searchKeyword={searchKeyword}
+              navigationRequest={navigationRequest}
+              pageNavigationRequest={pageNavigationRequest}
+              onSearchStateChange={onSearchStateChange}
+              onDocumentLoad={handleDocumentLoad}
+              onPageChange={onPageChange}
+            />
+          </div>
+        )}
       </div>
     </section>
   )

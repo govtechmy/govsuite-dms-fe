@@ -176,6 +176,7 @@ export default function DisplaySearchResults() {
         onDocumentLoad={handleDocumentLoad}
         onPageChange={() => {}}
         isIndexing={pdfSearchState.isIndexing}
+        isHybridSearch={isHybridSearch}
       />
       {/* <WordsResultSearch
         keywordRecords={keywordRecords}
