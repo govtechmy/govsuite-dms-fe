@@ -48,6 +48,7 @@ type SearchStore = {
   isLoadingSearch: boolean
   documentRecords: RecordSearchItem[]
   selectedDocumentId: string | null
+  selectedPageNumber: number | null
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
   documentInfo: DocumentInfo | null
@@ -65,6 +66,7 @@ type SearchStore = {
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
   setDocumentRecords: (documentRecords: RecordSearchItem[]) => void
   setSelectedDocumentId: (selectedDocumentId: string | null) => void
+  setSelectedPageNumber: (selectedPageNumber: number | null) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void
   setDocumentInfo: (documentInfo: DocumentInfo | null) => void
@@ -87,6 +89,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   isLoadingSearch: false,
   documentRecords: [],
   selectedDocumentId: null,
+  selectedPageNumber: null,
   keywordRecords: null,
   selectedKeywordId: null,
   documentInfo: null,
@@ -125,6 +128,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
   setSelectedDocumentId: (selectedDocumentId) => set({ selectedDocumentId }),
+  setSelectedPageNumber: (selectedPageNumber) => set({ selectedPageNumber }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
   setSelectedKeywordId: (selectedKeywordId) => set({ selectedKeywordId }),
   setDocumentInfo: (documentInfo) => set({ documentInfo }),
@@ -144,6 +148,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       documentRecords: [],
       keywordRecords: null,
       selectedDocumentId: null,
+      selectedPageNumber: null,
       selectedKeywordId: null,
       documentInfo: null,
       searchMeta: null,

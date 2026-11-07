@@ -64,6 +64,7 @@ export default function CarianDokumenPage() {
   const setDocumentRecords = useSearchStore((state) => state.setDocumentRecords)
   const setDocumentInfo = useSearchStore((state) => state.setDocumentInfo)
   const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
+  const setSelectedPageNumber = useSearchStore((state) => state.setSelectedPageNumber)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
   const setSearchMeta = useSearchStore((state) => state.setSearchMeta)
   const setDropdownUnits = useSearchStore((state) => state.setDropdownUnits)
@@ -124,9 +125,11 @@ export default function CarianDokumenPage() {
 
         if (documents.length > 0) {
           setSelectedDocumentId(documents[0].recordId)
+          setSelectedPageNumber(documents[0].pageNumber ?? null)
           await Promise.allSettled([fetchDocumentInfo(documents[0].recordId)])
         } else {
           setSelectedDocumentId(null)
+          setSelectedPageNumber(null)
           setDocumentInfo(null)
         }
       } catch (error) {
@@ -157,6 +160,7 @@ export default function CarianDokumenPage() {
       setIsLoadingSearch,
       setSearchMeta,
       setSelectedDocumentId,
+      setSelectedPageNumber,
       setSelectedKeywordId,
       unit,
       isHybridSearch,

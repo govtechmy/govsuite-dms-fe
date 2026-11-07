@@ -1,8 +1,8 @@
 import { Button } from '@govtechmy/myds-react/button'
-import PdfJsDocumentViewer, {
-  type PdfPageNavigationRequest,
-  type PdfSearchNavigationRequest,
-  type PdfSearchState,
+import type {
+  PdfPageNavigationRequest,
+  PdfSearchNavigationRequest,
+  PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
 import PdfHtmlDocumentViewer from '@/components/page/KatalogDokumen/DokumenID/PdfHtmlDocumentViewer'
 import SearchInPdf from './SearchInPdf'
@@ -236,9 +236,7 @@ export default function PratontonSearchResult({
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-auto rounded-lg bg-bg-gray-50">
-        {/* The HTML view drives search and page navigation; the PDF below is display
-            only, so match counts and the page list cover the HTML pages only.
-            TODO: replace SAMPLE_PAGES with the record view API.
+        {/* TODO: replace SAMPLE_PAGES with the record view API.
             Keyed by record so each selection remounts and reports its state again. */}
         <div className="flex w-full flex-col">
           <PdfHtmlDocumentViewer
@@ -251,7 +249,6 @@ export default function PratontonSearchResult({
             onDocumentLoad={handleDocumentLoad}
             onPageChange={onPageChange}
           />
-          <PdfJsDocumentViewer fileUrl={documentInfo?.path || ''} />
         </div>
       </div>
     </section>

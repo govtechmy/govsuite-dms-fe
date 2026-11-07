@@ -7,9 +7,18 @@ import { formatDateDisplay } from '@/utils/formatDate'
 export interface HybridRecordData {
   records: RecordSearchItem[]
   totalItems: number
+  selectedRecordId: string | null
+  selectedPageNumber: number | null
+  onPassageSelect: (record: RecordSearchItem) => void
 }
 
-export default function HybridRecordResultSearch({ records, totalItems }: HybridRecordData) {
+export default function HybridRecordResultSearch({
+  records,
+  totalItems,
+  selectedRecordId,
+  selectedPageNumber,
+  onPassageSelect,
+}: HybridRecordData) {
   return (
     <section className="flex h-[560px] w-full flex-col gap-3 lg:h-full lg:min-h-0">
       <h2 className="text-body-md font-semibold text-txt-black-900">
@@ -21,17 +30,20 @@ export default function HybridRecordResultSearch({ records, totalItems }: Hybrid
         aria-label="Senarai hasil carian"
       >
         {records.map((record) => {
+          const isSelected =
+            record.recordId === selectedRecordId && record.pageNumber === selectedPageNumber
           return (
             <li key={`${record.recordId}-${record.pageNumber}`}>
               <button
                 type="button"
-                // className={clx(
-                //   'relative flex w-full cursor-pointer flex-col gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fr-primary',
-                //   isSelected
-                //     ? 'border-otl-primary-300 bg-bg-primary-50'
-                //     : 'border-otl-gray-200 bg-bg-white hover:bg-bg-washed'
-                // )}
-                className="relative flex w-full cursor-pointer flex-col gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fr-primary border-otl-gray-200 bg-bg-white hover:bg-bg-washed"
+                onClick={() => onPassageSelect(record)}
+                aria-pressed={isSelected}
+                className={clx(
+                  'relative flex w-full cursor-pointer flex-col gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fr-primary',
+                  isSelected
+                    ? 'border-otl-primary-300 bg-bg-primary-50'
+                    : 'border-otl-gray-200 bg-bg-white hover:bg-bg-washed'
+                )}
               >
                 <span className="flex items-center gap-1.5 self-end text-body-xs font-semibold text-txt-black-900">
                   <span
@@ -46,11 +58,13 @@ export default function HybridRecordResultSearch({ records, totalItems }: Hybrid
                 </span>
                 <p className="line-clamp-3 text-body-xs text-txt-black-700">{record.snippet}</p>
                 <p className="line-clamp-2 text-body-sm font-semibold text-txt-primary underline underline-offset-2">
-                  Title
+                  {record.title || '-'}
                 </p>
                 <DocumentMetaTag
                   jenisDokumen={record.documentProfileName || '-'}
                   tarikh={formatDateDisplay(record.recordDate)}
+                  fileExtension={record.fileExtension ?? ''}
+                  fileType={record.fileType ?? ''}
                 />
               </button>
             </li>

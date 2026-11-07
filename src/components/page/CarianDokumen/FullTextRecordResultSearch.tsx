@@ -67,7 +67,12 @@ export default function FullTextRecordResultSearch() {
                 <p className="line-clamp-2 text-body-sm font-semibold text-txt-primary underline underline-offset-2">
                   Placeholder Title
                 </p>
-                <DocumentMetaTag jenisDokumen="PlaceholderDokumen" tarikh="11/01/00" />
+                <DocumentMetaTag
+                  jenisDokumen="PlaceholderDokumen"
+                  tarikh="11/01/00"
+                  fileExtension="pdf"
+                  fileType=""
+                />
               </div>
               {/* {isSelected && <ChevronRightIcon className="size-5 shrink-0 text-txt-black-700" />} */}
               <ChevronRightIcon className="size-5 shrink-0 text-txt-black-700" />
