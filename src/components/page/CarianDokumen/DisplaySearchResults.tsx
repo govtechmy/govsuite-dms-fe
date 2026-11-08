@@ -10,8 +10,12 @@ import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
-import dataSampleFulltext from './fullTextHtmlSample'
-import type { RecordSearchItem } from '@/services/catalog.svc'
+import {
+  getRecordMatchPages,
+  type RecordSearchItem,
+  type RecordMatchPage,
+} from '@/services/catalog.svc'
+import type { ProgressState } from '@/components/shared/ProgressResult'
 
 export default function DisplaySearchResults() {
   const [searchParams] = useSearchParams()
@@ -38,6 +42,9 @@ export default function DisplaySearchResults() {
   const [navigationRequest, setNavigationRequest] = useState<PdfSearchNavigationRequest | null>(
     null
   )
+  const [matchPages, setMatchPages] = useState<RecordMatchPage[] | null>(null)
+  const [matchPagesFetchState, setMatchPagesFetchState] = useState<ProgressState>(null)
+  const [matchPagesFetchError, setMatchPagesFetchError] = useState<string | null>(null)
   const navigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
@@ -85,7 +92,7 @@ export default function DisplaySearchResults() {
     queueNavigationRequest('next')
   }, [queueNavigationRequest])
 
-  const handlePassageSelect = useCallback(
+  const handleRecordSelect = useCallback(
     (record: RecordSearchItem) => {
       const isNewDocument = record.recordId !== selectedDocumentId
       setSelectedDocumentId(record.recordId)
@@ -96,6 +103,45 @@ export default function DisplaySearchResults() {
     },
     [selectedDocumentId, setSelectedDocumentId, setSelectedPageNumber, fetchDocumentInfo]
   )
+
+  // Full text: load the pages of the selected record that contain the keyword
+  useEffect(() => {
+    if (isHybridSearch || !selectedDocumentId || !previewSearchQuery) {
+      return
+    }
+
+    let ignore = false
+
+    const fetchMatchPages = async () => {
+      setMatchPagesFetchState('loading')
+      setMatchPagesFetchError(null)
+      setMatchPages(null)
+
+      try {
+        const result = await getRecordMatchPages({
+          recordId: selectedDocumentId,
+          query: previewSearchQuery,
+        })
+        if (ignore) return
+
+        setMatchPages(result.items)
+        setMatchPagesFetchState('success')
+        setSelectedPageNumber(result.items[0]?.pageNumber ?? null)
+      } catch (error) {
+        if (ignore) return
+        setMatchPagesFetchState('error')
+        setMatchPagesFetchError(
+          error instanceof Error ? error.message : 'Gagal memuatkan senarai muka surat.'
+        )
+      }
+    }
+
+    void fetchMatchPages()
+
+    return () => {
+      ignore = true
+    }
+  }, [isHybridSearch, selectedDocumentId, previewSearchQuery, setSelectedPageNumber])
 
   useEffect(() => {
     setSearchKeyword((previousSearchKeyword) =>
@@ -188,18 +234,25 @@ export default function DisplaySearchResults() {
           <HybridRecordResultSearch
             records={documentRecords}
             totalItems={searchMeta?.totalItems ?? documentRecords.length}
-            selectedRecordId={selectedDocumentId}
+            selectedDocumentId={selectedDocumentId}
             selectedPageNumber={selectedPageNumber}
-            onPassageSelect={handlePassageSelect}
+            onRecordSelect={handleRecordSelect}
           />
         </div>
       ) : (
         <div className="flex w-full shrink-0 flex-col gap-4 lg:grid lg:h-full lg:w-[320px] lg:grid-rows-[3fr_2fr]">
-          <FullTextRecordResultSearch />
+          <FullTextRecordResultSearch
+            records={documentRecords}
+            totalItems={searchMeta?.totalItems ?? documentRecords.length}
+            selectedDocumentId={selectedDocumentId}
+            onRecordSelect={handleRecordSelect}
+          />
           <PageResultSearch
-            currentPage={1}
-            totalPages={dataSampleFulltext.data.items.length}
-            onPageSelect={() => {}}
+            pages={matchPages}
+            fetchState={matchPagesFetchState}
+            fetchError={matchPagesFetchError}
+            selectedPageNumber={selectedPageNumber}
+            onPageSelect={setSelectedPageNumber}
           />
         </div>
       )}

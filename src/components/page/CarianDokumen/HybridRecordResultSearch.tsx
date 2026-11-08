@@ -1,24 +1,20 @@
 import { clx } from '@govtechmy/myds-react/utils'
 import DocumentMetaTag from './DocumentMetaTag'
 import getRelevanceDotClass from '@/utils/getRelevanceDotClass'
-import { type RecordSearchItem } from '@/services/catalog.svc'
 import { formatDateDisplay } from '@/utils/formatDate'
+import type { RecordResultListProps } from './searchMode'
 
-export interface HybridRecordData {
-  records: RecordSearchItem[]
-  totalItems: number
-  selectedRecordId: string | null
+interface HybridRecordResultSearchProps extends RecordResultListProps {
   selectedPageNumber: number | null
-  onPassageSelect: (record: RecordSearchItem) => void
 }
 
 export default function HybridRecordResultSearch({
   records,
   totalItems,
-  selectedRecordId,
+  selectedDocumentId,
   selectedPageNumber,
-  onPassageSelect,
-}: HybridRecordData) {
+  onRecordSelect,
+}: HybridRecordResultSearchProps) {
   return (
     <section className="flex h-[560px] w-full flex-col gap-3 lg:h-full lg:min-h-0">
       <h2 className="text-body-md font-semibold text-txt-black-900">
@@ -31,12 +27,12 @@ export default function HybridRecordResultSearch({
       >
         {records.map((record) => {
           const isSelected =
-            record.recordId === selectedRecordId && record.pageNumber === selectedPageNumber
+            record.recordId === selectedDocumentId && record.pageNumber === selectedPageNumber
           return (
             <li key={`${record.recordId}-${record.pageNumber}`}>
               <button
                 type="button"
-                onClick={() => onPassageSelect(record)}
+                onClick={() => onRecordSelect(record)}
                 aria-pressed={isSelected}
                 className={clx(
                   'relative flex w-full cursor-pointer flex-col gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fr-primary',

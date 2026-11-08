@@ -14,5 +14,5 @@ export interface RecordResultListProps {
   records: RecordSearchItem[]
   totalItems: number
   selectedDocumentId: string | null
-  onDocumentSelect: (documentId: string) => void
+  onRecordSelect: (record: RecordSearchItem) => void
 }
