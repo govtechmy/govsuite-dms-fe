@@ -96,7 +96,9 @@ export default function DisplaySearchResults() {
     (record: RecordSearchItem) => {
       const isNewDocument = record.recordId !== selectedDocumentId
       setSelectedDocumentId(record.recordId)
-      setSelectedPageNumber(record.pageNumber ?? null)
+      if (isNewDocument || record.pageNumber !== undefined) {
+        setSelectedPageNumber(record.pageNumber ?? null)
+      }
       if (isNewDocument) {
         void fetchDocumentInfo(record.recordId)
       }
@@ -141,7 +143,15 @@ export default function DisplaySearchResults() {
     return () => {
       ignore = true
     }
-  }, [isHybridSearch, selectedDocumentId, previewSearchQuery, setSelectedPageNumber])
+    // documentRecords: re-run after every new search (e.g. sort change) even if the
+    // first record stays the same, because the search resets the selected page
+  }, [
+    isHybridSearch,
+    selectedDocumentId,
+    previewSearchQuery,
+    setSelectedPageNumber,
+    documentRecords,
+  ])
 
   useEffect(() => {
     setSearchKeyword((previousSearchKeyword) =>
@@ -222,7 +232,6 @@ export default function DisplaySearchResults() {
         onDocumentLoad={handleDocumentLoad}
         onPageChange={() => {}}
         isIndexing={pdfSearchState.isIndexing}
-        isHybridSearch={isHybridSearch}
       />
       {/* <WordsResultSearch
         keywordRecords={keywordRecords}
