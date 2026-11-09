@@ -3,7 +3,7 @@ import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
-import DokumenContentID from '@/components/page/KatalogDokumen/DokumenID/DokumenContentID'
+import DokumenContent from '@/components/shared/DokumenContent'
 import { DokumenLoadProgress } from '@/components/page/KatalogDokumen/DokumenID/DokumenLoadProgress'
 import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/HeaderDokumenID'
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
@@ -522,7 +522,7 @@ export default function DokumenIDPage() {
               </div>
             )}
           </div>
-          <DokumenContentID
+          <DokumenContent
             dokumenViewPages={dokumenViewPages}
             dokumenViewFetchState={dokumenViewFetchState}
             dokumenViewFetchError={dokumenViewFetchError}

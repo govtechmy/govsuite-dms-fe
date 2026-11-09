@@ -10,7 +10,7 @@ import { ProgressResult, type ProgressState } from '@/components/shared/Progress
 import type { RecordViewError, RecordViewPage } from '@/services/pdf.svc'
 import PdfHtmlDocumentViewer from './PdfHtmlDocumentViewer'
 
-interface DokumenContentIDProps {
+interface DokumenContentProps {
   dokumenViewPages: RecordViewPage[] | null
   dokumenViewFetchState: ProgressState
   dokumenViewFetchError: RecordViewError | null
@@ -22,7 +22,7 @@ interface DokumenContentIDProps {
   onPageChange?: (currentPage: number, totalPages: number) => void
 }
 
-export default function DokumenContentID({
+export default function DokumenContent({
   dokumenViewPages,
   dokumenViewFetchState,
   dokumenViewFetchError,
@@ -32,7 +32,7 @@ export default function DokumenContentID({
   onSearchStateChange,
   onDocumentLoad,
   onPageChange,
-}: DokumenContentIDProps) {
+}: DokumenContentProps) {
   // Viewer's `pages` reference stays stable across renders
   const pages = useMemo(
     () => (dokumenViewPages ?? []).map(({ contentEditor }) => contentEditor),
