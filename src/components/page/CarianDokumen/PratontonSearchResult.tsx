@@ -29,6 +29,8 @@ interface PratontonSearchResultProps {
   onDocumentLoad?: () => void
   onPageChange: (currentPage: number, totalPages: number) => void
   isIndexing: boolean
+  selectedDocumentId: string | null
+  selectedPageNumber: number | null
 }
 
 export default function PratontonSearchResult({
@@ -43,13 +45,13 @@ export default function PratontonSearchResult({
   onDocumentLoad,
   onPageChange,
   isIndexing,
+  selectedDocumentId,
+  selectedPageNumber,
 }: PratontonSearchResultProps) {
   const navigate = useNavigate()
   const { lang } = useParams()
   const { toast } = useToast()
   const documentInfo = useSearchStore((state) => state.documentInfo)
-  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
-  const selectedPageNumber = useSearchStore((state) => state.selectedPageNumber)
   const [viewPages, setViewPages] = useState<RecordViewPage[] | null>(null)
   const [viewFetchState, setViewFetchState] = useState<ProgressState>(null)
   const [viewFetchError, setViewFetchError] = useState<RecordViewError | null>(null)

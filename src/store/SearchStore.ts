@@ -47,8 +47,6 @@ type SearchStore = {
   pageSize: number
   isLoadingSearch: boolean
   documentRecords: RecordSearchItem[]
-  selectedDocumentId: string | null
-  selectedPageNumber: number | null
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
   documentInfo: DocumentInfo | null
@@ -65,8 +63,6 @@ type SearchStore = {
   setPageSize: (pageSize: number) => void
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
   setDocumentRecords: (documentRecords: RecordSearchItem[]) => void
-  setSelectedDocumentId: (selectedDocumentId: string | null) => void
-  setSelectedPageNumber: (selectedPageNumber: number | null) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void
   setDocumentInfo: (documentInfo: DocumentInfo | null) => void
@@ -77,7 +73,7 @@ type SearchStore = {
   fetchDocumentInfo: (documentId: string) => Promise<void>
 }
 
-export const useSearchStore = create<SearchStore>((set, get) => ({
+export const useSearchStore = create<SearchStore>((set) => ({
   query: '',
   jenisDokumen: '',
   unit: '',
@@ -88,8 +84,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   pageSize: DEFAULT_PAGE_SIZE,
   isLoadingSearch: false,
   documentRecords: [],
-  selectedDocumentId: null,
-  selectedPageNumber: null,
   keywordRecords: null,
   selectedKeywordId: null,
   documentInfo: null,
@@ -127,8 +121,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     }),
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
-  setSelectedDocumentId: (selectedDocumentId) => set({ selectedDocumentId }),
-  setSelectedPageNumber: (selectedPageNumber) => set({ selectedPageNumber }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
   setSelectedKeywordId: (selectedKeywordId) => set({ selectedKeywordId }),
   setDocumentInfo: (documentInfo) => set({ documentInfo }),
@@ -147,8 +139,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       pageSize: DEFAULT_PAGE_SIZE,
       documentRecords: [],
       keywordRecords: null,
-      selectedDocumentId: null,
-      selectedPageNumber: null,
       selectedKeywordId: null,
       documentInfo: null,
       searchMeta: null,
@@ -172,10 +162,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       if (!response.success) {
         console.error('Document info API error:', response.error)
         set({ documentInfo: null })
-        return
-      }
-
-      if (get().selectedDocumentId && get().selectedDocumentId !== documentId) {
         return
       }
 

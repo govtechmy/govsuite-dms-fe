@@ -63,14 +63,11 @@ export default function CarianDokumenPage() {
   const setIsLoadingSearch = useSearchStore((state) => state.setIsLoadingSearch)
   const setDocumentRecords = useSearchStore((state) => state.setDocumentRecords)
   const setDocumentInfo = useSearchStore((state) => state.setDocumentInfo)
-  const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
-  const setSelectedPageNumber = useSearchStore((state) => state.setSelectedPageNumber)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
   const setSearchMeta = useSearchStore((state) => state.setSearchMeta)
   const setDropdownUnits = useSearchStore((state) => state.setDropdownUnits)
   const setDropdownJenisDokumen = useSearchStore((state) => state.setDropdownJenisDokumen)
   const resetSearchState = useSearchStore((state) => state.resetSearchState)
-  const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
   // TODO: the `append` path (load the next batch) has no caller while lazy loading
   // is disabled; it is kept so scroll-to-load can be reconnected later.
@@ -123,13 +120,7 @@ export default function CarianDokumenPage() {
 
         setDocumentRecords(documents)
 
-        if (documents.length > 0) {
-          setSelectedDocumentId(documents[0].recordId)
-          setSelectedPageNumber(documents[0].pageNumber ?? null)
-          await Promise.allSettled([fetchDocumentInfo(documents[0].recordId)])
-        } else {
-          setSelectedDocumentId(null)
-          setSelectedPageNumber(null)
+        if (!documents.length) {
           setDocumentInfo(null)
         }
       } catch (error) {
@@ -151,7 +142,6 @@ export default function CarianDokumenPage() {
     [
       dateFrom,
       dateTo,
-      fetchDocumentInfo,
       jenisDokumen,
       query,
       sort,
@@ -159,8 +149,6 @@ export default function CarianDokumenPage() {
       setDocumentRecords,
       setIsLoadingSearch,
       setSearchMeta,
-      setSelectedDocumentId,
-      setSelectedPageNumber,
       setSelectedKeywordId,
       unit,
       isHybridSearch,

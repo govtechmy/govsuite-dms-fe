@@ -5,7 +5,7 @@ import PratontonSearchResult from './PratontonSearchResult'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
-import { SEARCH_MODE, SEARCH_MODE_PARAM } from './searchMode'
+import { RECORD_ID_PARAM, RECORD_PAGE_PARAM, SEARCH_MODE, SEARCH_MODE_PARAM } from './searchMode'
 import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
@@ -18,8 +18,12 @@ import {
 import type { ProgressState } from '@/components/shared/ProgressResult'
 
 export default function DisplaySearchResults() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
+  const selectedDocumentId = searchParams.get(RECORD_ID_PARAM) || null
+  const recordPageParam = Number(searchParams.get(RECORD_PAGE_PARAM))
+  const selectedPageNumber =
+    Number.isInteger(recordPageParam) && recordPageParam > 0 ? recordPageParam : null
   const previewSearchQuery = useSearchStore((state) => state.query)
   const keywordRecords = useSearchStore((state) => state.keywordRecords)
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
@@ -27,11 +31,29 @@ export default function DisplaySearchResults() {
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const searchMeta = useSearchStore((state) => state.searchMeta)
-  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
-  const selectedPageNumber = useSearchStore((state) => state.selectedPageNumber)
   const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
-  const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
-  const setSelectedPageNumber = useSearchStore((state) => state.setSelectedPageNumber)
+
+  const setRecordSelection = useCallback(
+    (recordId: string | null, pageNumber: number | null) => {
+      setSearchParams(
+        (params) => {
+          if (recordId) {
+            params.set(RECORD_ID_PARAM, recordId)
+          } else {
+            params.delete(RECORD_ID_PARAM)
+          }
+          if (pageNumber !== null) {
+            params.set(RECORD_PAGE_PARAM, String(pageNumber))
+          } else {
+            params.delete(RECORD_PAGE_PARAM)
+          }
+          return params
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams]
+  )
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -45,6 +67,7 @@ export default function DisplaySearchResults() {
   const [matchPages, setMatchPages] = useState<RecordMatchPage[] | null>(null)
   const [matchPagesFetchState, setMatchPagesFetchState] = useState<ProgressState>(null)
   const [matchPagesFetchError, setMatchPagesFetchError] = useState<string | null>(null)
+  const [matchPagesRecordId, setMatchPagesRecordId] = useState<string | null>(null)
   const navigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
@@ -94,17 +117,49 @@ export default function DisplaySearchResults() {
 
   const handleRecordSelect = useCallback(
     (record: RecordSearchItem) => {
-      const isNewDocument = record.recordId !== selectedDocumentId
-      setSelectedDocumentId(record.recordId)
-      if (isNewDocument || record.pageNumber !== undefined) {
-        setSelectedPageNumber(record.pageNumber ?? null)
+      // Hybrid passage: the page comes with the result
+      if (record.pageNumber !== undefined) {
+        setRecordSelection(record.recordId, record.pageNumber)
+        return
       }
-      if (isNewDocument) {
-        void fetchDocumentInfo(record.recordId)
+      // Full text record: keep the selected page when the same record is clicked again;
+      // for a new record the page is chosen once its match pages load
+      if (record.recordId !== selectedDocumentId) {
+        setRecordSelection(record.recordId, null)
       }
     },
-    [selectedDocumentId, setSelectedDocumentId, setSelectedPageNumber, fetchDocumentInfo]
+    [selectedDocumentId, setRecordSelection]
   )
+
+  const handlePageSelect = useCallback(
+    (pageNumber: number) => {
+      setRecordSelection(selectedDocumentId, pageNumber)
+    },
+    [selectedDocumentId, setRecordSelection]
+  )
+
+  // Select the first result when the selection in the URL is missing or not in these results
+  // (new search, or a shared link to a record that is no longer returned)
+  useEffect(() => {
+    const firstRecord = documentRecords[0]
+    if (!firstRecord) return
+
+    const isSelectionInResults = documentRecords.some(
+      (record) =>
+        record.recordId === selectedDocumentId &&
+        (!isHybridSearch || record.pageNumber === selectedPageNumber)
+    )
+    if (!isSelectionInResults) {
+      setRecordSelection(firstRecord.recordId, firstRecord.pageNumber ?? null)
+    }
+  }, [documentRecords, isHybridSearch, selectedDocumentId, selectedPageNumber, setRecordSelection])
+
+  // Load the selected record's info (path, reference, title) used by the preview header
+  useEffect(() => {
+    if (selectedDocumentId) {
+      void fetchDocumentInfo(selectedDocumentId)
+    }
+  }, [selectedDocumentId, fetchDocumentInfo])
 
   // Full text: load the pages of the selected record that contain the keyword
   useEffect(() => {
@@ -118,6 +173,7 @@ export default function DisplaySearchResults() {
       setMatchPagesFetchState('loading')
       setMatchPagesFetchError(null)
       setMatchPages(null)
+      setMatchPagesRecordId(null)
 
       try {
         const result = await getRecordMatchPages({
@@ -127,8 +183,8 @@ export default function DisplaySearchResults() {
         if (ignore) return
 
         setMatchPages(result.items)
+        setMatchPagesRecordId(selectedDocumentId)
         setMatchPagesFetchState('success')
-        setSelectedPageNumber(result.items[0]?.pageNumber ?? null)
       } catch (error) {
         if (ignore) return
         setMatchPagesFetchState('error')
@@ -143,14 +199,35 @@ export default function DisplaySearchResults() {
     return () => {
       ignore = true
     }
-    // documentRecords: re-run after every new search (e.g. sort change) even if the
-    // first record stays the same, because the search resets the selected page
+  }, [isHybridSearch, selectedDocumentId, previewSearchQuery])
+
+  // Full text: once the match pages of the selected record are loaded, keep the selected
+  // page if it is one of them (e.g. after a refresh), otherwise select the first match
+  useEffect(() => {
+    if (
+      isHybridSearch ||
+      !selectedDocumentId ||
+      matchPagesFetchState !== 'success' ||
+      matchPagesRecordId !== selectedDocumentId
+    ) {
+      return
+    }
+
+    const pages = matchPages ?? []
+    if (pages.some((page) => page.pageNumber === selectedPageNumber)) return
+
+    const firstPageNumber = pages[0]?.pageNumber ?? null
+    if (firstPageNumber !== selectedPageNumber) {
+      setRecordSelection(selectedDocumentId, firstPageNumber)
+    }
   }, [
     isHybridSearch,
     selectedDocumentId,
-    previewSearchQuery,
-    setSelectedPageNumber,
-    documentRecords,
+    selectedPageNumber,
+    matchPages,
+    matchPagesFetchState,
+    matchPagesRecordId,
+    setRecordSelection,
   ])
 
   useEffect(() => {
@@ -232,6 +309,8 @@ export default function DisplaySearchResults() {
         onDocumentLoad={handleDocumentLoad}
         onPageChange={() => {}}
         isIndexing={pdfSearchState.isIndexing}
+        selectedDocumentId={selectedDocumentId}
+        selectedPageNumber={selectedPageNumber}
       />
       {/* <WordsResultSearch
         keywordRecords={keywordRecords}
@@ -261,7 +340,7 @@ export default function DisplaySearchResults() {
             fetchState={matchPagesFetchState}
             fetchError={matchPagesFetchError}
             selectedPageNumber={selectedPageNumber}
-            onPageSelect={setSelectedPageNumber}
+            onPageSelect={handlePageSelect}
           />
         </div>
       )}
