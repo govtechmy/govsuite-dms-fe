@@ -14,7 +14,7 @@ import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
 import extractBackendError from '@/utils/extractBackendError'
 import { getDokumenViewPage, type RecordViewError, type RecordViewPage } from '@/services/pdf.svc'
 import type { ProgressState } from '@/components/shared/ProgressResult'
-import DokumenContent from '@/components/shared/DokumenContent'
+import DokumenContentID from '@/components/shared/DokumenContentID'
 // import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
@@ -272,7 +272,7 @@ export default function PratontonSearchResult({
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-auto rounded-lg bg-bg-gray-50">
-        <DokumenContent
+        <DokumenContentID
           key={`${selectedDocumentId}-${selectedPageNumber}`}
           dokumenViewPages={viewPages}
           dokumenViewFetchState={viewFetchState}
