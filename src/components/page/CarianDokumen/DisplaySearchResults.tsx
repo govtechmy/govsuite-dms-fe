@@ -5,7 +5,6 @@ import PratontonSearchResult from './PratontonSearchResult'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
-import { URL_PARAM, SEARCH_MODE } from './searchMode'
 import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
@@ -18,12 +17,10 @@ import {
 import type { ProgressState } from '@/components/shared/ProgressResult'
 
 export default function DisplaySearchResults() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const isHybridSearch = searchParams.get(URL_PARAM.SEARCH_MODE) === SEARCH_MODE.HIBRID
-  const selectedDocumentId = searchParams.get(URL_PARAM.RECORD_ID) || null
-  const recordPageParam = Number(searchParams.get(URL_PARAM.RECORD_PAGE))
-  const selectedPageNumber =
-    Number.isInteger(recordPageParam) && recordPageParam > 0 ? recordPageParam : null
+  const [searchParams] = useSearchParams()
+  const isHybridSearch = searchParams.get('searchMode') === 'hibrid'
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
+  const [selectedPageNumber, setSelectedPageNumber] = useState<number | null>(null)
   const previewSearchQuery = useSearchStore((state) => state.query)
   const keywordRecords = useSearchStore((state) => state.keywordRecords)
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
@@ -33,27 +30,10 @@ export default function DisplaySearchResults() {
   const searchMeta = useSearchStore((state) => state.searchMeta)
   const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
-  const setRecordSelection = useCallback(
-    (recordId: string | null, pageNumber: number | null) => {
-      setSearchParams(
-        (params) => {
-          if (recordId) {
-            params.set(URL_PARAM.RECORD_ID, recordId)
-          } else {
-            params.delete(URL_PARAM.RECORD_ID)
-          }
-          if (pageNumber !== null) {
-            params.set(URL_PARAM.RECORD_PAGE, String(pageNumber))
-          } else {
-            params.delete(URL_PARAM.RECORD_PAGE)
-          }
-          return params
-        },
-        { replace: true }
-      )
-    },
-    [setSearchParams]
-  )
+  const setRecordSelection = useCallback((recordId: string | null, pageNumber: number | null) => {
+    setSelectedDocumentId(recordId)
+    setSelectedPageNumber(pageNumber)
+  }, [])
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -138,8 +118,7 @@ export default function DisplaySearchResults() {
     [selectedDocumentId, setRecordSelection]
   )
 
-  // Select the first result when the selection in the URL is missing or not in these results
-  // (new search, or a shared link to a record that is no longer returned)
+  // Select the first result when nothing is selected or the selection is not in these results
   useEffect(() => {
     const firstRecord = documentRecords[0]
     if (!firstRecord) return

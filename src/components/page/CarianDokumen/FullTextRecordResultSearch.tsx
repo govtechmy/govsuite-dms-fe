@@ -11,16 +11,23 @@ import DocumentMetaTag from './DocumentMetaTag'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
 import { formatDateDisplay } from '@/utils/formatDate'
-import type { RecordResultListProps } from './searchMode'
+import type { RecordSearchItem } from '@/services/catalog.svc'
 
 const LAZY_BATCH_SIZE = 10
+
+interface FullTextRecordResultSearchProps {
+  records: RecordSearchItem[]
+  totalItems: number
+  selectedDocumentId: string | null
+  onRecordSelect: (record: RecordSearchItem) => void
+}
 
 export default function FullTextRecordResultSearch({
   records,
   totalItems,
   selectedDocumentId,
   onRecordSelect,
-}: RecordResultListProps) {
+}: FullTextRecordResultSearchProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const sortBy = useSearchStore((state) => state.sort)
   const setSort = useSearchStore((state) => state.setSort)

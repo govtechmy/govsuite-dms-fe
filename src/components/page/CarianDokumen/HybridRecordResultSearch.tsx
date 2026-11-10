@@ -2,10 +2,14 @@ import { clx } from '@govtechmy/myds-react/utils'
 import DocumentMetaTag from './DocumentMetaTag'
 import getRelevanceDotClass from '@/utils/getRelevanceDotClass'
 import { formatDateDisplay } from '@/utils/formatDate'
-import type { RecordResultListProps } from './searchMode'
+import type { RecordSearchItem } from '@/services/catalog.svc'
 
-interface HybridRecordResultSearchProps extends RecordResultListProps {
+interface HybridRecordResultSearchProps {
+  records: RecordSearchItem[]
+  totalItems: number
+  selectedDocumentId: string | null
   selectedPageNumber: number | null
+  onRecordSelect: (record: RecordSearchItem) => void
 }
 
 export default function HybridRecordResultSearch({
