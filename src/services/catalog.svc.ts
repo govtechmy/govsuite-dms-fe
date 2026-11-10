@@ -130,6 +130,7 @@ export interface RecordSearchApiItem {
 // Hybrid API: one item from POST /search/ (one matched page, not one record)
 export interface RecordViewPassage {
   record_id?: string
+  title?: string
   page_number?: number
   accessLevel?: string
   recordDate?: string
@@ -583,8 +584,7 @@ export const getHybridSearchRecords = async (input: {
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
       ? payload.items.map((item: RecordViewPassage): RecordSearchItem => ({
           recordId: String(item?.record_id ?? ''),
-          // Hybrid API does not return a title.
-          title: '',
+          title: item?.title ?? '',
           pageNumber: item?.page_number,
           recordDate: item?.recordDate ?? '',
           documentProfile: item?.documentProfile ?? '',

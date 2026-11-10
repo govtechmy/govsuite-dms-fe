@@ -1,12 +1,10 @@
 import { Button } from '@govtechmy/myds-react/button'
-import PdfJsDocumentViewer, {
-  type PdfPageNavigationRequest,
-  type PdfSearchNavigationRequest,
-  type PdfSearchState,
+import type {
+  PdfPageNavigationRequest,
+  PdfSearchNavigationRequest,
+  PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
-import PdfHtmlDocumentViewer from '@/components/page/KatalogDokumen/DokumenID/PdfHtmlDocumentViewer'
 import SearchInPdf from './SearchInPdf'
-import dataSampleFulltext from './fullTextHtmlSample'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
@@ -14,6 +12,9 @@ import { CheckIcon, CopyIcon, EyeShowIcon, HeartIcon } from '@govtechmy/myds-rea
 import { useToast } from '@govtechmy/myds-react/hooks'
 import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
 import extractBackendError from '@/utils/extractBackendError'
+import { getDokumenViewPage, type RecordViewError, type RecordViewPage } from '@/services/pdf.svc'
+import type { ProgressState } from '@/components/shared/ProgressResult'
+import DokumenContentID from '@/components/shared/DokumenContentID'
 // import { downloadFile } from '@/utils/downloadFile'
 
 interface PratontonSearchResultProps {
@@ -28,19 +29,9 @@ interface PratontonSearchResultProps {
   onDocumentLoad?: () => void
   onPageChange: (currentPage: number, totalPages: number) => void
   isIndexing: boolean
+  selectedDocumentId: string | null
+  selectedPageNumber: number | null
 }
-
-// The backend's `contentEditor` is plain HTML, so wrap each item in the page/frame
-// nodes the viewer expects: an A4 sheet (96 DPI) that grows with its content, and
-// one frame in normal flow instead of the converter's absolute positioning
-const PAGE_STYLE = 'width: 794px; min-height: 1123px'
-const FRAME_STYLE = 'position: relative; padding: 72px; font-size: 14px; line-height: 1.6'
-
-// Built once so the viewer's `pages` reference stays stable across renders
-const SAMPLE_PAGES = dataSampleFulltext.data.items.map(
-  ({ pageNumber, contentEditor }) =>
-    `<div data-type="page" data-page="${pageNumber}" style="${PAGE_STYLE}"><div data-type="frame" style="${FRAME_STYLE}">${contentEditor}</div></div>`
-)
 
 export default function PratontonSearchResult({
   searchKeyword,
@@ -54,11 +45,16 @@ export default function PratontonSearchResult({
   onDocumentLoad,
   onPageChange,
   isIndexing,
+  selectedDocumentId,
+  selectedPageNumber,
 }: PratontonSearchResultProps) {
   const navigate = useNavigate()
   const { lang } = useParams()
   const { toast } = useToast()
   const documentInfo = useSearchStore((state) => state.documentInfo)
+  const [viewPages, setViewPages] = useState<RecordViewPage[] | null>(null)
+  const [viewFetchState, setViewFetchState] = useState<ProgressState>(null)
+  const [viewFetchError, setViewFetchError] = useState<RecordViewError | null>(null)
   // const documentRecords = useSearchStore((state) => state.documentRecords)
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const [isReferenceCopied, setIsReferenceCopied] = useState(false)
@@ -90,6 +86,48 @@ export default function PratontonSearchResult({
 
     fetchFavoriteStatus()
   }, [documentInfo?.documentID])
+
+  useEffect(() => {
+    if (!selectedDocumentId || selectedPageNumber === null) {
+      setViewPages(null)
+      setViewFetchState(null)
+      setViewFetchError(null)
+      return
+    }
+
+    let ignore = false
+    const abortController = new AbortController()
+
+    const fetchSelectedPage = async () => {
+      setViewFetchState('loading')
+      setViewFetchError(null)
+      setViewPages(null)
+
+      const result = await getDokumenViewPage({
+        id: selectedDocumentId,
+        page: selectedPageNumber,
+        signal: abortController.signal,
+      })
+
+      if (ignore) return
+
+      if (!result.success) {
+        setViewFetchState('error')
+        setViewFetchError(result.error)
+        return
+      }
+
+      setViewPages(result.data.items)
+      setViewFetchState('success')
+    }
+
+    void fetchSelectedPage()
+
+    return () => {
+      ignore = true
+      abortController.abort()
+    }
+  }, [selectedDocumentId, selectedPageNumber])
 
   useEffect(() => {
     if (!isReferenceCopied) {
@@ -236,23 +274,18 @@ export default function PratontonSearchResult({
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-auto rounded-lg bg-bg-gray-50">
-        {/* The HTML view drives search and page navigation; the PDF below is display
-            only, so match counts and the page list cover the HTML pages only.
-            TODO: replace SAMPLE_PAGES with the record view API.
-            Keyed by record so each selection remounts and reports its state again. */}
-        <div className="flex w-full flex-col">
-          <PdfHtmlDocumentViewer
-            key={documentInfo?.documentID}
-            pages={SAMPLE_PAGES}
-            searchKeyword={searchKeyword}
-            navigationRequest={navigationRequest}
-            pageNavigationRequest={pageNavigationRequest}
-            onSearchStateChange={onSearchStateChange}
-            onDocumentLoad={handleDocumentLoad}
-            onPageChange={onPageChange}
-          />
-          <PdfJsDocumentViewer fileUrl={documentInfo?.path || ''} />
-        </div>
+        <DokumenContentID
+          key={`${selectedDocumentId}-${selectedPageNumber}`}
+          dokumenViewPages={viewPages}
+          dokumenViewFetchState={viewFetchState}
+          dokumenViewFetchError={viewFetchError}
+          searchKeyword={searchKeyword}
+          navigationRequest={navigationRequest}
+          pageNavigationRequest={pageNavigationRequest}
+          onSearchStateChange={onSearchStateChange}
+          onDocumentLoad={handleDocumentLoad}
+          onPageChange={onPageChange}
+        />
       </div>
     </section>
   )

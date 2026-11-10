@@ -5,7 +5,11 @@ import SearchLoadingState from '@/components/page/CarianDokumen/SearchLoadingSta
 import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCarianDokumen'
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
-import { getSearchRecordCarianDokumen } from '@/services/catalog.svc'
+import {
+  getHybridSearchRecords,
+  getSearchRecordCarianDokumen,
+  type RecordSearchResponse,
+} from '@/services/catalog.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
 import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -41,6 +45,7 @@ const LAZY_BATCH_SIZE = 10
 
 export default function CarianDokumenPage() {
   const [searchParams] = useSearchParams()
+  const isHybridSearch = searchParams.get('searchMode') === 'hibrid'
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
   const currentPageRef = useRef(1)
@@ -57,13 +62,11 @@ export default function CarianDokumenPage() {
   const setIsLoadingSearch = useSearchStore((state) => state.setIsLoadingSearch)
   const setDocumentRecords = useSearchStore((state) => state.setDocumentRecords)
   const setDocumentInfo = useSearchStore((state) => state.setDocumentInfo)
-  const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
   const setSearchMeta = useSearchStore((state) => state.setSearchMeta)
   const setDropdownUnits = useSearchStore((state) => state.setDropdownUnits)
   const setDropdownJenisDokumen = useSearchStore((state) => state.setDropdownJenisDokumen)
   const resetSearchState = useSearchStore((state) => state.resetSearchState)
-  const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
   // TODO: the `append` path (load the next batch) has no caller while lazy loading
   // is disabled; it is kept so scroll-to-load can be reconnected later.
@@ -79,16 +82,25 @@ export default function CarianDokumenPage() {
       }
 
       try {
-        const backendResponse = await getSearchRecordCarianDokumen({
-          query,
-          unit,
-          jenisDokumen,
-          dateFrom,
-          dateTo,
-          sort,
-          page: nextPage,
-          limit: LAZY_BATCH_SIZE,
-        })
+        let backendResponse: RecordSearchResponse
+        if (isHybridSearch) {
+          backendResponse = await getHybridSearchRecords({
+            query,
+            page: nextPage,
+            limit: LAZY_BATCH_SIZE,
+          })
+        } else {
+          backendResponse = await getSearchRecordCarianDokumen({
+            query,
+            unit,
+            jenisDokumen,
+            dateFrom,
+            dateTo,
+            sort,
+            page: nextPage,
+            limit: LAZY_BATCH_SIZE,
+          })
+        }
 
         if (requestToken !== latestSearchRequestTokenRef.current) {
           return
@@ -97,10 +109,7 @@ export default function CarianDokumenPage() {
         currentPageRef.current = backendResponse.meta.currentPage || nextPage
         setSearchMeta(backendResponse.meta)
 
-        const documents = backendResponse.items.map((item) => ({
-          documentId: item.recordId,
-          title: item.title,
-        }))
+        const documents = backendResponse.items
 
         if (append) {
           const currentRecords = useSearchStore.getState().documentRecords
@@ -110,11 +119,7 @@ export default function CarianDokumenPage() {
 
         setDocumentRecords(documents)
 
-        if (documents.length > 0) {
-          setSelectedDocumentId(documents[0].documentId)
-          await Promise.allSettled([fetchDocumentInfo(documents[0].documentId)])
-        } else {
-          setSelectedDocumentId(null)
+        if (!documents.length) {
           setDocumentInfo(null)
         }
       } catch (error) {
@@ -136,7 +141,6 @@ export default function CarianDokumenPage() {
     [
       dateFrom,
       dateTo,
-      fetchDocumentInfo,
       jenisDokumen,
       query,
       sort,
@@ -144,9 +148,9 @@ export default function CarianDokumenPage() {
       setDocumentRecords,
       setIsLoadingSearch,
       setSearchMeta,
-      setSelectedDocumentId,
       setSelectedKeywordId,
       unit,
+      isHybridSearch,
     ]
   )
 

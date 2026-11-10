@@ -1,12 +1,7 @@
 import { create } from 'zustand'
-import type { CatalogListMeta } from '@/services/catalog.svc'
+import type { CatalogListMeta, RecordSearchItem } from '@/services/catalog.svc'
 import type { DropdownJenisDokumen, DropdownUnit } from '@/services/dropdown.svc'
 import { getPdfGarage } from '@/services/pdf.svc'
-
-export interface DocumentRecord {
-  documentId: string
-  title: string
-}
 
 export interface KeywordRecord {
   keyword: string
@@ -51,8 +46,7 @@ type SearchStore = {
   pageNumber: number
   pageSize: number
   isLoadingSearch: boolean
-  documentRecords: DocumentRecord[]
-  selectedDocumentId: string | null
+  documentRecords: RecordSearchItem[]
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
   documentInfo: DocumentInfo | null
@@ -68,8 +62,7 @@ type SearchStore = {
   setPageNumber: (pageNumber: number) => void
   setPageSize: (pageSize: number) => void
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
-  setDocumentRecords: (documentRecords: DocumentRecord[]) => void
-  setSelectedDocumentId: (selectedDocumentId: string | null) => void
+  setDocumentRecords: (documentRecords: RecordSearchItem[]) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void
   setDocumentInfo: (documentInfo: DocumentInfo | null) => void
@@ -80,7 +73,7 @@ type SearchStore = {
   fetchDocumentInfo: (documentId: string) => Promise<void>
 }
 
-export const useSearchStore = create<SearchStore>((set, get) => ({
+export const useSearchStore = create<SearchStore>((set) => ({
   query: '',
   jenisDokumen: '',
   unit: '',
@@ -91,7 +84,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   pageSize: DEFAULT_PAGE_SIZE,
   isLoadingSearch: false,
   documentRecords: [],
-  selectedDocumentId: null,
   keywordRecords: null,
   selectedKeywordId: null,
   documentInfo: null,
@@ -129,7 +121,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     }),
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
-  setSelectedDocumentId: (selectedDocumentId) => set({ selectedDocumentId }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
   setSelectedKeywordId: (selectedKeywordId) => set({ selectedKeywordId }),
   setDocumentInfo: (documentInfo) => set({ documentInfo }),
@@ -148,7 +139,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       pageSize: DEFAULT_PAGE_SIZE,
       documentRecords: [],
       keywordRecords: null,
-      selectedDocumentId: null,
       selectedKeywordId: null,
       documentInfo: null,
       searchMeta: null,
@@ -172,10 +162,6 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       if (!response.success) {
         console.error('Document info API error:', response.error)
         set({ documentInfo: null })
-        return
-      }
-
-      if (get().selectedDocumentId && get().selectedDocumentId !== documentId) {
         return
       }
 

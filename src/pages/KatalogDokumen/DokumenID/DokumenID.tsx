@@ -3,7 +3,7 @@ import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
-import DokumenContentID from '@/components/page/KatalogDokumen/DokumenID/DokumenContentID'
+import DokumenContentID from '@/components/shared/DokumenContentID'
 import { DokumenLoadProgress } from '@/components/page/KatalogDokumen/DokumenID/DokumenLoadProgress'
 import { HeaderDokumenID } from '@/components/page/KatalogDokumen/DokumenID/HeaderDokumenID'
 import { SearchBarDokumenID } from '@/components/page/KatalogDokumen/DokumenID/SearchBarDokumenID'
