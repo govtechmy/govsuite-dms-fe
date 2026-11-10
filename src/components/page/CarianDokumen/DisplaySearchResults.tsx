@@ -5,7 +5,7 @@ import PratontonSearchResult from './PratontonSearchResult'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
-import { RECORD_ID_PARAM, RECORD_PAGE_PARAM, SEARCH_MODE, SEARCH_MODE_PARAM } from './searchMode'
+import { URL_PARAM, SEARCH_MODE } from './searchMode'
 import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
@@ -19,9 +19,9 @@ import type { ProgressState } from '@/components/shared/ProgressResult'
 
 export default function DisplaySearchResults() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
-  const selectedDocumentId = searchParams.get(RECORD_ID_PARAM) || null
-  const recordPageParam = Number(searchParams.get(RECORD_PAGE_PARAM))
+  const isHybridSearch = searchParams.get(URL_PARAM.SEARCH_MODE) === SEARCH_MODE.HIBRID
+  const selectedDocumentId = searchParams.get(URL_PARAM.RECORD_ID) || null
+  const recordPageParam = Number(searchParams.get(URL_PARAM.RECORD_PAGE))
   const selectedPageNumber =
     Number.isInteger(recordPageParam) && recordPageParam > 0 ? recordPageParam : null
   const previewSearchQuery = useSearchStore((state) => state.query)
@@ -38,14 +38,14 @@ export default function DisplaySearchResults() {
       setSearchParams(
         (params) => {
           if (recordId) {
-            params.set(RECORD_ID_PARAM, recordId)
+            params.set(URL_PARAM.RECORD_ID, recordId)
           } else {
-            params.delete(RECORD_ID_PARAM)
+            params.delete(URL_PARAM.RECORD_ID)
           }
           if (pageNumber !== null) {
-            params.set(RECORD_PAGE_PARAM, String(pageNumber))
+            params.set(URL_PARAM.RECORD_PAGE, String(pageNumber))
           } else {
-            params.delete(RECORD_PAGE_PARAM)
+            params.delete(URL_PARAM.RECORD_PAGE)
           }
           return params
         },

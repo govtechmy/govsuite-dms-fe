@@ -11,7 +11,7 @@ import { CrossIcon, ReloadIcon } from '@govtechmy/myds-react/icon'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@govtechmy/myds-react/tooltip'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
-import { SEARCH_MODE, SEARCH_MODE_PARAM } from './searchMode'
+import { SEARCH_MODE, URL_PARAM } from './searchMode'
 
 interface SelectCarianDokumenWithStoreProps {
   showOnlyWhenSearchQuery?: boolean
@@ -38,16 +38,16 @@ export default function SelectCarianDokumenWithStore({
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
   const selectedSearchMode =
-    searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID ? SEARCH_MODE.HIBRID : ''
+    searchParams.get(URL_PARAM.SEARCH_MODE) === SEARCH_MODE.HIBRID ? SEARCH_MODE.HIBRID : ''
 
   // View only: the search request stays the same, so the page is not reset
   const handleSearchModeChange = (value: string) => {
     const params = new URLSearchParams(searchParams)
 
     if (value === SEARCH_MODE.HIBRID) {
-      params.set(SEARCH_MODE_PARAM, SEARCH_MODE.HIBRID)
+      params.set(URL_PARAM.SEARCH_MODE, SEARCH_MODE.HIBRID)
     } else {
-      params.delete(SEARCH_MODE_PARAM)
+      params.delete(URL_PARAM.SEARCH_MODE)
     }
 
     setSearchParams(params)

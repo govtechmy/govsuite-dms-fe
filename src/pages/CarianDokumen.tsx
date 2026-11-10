@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSearchStore } from '@/store/SearchStore'
 import { AutoToast } from '@govtechmy/myds-react/toast'
-import { SEARCH_MODE, SEARCH_MODE_PARAM } from '@/components/page/CarianDokumen/searchMode'
+import { SEARCH_MODE, URL_PARAM } from '@/components/page/CarianDokumen/searchMode'
 
 export interface DocumentRecord {
   documentId: string
@@ -46,7 +46,7 @@ const LAZY_BATCH_SIZE = 10
 
 export default function CarianDokumenPage() {
   const [searchParams] = useSearchParams()
-  const isHybridSearch = searchParams.get(SEARCH_MODE_PARAM) === SEARCH_MODE.HIBRID
+  const isHybridSearch = searchParams.get(URL_PARAM.SEARCH_MODE) === SEARCH_MODE.HIBRID
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
   const currentPageRef = useRef(1)
