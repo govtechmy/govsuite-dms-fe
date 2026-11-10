@@ -11,13 +11,17 @@ import type {
 } from '@/components/shared/PdfJsDocumentViewer'
 import {
   getRecordMatchPages,
+  type CatalogListMeta,
   type RecordSearchItem,
   type RecordMatchPage,
 } from '@/services/catalog.svc'
 import type { ProgressState } from '@/components/shared/ProgressResult'
 
+// For pagination of "Muka Surat X" card
+const MATCH_PAGES_PAGE_SIZE = 10
+
 export default function DisplaySearchResults() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const isHybridSearch = searchParams.get('searchMode') === 'hibrid'
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [selectedPageNumber, setSelectedPageNumber] = useState<number | null>(null)
@@ -48,6 +52,17 @@ export default function DisplaySearchResults() {
   const [matchPagesFetchState, setMatchPagesFetchState] = useState<ProgressState>(null)
   const [matchPagesFetchError, setMatchPagesFetchError] = useState<string | null>(null)
   const [matchPagesRecordId, setMatchPagesRecordId] = useState<string | null>(null)
+  const [matchPagesMeta, setMatchPagesMeta] = useState<CatalogListMeta | null>(null)
+  const [matchPagesPageNumber, setMatchPagesPageNumber] = useState(1)
+  const [matchPagesPreviousRecordId, setMatchPagesPreviousRecordId] = useState(selectedDocumentId)
+
+  // A newly selected record starts from the first page of its match pages,
+  // reset during render so it is never fetched with the previous record's page
+  if (selectedDocumentId !== matchPagesPreviousRecordId) {
+    setMatchPagesPreviousRecordId(selectedDocumentId)
+    setMatchPagesPageNumber(1)
+  }
+
   const navigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
@@ -118,6 +133,16 @@ export default function DisplaySearchResults() {
     [selectedDocumentId, setRecordSelection]
   )
 
+  // Record list page lives in the URL so refresh and back navigation keep it
+  const handleRecordPageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams)
+      params.set('page', String(page))
+      setSearchParams(params)
+    },
+    [searchParams, setSearchParams]
+  )
+
   // Select the first result when nothing is selected or the selection is not in these results
   useEffect(() => {
     const firstRecord = documentRecords[0]
@@ -152,16 +177,20 @@ export default function DisplaySearchResults() {
       setMatchPagesFetchState('loading')
       setMatchPagesFetchError(null)
       setMatchPages(null)
+      setMatchPagesMeta(null)
       setMatchPagesRecordId(null)
 
       try {
         const result = await getRecordMatchPages({
           recordId: selectedDocumentId,
           query: previewSearchQuery,
+          page: matchPagesPageNumber,
+          limit: MATCH_PAGES_PAGE_SIZE,
         })
         if (ignore) return
 
         setMatchPages(result.items)
+        setMatchPagesMeta(result.meta)
         setMatchPagesRecordId(selectedDocumentId)
         setMatchPagesFetchState('success')
       } catch (error) {
@@ -178,7 +207,7 @@ export default function DisplaySearchResults() {
     return () => {
       ignore = true
     }
-  }, [isHybridSearch, selectedDocumentId, previewSearchQuery])
+  }, [isHybridSearch, selectedDocumentId, previewSearchQuery, matchPagesPageNumber])
 
   // Full text: once the match pages of the selected record are loaded, keep the selected
   // page if it is one of them (e.g. after a refresh), otherwise select the first match
@@ -304,6 +333,8 @@ export default function DisplaySearchResults() {
             selectedDocumentId={selectedDocumentId}
             selectedPageNumber={selectedPageNumber}
             onRecordSelect={handleRecordSelect}
+            meta={searchMeta}
+            onPaginationChange={handleRecordPageChange}
           />
         </div>
       ) : (
@@ -313,6 +344,8 @@ export default function DisplaySearchResults() {
             totalItems={searchMeta?.totalItems ?? documentRecords.length}
             selectedDocumentId={selectedDocumentId}
             onRecordSelect={handleRecordSelect}
+            meta={searchMeta}
+            onPaginationChange={handleRecordPageChange}
           />
           <PageResultSearch
             pages={matchPages}
@@ -320,6 +353,8 @@ export default function DisplaySearchResults() {
             fetchError={matchPagesFetchError}
             selectedPageNumber={selectedPageNumber}
             onPageSelect={handlePageSelect}
+            meta={matchPagesMeta}
+            onPaginationChange={setMatchPagesPageNumber}
           />
         </div>
       )}

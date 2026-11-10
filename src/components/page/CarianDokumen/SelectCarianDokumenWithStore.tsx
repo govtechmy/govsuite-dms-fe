@@ -48,6 +48,11 @@ export default function SelectCarianDokumenWithStore({
       params.delete('searchMode')
     }
 
+    if (resetPageOnFilterChange) {
+      params.set('page', '1')
+      params.set('limit', SEARCH_LIMIT)
+    }
+
     setSearchParams(params)
   }
 

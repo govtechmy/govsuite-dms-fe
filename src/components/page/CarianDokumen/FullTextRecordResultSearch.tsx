@@ -11,8 +11,11 @@ import DocumentMetaTag from './DocumentMetaTag'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
 import { formatDateDisplay } from '@/utils/formatDate'
-import type { RecordSearchItem } from '@/services/catalog.svc'
+import { AutoPagination } from '@govtechmy/myds-react/pagination'
+import type { CatalogListMeta, RecordSearchItem } from '@/services/catalog.svc'
 
+// TODO: only written to the URL `limit` in handleSortChange; nothing reads it back, the page
+// size comes from LAZY_BATCH_SIZE in pages/CarianDokumen.tsx. Remove both with lazy loading.
 const LAZY_BATCH_SIZE = 10
 
 interface FullTextRecordResultSearchProps {
@@ -20,6 +23,8 @@ interface FullTextRecordResultSearchProps {
   totalItems: number
   selectedDocumentId: string | null
   onRecordSelect: (record: RecordSearchItem) => void
+  meta: CatalogListMeta | null
+  onPaginationChange: (page: number) => void
 }
 
 export default function FullTextRecordResultSearch({
@@ -27,6 +32,8 @@ export default function FullTextRecordResultSearch({
   totalItems,
   selectedDocumentId,
   onRecordSelect,
+  meta,
+  onPaginationChange,
 }: FullTextRecordResultSearchProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const sortBy = useSearchStore((state) => state.sort)
@@ -95,6 +102,18 @@ export default function FullTextRecordResultSearch({
           )
         })}
       </div>
+
+      {meta && meta.totalPages > 1 && (
+        <div className="flex shrink-0 justify-center border-t border-otl-gray-200 pt-3">
+          <AutoPagination
+            page={meta.currentPage}
+            limit={meta.pageSize}
+            count={meta.totalItems}
+            type="simple"
+            onPageChange={onPaginationChange}
+          />
+        </div>
+      )}
     </section>
   )
 }

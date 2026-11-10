@@ -41,7 +41,7 @@ export interface DocumentInfoResponse {
   }
 }
 
-const LAZY_BATCH_SIZE = 10
+const LAZY_BATCH_SIZE = 2
 
 export default function CarianDokumenPage() {
   const [searchParams] = useSearchParams()
@@ -56,6 +56,7 @@ export default function CarianDokumenPage() {
   const dateFrom = useSearchStore((state) => state.dateFrom)
   const dateTo = useSearchStore((state) => state.dateTo)
   const sort = useSearchStore((state) => state.sort)
+  const pageNumber = useSearchStore((state) => state.pageNumber)
   const isLoadingSearch = useSearchStore((state) => state.isLoadingSearch)
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const setFromSearchParams = useSearchStore((state) => state.setFromSearchParams)
@@ -73,7 +74,7 @@ export default function CarianDokumenPage() {
   const fetchAndSetDocumentRecords = useCallback(
     async (options?: { append?: boolean }) => {
       const append = options?.append ?? false
-      const nextPage = append ? currentPageRef.current + 1 : 1
+      const nextPage = append ? currentPageRef.current + 1 : pageNumber
       const requestToken = ++latestSearchRequestTokenRef.current
 
       if (!append) {
@@ -142,6 +143,7 @@ export default function CarianDokumenPage() {
       dateFrom,
       dateTo,
       jenisDokumen,
+      pageNumber,
       query,
       sort,
       setDocumentInfo,
@@ -162,6 +164,8 @@ export default function CarianDokumenPage() {
       dateFrom: searchParams.get('dateFrom') || '',
       dateTo: searchParams.get('dateTo') || '',
       sort: searchParams.get('sort') || 'desc',
+      // TODO: `page` is kept in the URL only for pagination; when lazy loading replaces it,
+      // remove this read and every `params.set('page', ...)`, and track the batch in currentPageRef.
       pageNumber: Math.max(1, Number(searchParams.get('page')) || 1),
       pageSize: LAZY_BATCH_SIZE,
     })

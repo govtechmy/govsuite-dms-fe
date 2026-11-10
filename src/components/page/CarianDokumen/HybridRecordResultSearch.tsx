@@ -2,7 +2,8 @@ import { clx } from '@govtechmy/myds-react/utils'
 import DocumentMetaTag from './DocumentMetaTag'
 import getRelevanceDotClass from '@/utils/getRelevanceDotClass'
 import { formatDateDisplay } from '@/utils/formatDate'
-import type { RecordSearchItem } from '@/services/catalog.svc'
+import { AutoPagination } from '@govtechmy/myds-react/pagination'
+import type { CatalogListMeta, RecordSearchItem } from '@/services/catalog.svc'
 
 interface HybridRecordResultSearchProps {
   records: RecordSearchItem[]
@@ -10,6 +11,8 @@ interface HybridRecordResultSearchProps {
   selectedDocumentId: string | null
   selectedPageNumber: number | null
   onRecordSelect: (record: RecordSearchItem) => void
+  meta: CatalogListMeta | null
+  onPaginationChange: (page: number) => void
 }
 
 export default function HybridRecordResultSearch({
@@ -18,6 +21,8 @@ export default function HybridRecordResultSearch({
   selectedDocumentId,
   selectedPageNumber,
   onRecordSelect,
+  meta,
+  onPaginationChange,
 }: HybridRecordResultSearchProps) {
   return (
     <section className="flex h-[560px] w-full flex-col gap-3 lg:h-full lg:min-h-0">
@@ -71,6 +76,18 @@ export default function HybridRecordResultSearch({
           )
         })}
       </ul>
+
+      {meta && meta.totalPages > 1 && (
+        <div className="flex shrink-0 justify-center border-t border-otl-gray-200 pt-3">
+          <AutoPagination
+            page={meta.currentPage}
+            limit={meta.pageSize}
+            count={meta.totalItems}
+            type="simple"
+            onPageChange={onPaginationChange}
+          />
+        </div>
+      )}
     </section>
   )
 }

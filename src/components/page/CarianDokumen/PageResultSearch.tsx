@@ -1,5 +1,6 @@
 import type { ProgressState } from '@/components/shared/ProgressResult'
-import type { RecordMatchPage } from '@/services/catalog.svc'
+import type { CatalogListMeta, RecordMatchPage } from '@/services/catalog.svc'
+import { AutoPagination } from '@govtechmy/myds-react/pagination'
 import { Spinner } from '@govtechmy/myds-react/spinner'
 import { clx } from '@govtechmy/myds-react/utils'
 
@@ -9,6 +10,8 @@ interface PageResultSearchProps {
   fetchError: string | null
   selectedPageNumber: number | null
   onPageSelect: (page: number) => void
+  meta: CatalogListMeta | null
+  onPaginationChange: (page: number) => void
 }
 
 export default function PageResultSearch({
@@ -17,11 +20,13 @@ export default function PageResultSearch({
   fetchError,
   selectedPageNumber,
   onPageSelect,
+  meta,
+  onPaginationChange,
 }: PageResultSearchProps) {
   return (
     <section className="flex h-[240px] w-full flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-white p-3 lg:h-auto lg:min-h-0">
       <h2 className="p-1 text-body-sm font-semibold text-txt-black-900">
-        {pages?.length ?? 0} muka surat ditemui
+        {meta?.totalItems ?? pages?.length ?? 0} muka surat ditemui
       </h2>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -59,6 +64,18 @@ export default function PageResultSearch({
           })
         )}
       </div>
+
+      {fetchState === 'success' && meta && meta.totalPages > 1 && (
+        <div className="flex shrink-0 justify-center border-t border-otl-gray-200 pt-3">
+          <AutoPagination
+            page={meta.currentPage}
+            limit={meta.pageSize}
+            count={meta.totalItems}
+            type="simple"
+            onPageChange={onPaginationChange}
+          />
+        </div>
+      )}
     </section>
   )
 }
