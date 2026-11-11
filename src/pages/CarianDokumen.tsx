@@ -44,7 +44,7 @@ export interface DocumentInfoResponse {
 const LAZY_BATCH_SIZE = 2
 
 export default function CarianDokumenPage() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const isHybridSearch = searchParams.get('searchMode') === 'hibrid'
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
@@ -107,6 +107,22 @@ export default function CarianDokumenPage() {
           return
         }
 
+        // Page is past the last page (e.g. old link): go to the last page instead of showing no results
+        if (
+          backendResponse.items.length === 0 &&
+          backendResponse.meta.totalItems > 0 &&
+          backendResponse.meta.currentPage > backendResponse.meta.totalPages
+        ) {
+          setSearchParams(
+            (previousParams) => {
+              previousParams.set('page', String(backendResponse.meta.totalPages))
+              return previousParams
+            },
+            { replace: true }
+          )
+          return
+        }
+
         currentPageRef.current = backendResponse.meta.currentPage || nextPage
         setSearchMeta(backendResponse.meta)
 
@@ -150,6 +166,7 @@ export default function CarianDokumenPage() {
       setDocumentRecords,
       setIsLoadingSearch,
       setSearchMeta,
+      setSearchParams,
       setSelectedKeywordId,
       unit,
       isHybridSearch,
