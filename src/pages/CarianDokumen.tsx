@@ -41,7 +41,8 @@ export interface DocumentInfoResponse {
   }
 }
 
-const LAZY_BATCH_SIZE = 2
+const FULLTEXT_LAZY_BATCH_SIZE = 2
+const HYBRID_LAZY_BATCH_SIZE = 10
 
 export default function CarianDokumenPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -61,6 +62,7 @@ export default function CarianDokumenPage() {
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const setFromSearchParams = useSearchStore((state) => state.setFromSearchParams)
   const setIsLoadingSearch = useSearchStore((state) => state.setIsLoadingSearch)
+  const setIsFetchingMoreRecords = useSearchStore((state) => state.setIsFetchingMoreRecords)
   const setDocumentRecords = useSearchStore((state) => state.setDocumentRecords)
   const setDocumentInfo = useSearchStore((state) => state.setDocumentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
@@ -82,26 +84,56 @@ export default function CarianDokumenPage() {
         setIsLoadingSearch(true)
       }
 
+      let hasShownFirstBatch = false
+
       try {
-        let backendResponse: RecordSearchResponse
+        // Hybrid: show the first batch right away, then keep fetching the rest in the background
         if (isHybridSearch) {
-          backendResponse = await getHybridSearchRecords({
-            query,
-            page: nextPage,
-            limit: LAZY_BATCH_SIZE,
-          })
-        } else {
-          backendResponse = await getSearchRecordCarianDokumen({
-            query,
-            unit,
-            jenisDokumen,
-            dateFrom,
-            dateTo,
-            sort,
-            page: nextPage,
-            limit: LAZY_BATCH_SIZE,
-          })
+          let page = 1
+          let hasNextPage = true
+
+          while (hasNextPage) {
+            const batch = await getHybridSearchRecords({
+              query,
+              page,
+              limit: HYBRID_LAZY_BATCH_SIZE,
+            })
+
+            if (requestToken !== latestSearchRequestTokenRef.current) {
+              return
+            }
+
+            hasNextPage = batch.meta.hasNextPage && batch.items.length > 0
+
+            if (page === 1) {
+              setSearchMeta(batch.meta)
+              setDocumentRecords(batch.items)
+              if (!batch.items.length) {
+                setDocumentInfo(null)
+              }
+              setIsLoadingSearch(false)
+              setIsFetchingMoreRecords(hasNextPage)
+              hasShownFirstBatch = true
+            } else {
+              const currentRecords = useSearchStore.getState().documentRecords
+              setDocumentRecords([...currentRecords, ...batch.items])
+            }
+
+            page += 1
+          }
+          return
         }
+
+        const backendResponse: RecordSearchResponse = await getSearchRecordCarianDokumen({
+          query,
+          unit,
+          jenisDokumen,
+          dateFrom,
+          dateTo,
+          sort,
+          page: nextPage,
+          limit: FULLTEXT_LAZY_BATCH_SIZE,
+        })
 
         if (requestToken !== latestSearchRequestTokenRef.current) {
           return
@@ -145,13 +177,17 @@ export default function CarianDokumenPage() {
         }
 
         console.error('Search error:', error)
-        if (!append) {
+        // A later batch failing keeps the results already shown
+        if (!append && !hasShownFirstBatch) {
           setDocumentRecords([])
           setSearchMeta(null)
         }
       } finally {
         if (!append && requestToken === latestSearchRequestTokenRef.current) {
           setIsLoadingSearch(false)
+        }
+        if (requestToken === latestSearchRequestTokenRef.current) {
+          setIsFetchingMoreRecords(false)
         }
       }
     },
@@ -164,6 +200,7 @@ export default function CarianDokumenPage() {
       sort,
       setDocumentInfo,
       setDocumentRecords,
+      setIsFetchingMoreRecords,
       setIsLoadingSearch,
       setSearchMeta,
       setSearchParams,
@@ -184,7 +221,7 @@ export default function CarianDokumenPage() {
       // TODO: `page` is kept in the URL only for pagination; when lazy loading replaces it,
       // remove this read and every `params.set('page', ...)`, and track the batch in currentPageRef.
       pageNumber: Math.max(1, Number(searchParams.get('page')) || 1),
-      pageSize: LAZY_BATCH_SIZE,
+      pageSize: FULLTEXT_LAZY_BATCH_SIZE,
     })
   }, [searchParams, setFromSearchParams])
 

@@ -2,8 +2,8 @@ import { clx } from '@govtechmy/myds-react/utils'
 import DocumentMetaTag from './DocumentMetaTag'
 import getRelevanceDotClass from '@/utils/getRelevanceDotClass'
 import { formatDateDisplay } from '@/utils/formatDate'
-import { AutoPagination } from '@govtechmy/myds-react/pagination'
-import type { CatalogListMeta, RecordSearchItem } from '@/services/catalog.svc'
+import { Spinner } from '@govtechmy/myds-react/spinner'
+import type { RecordSearchItem } from '@/services/catalog.svc'
 
 interface HybridRecordResultSearchProps {
   records: RecordSearchItem[]
@@ -11,8 +11,7 @@ interface HybridRecordResultSearchProps {
   selectedDocumentId: string | null
   selectedPageNumber: number | null
   onRecordSelect: (record: RecordSearchItem) => void
-  meta: CatalogListMeta | null
-  onPaginationChange: (page: number) => void
+  isFetchingMore: boolean
 }
 
 export default function HybridRecordResultSearch({
@@ -21,13 +20,18 @@ export default function HybridRecordResultSearch({
   selectedDocumentId,
   selectedPageNumber,
   onRecordSelect,
-  meta,
-  onPaginationChange,
+  isFetchingMore,
 }: HybridRecordResultSearchProps) {
   return (
     <section className="flex h-[560px] w-full flex-col gap-3 lg:h-full lg:min-h-0">
-      <h2 className="text-body-md font-semibold text-txt-black-900">
+      <h2 className="flex items-center gap-2 text-body-md font-semibold text-txt-black-900">
         Hasil Carian {totalItems} rekod
+        {isFetchingMore && (
+          <>
+            <Spinner size="small" />
+            <span className="sr-only">Memuatkan lagi</span>
+          </>
+        )}
       </h2>
 
       <ul
@@ -76,18 +80,6 @@ export default function HybridRecordResultSearch({
           )
         })}
       </ul>
-
-      {meta && meta.totalPages > 1 && (
-        <div className="flex shrink-0 justify-center border-t border-otl-gray-200 pt-3">
-          <AutoPagination
-            page={meta.currentPage}
-            limit={meta.pageSize}
-            count={meta.totalItems}
-            type="simple"
-            onPageChange={onPaginationChange}
-          />
-        </div>
-      )}
     </section>
   )
 }

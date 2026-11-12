@@ -46,6 +46,7 @@ type SearchStore = {
   pageNumber: number
   pageSize: number
   isLoadingSearch: boolean
+  isFetchingMoreRecords: boolean
   documentRecords: RecordSearchItem[]
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
@@ -62,6 +63,7 @@ type SearchStore = {
   setPageNumber: (pageNumber: number) => void
   setPageSize: (pageSize: number) => void
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
+  setIsFetchingMoreRecords: (isFetchingMoreRecords: boolean) => void
   setDocumentRecords: (documentRecords: RecordSearchItem[]) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void
@@ -83,6 +85,7 @@ export const useSearchStore = create<SearchStore>((set) => ({
   pageNumber: DEFAULT_PAGE_NUMBER,
   pageSize: DEFAULT_PAGE_SIZE,
   isLoadingSearch: false,
+  isFetchingMoreRecords: false,
   documentRecords: [],
   keywordRecords: null,
   selectedKeywordId: null,
@@ -120,6 +123,7 @@ export const useSearchStore = create<SearchStore>((set) => ({
       pageNumber: DEFAULT_PAGE_NUMBER,
     }),
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
+  setIsFetchingMoreRecords: (isFetchingMoreRecords) => set({ isFetchingMoreRecords }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
   setSelectedKeywordId: (selectedKeywordId) => set({ selectedKeywordId }),
@@ -143,6 +147,7 @@ export const useSearchStore = create<SearchStore>((set) => ({
       documentInfo: null,
       searchMeta: null,
       isLoadingSearch: false,
+      isFetchingMoreRecords: false,
     }),
   fetchDocumentInfo: async (documentId) => {
     if (!documentId) {

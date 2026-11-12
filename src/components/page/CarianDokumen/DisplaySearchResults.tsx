@@ -32,6 +32,7 @@ export default function DisplaySearchResults() {
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const searchMeta = useSearchStore((state) => state.searchMeta)
+  const isFetchingMoreRecords = useSearchStore((state) => state.isFetchingMoreRecords)
   const fetchDocumentInfo = useSearchStore((state) => state.fetchDocumentInfo)
 
   const setRecordSelection = useCallback((recordId: string | null, pageNumber: number | null) => {
@@ -333,8 +334,7 @@ export default function DisplaySearchResults() {
             selectedDocumentId={selectedDocumentId}
             selectedPageNumber={selectedPageNumber}
             onRecordSelect={handleRecordSelect}
-            meta={searchMeta}
-            onPaginationChange={handleRecordPageChange}
+            isFetchingMore={isFetchingMoreRecords}
           />
         </div>
       ) : (
