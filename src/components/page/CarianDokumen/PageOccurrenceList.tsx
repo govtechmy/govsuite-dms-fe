@@ -13,7 +13,7 @@ export default function PageOccurrenceList({
   failedPageNumbers,
 }: PageOccurrenceListProps) {
   return (
-    <div className="flex max-h-[200px] w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2">
+    <div className="flex max-h-[200px] w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2 lg:min-h-0 lg:flex-1">
       <ul className="flex h-full flex-col overflow-y-auto">
         {items.map((item) => (
           <li
@@ -22,7 +22,9 @@ export default function PageOccurrenceList({
             className="flex w-full items-center gap-2 rounded px-2.5 py-1.5"
           >
             <div className="flex min-w-0 flex-1 flex-col">
-              <p className="truncate text-body-xs font-medium text-txt-black-900">{item.title}</p>
+              <p className="truncate text-body-xs font-medium text-txt-black-900">
+                {item.searchText}
+              </p>
               {failedPageNumbers.includes(item.pageNumber) ? (
                 <p className="text-body-xs text-txt-danger">Gagal dimuatkan</p>
               ) : (

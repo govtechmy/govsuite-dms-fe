@@ -73,7 +73,7 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
   }
 
   return (
-    <section className="flex w-full flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-white p-3 lg:h-[368px] lg:w-[334px] lg:shrink-0">
+    <section className="flex w-full flex-col gap-3 lg:w-[334px] lg:shrink-0">
       <div className="flex w-full flex-col gap-3 lg:min-h-0 lg:flex-1">
         <div className="flex w-full items-center justify-center gap-6">
           <p className="flex-1 text-body-md font-semibold text-txt-black-900">
@@ -91,7 +91,7 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
         </div>
 
         {/* Documents List */}
-        <div className="flex h-[300px] w-full flex-col overflow-hidden lg:h-auto lg:min-h-0 lg:flex-1">
+        <div className="flex h-[250px] w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-white px-4 py-2.5">
           <div className="min-h-0 flex-1 overflow-y-auto" onScroll={handleLazyLoadScroll}>
             {documentRecords.map((record) => {
               const isSelected = selectedDocumentId === record.documentId

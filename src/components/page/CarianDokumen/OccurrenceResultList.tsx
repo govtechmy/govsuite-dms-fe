@@ -18,7 +18,7 @@ export default function OccurrenceResultList({
   const occurrences = pages.flatMap((page) => Array.from({ length: page.occurrences }, () => page))
 
   return (
-    <div className="flex h-[300px] w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2">
+    <div className="flex h-[300px] w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2 lg:h-auto lg:min-h-0 lg:flex-1">
       {occurrences.length > 0 ? (
         <ol className="flex h-full flex-col overflow-y-auto">
           {occurrences.map((page, index) => {
@@ -46,7 +46,9 @@ export default function OccurrenceResultList({
                   >
                     ({occurrence})
                   </span>
-                  <span className="flex-1 truncate text-body-xs font-medium">{page.title}</span>
+                  <span className="flex-1 truncate text-body-xs font-medium">
+                    {page.searchText}
+                  </span>
                   <span
                     className={clx('shrink-0 text-body-xs', !isSelected && 'text-txt-black-500')}
                   >

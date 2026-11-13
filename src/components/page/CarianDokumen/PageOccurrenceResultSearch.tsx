@@ -1,3 +1,4 @@
+import { Spinner } from '@govtechmy/myds-react/spinner'
 import { useEffect, useState } from 'react'
 import OccurrenceResultList from './OccurrenceResultList'
 import PageOccurrenceList from './PageOccurrenceList'
@@ -5,7 +6,7 @@ import PageOccurrenceList from './PageOccurrenceList'
 export interface PageOccurrenceItem {
   pageNumber: number
   occurrences: number
-  title: string
+  searchText: string
   location: string
 }
 
@@ -14,61 +15,61 @@ const PAGE_OCCURRENCE_ITEMS: PageOccurrenceItem[] = [
   {
     pageNumber: 1,
     occurrences: 1,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 4,
     occurrences: 9,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 5,
     occurrences: 7,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 6,
     occurrences: 5,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 7,
     occurrences: 5,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 8,
     occurrences: 4,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 9,
     occurrences: 6,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 10,
     occurrences: 4,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 11,
     occurrences: 6,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
   {
     pageNumber: 12,
     occurrences: 4,
-    title: 'Agenda Mesyuarat JPICT Bil 1/2026',
+    searchText: 'text being searched',
     location: 'pdf/x/y/z',
   },
 ]
@@ -90,6 +91,7 @@ export default function PageOccurrenceResultSearch() {
   const [totalOccurrences] = useState(() =>
     PAGE_OCCURRENCE_ITEMS.reduce((sum, item) => sum + item.occurrences, 0)
   )
+  const isFetching = pendingPages.length > failedPageNumbers.length
 
   useEffect(() => {
     let isCancelled = false
@@ -123,14 +125,21 @@ export default function PageOccurrenceResultSearch() {
   }, [])
 
   return (
-    <div className="flex w-full flex-col gap-3">
-      <p className="text-body-md font-semibold text-txt-black-900">
-        {totalOccurrences} Perkataan Ditemui
-      </p>
+    <div className="flex w-full flex-col gap-3 lg:min-h-0 lg:flex-1">
+      <div className="flex items-center gap-2 justify-between">
+        <p className="text-body-md font-semibold text-txt-black-900">
+          {totalOccurrences} Perkataan Ditemui
+        </p>
+        {isFetching && (
+          <div className="pr-3">
+            <Spinner size="small" />
+          </div>
+        )}
+      </div>
 
       <OccurrenceResultList
         pages={loadedPages}
-        isFetching={pendingPages.length > failedPageNumbers.length}
+        isFetching={isFetching}
         selectedOccurrence={selectedOccurrence}
         onOccurrenceSelect={setSelectedOccurrence}
       />
