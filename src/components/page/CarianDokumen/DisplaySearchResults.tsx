@@ -66,14 +66,6 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     setIsPdfLoaded((previousIsPdfLoaded) => (previousIsPdfLoaded ? previousIsPdfLoaded : true))
   }, [])
 
-  const handlePreviousMatch = useCallback(() => {
-    queueNavigationRequest('previous')
-  }, [queueNavigationRequest])
-
-  const handleNextMatch = useCallback(() => {
-    queueNavigationRequest('next')
-  }, [queueNavigationRequest])
-
   useEffect(() => {
     setSearchKeyword((previousSearchKeyword) =>
       previousSearchKeyword === previewSearchQuery ? previousSearchKeyword : previewSearchQuery
@@ -142,20 +134,14 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch lg:flex-row">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch lg:flex-row ml-6">
         <PratontonSearchResult
           searchKeyword={searchKeyword}
-          onSearchKeywordChange={setSearchKeyword}
-          currentMatchIndex={pdfSearchState.currentMatchIndex}
-          totalMatches={pdfSearchState.totalMatches}
-          onPreviousMatch={handlePreviousMatch}
-          onNextMatch={handleNextMatch}
           navigationRequest={navigationRequest}
           onSearchStateChange={handleSearchStateChange}
           onDocumentLoad={handleDocumentLoad}
-          isIndexing={pdfSearchState.isIndexing}
         />
-        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 border-y py-3 lg:h-full lg:w-[358px] lg:self-stretch lg:pl-6">
+        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 py-3 lg:h-full lg:w-[320px] lg:self-stretch lg:pl-6 lg:ml-6">
           <RecordResultSearch onLazyLoad={onLazyLoad} />
 
           {/* <WordsResultSearch

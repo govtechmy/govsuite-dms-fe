@@ -598,7 +598,7 @@ export default function PdfJsDocumentViewer({
                   pageRefs.current[pageNumber] = pageElement
                 }}
                 data-page-number={pageNumber}
-                className="mx-auto w-fit rounded-md border border-otl-gray-200 bg-bg-white"
+                className="mx-auto w-fit overflow-hidden rounded-md border border-otl-gray-200 bg-bg-white"
               >
                 <Page
                   pageNumber={pageNumber}

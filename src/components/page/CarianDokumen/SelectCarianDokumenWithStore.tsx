@@ -9,6 +9,7 @@ import { Button } from '@govtechmy/myds-react/button'
 import { DateRangePicker } from '@govtechmy/myds-react/daterange-picker'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
 import { useSearchStore } from '@/store/SearchStore'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 interface SelectCarianDokumenWithStoreProps {
@@ -17,6 +18,11 @@ interface SelectCarianDokumenWithStoreProps {
 }
 
 const SEARCH_LIMIT = '10'
+
+const JENIS_CARIAN_OPTIONS = [
+  { value: 'teks-penuh', label: 'Teks Penuh' },
+  { value: 'hybrid', label: 'Hybrid' },
+]
 
 export default function SelectCarianDokumenWithStore({
   showOnlyWhenSearchQuery = false,
@@ -29,6 +35,7 @@ export default function SelectCarianDokumenWithStore({
   const setUnit = useSearchStore((state) => state.setUnit)
   const setDateRange = useSearchStore((state) => state.setDateRange)
   const hasSearchQuery = Boolean(searchParams.get('search')?.trim())
+  const [selectedJenisCarian, setSelectedJenisCarian] = useState(JENIS_CARIAN_OPTIONS[0].value)
 
   const selectedJenisDokumen = searchParams.get('jenisDokumen') || ''
   const selectedUnit = searchParams.get('unit') || ''
@@ -127,21 +134,21 @@ export default function SelectCarianDokumenWithStore({
         <Select
           size={'small'}
           variant="outline"
-          value={selectedUnit}
-          onValueChange={handleUnitChange}
+          value={selectedJenisCarian}
+          onValueChange={setSelectedJenisCarian}
         >
           <SelectTrigger>
-            <SelectValue label="Unit" placeholder="Semua" />
+            <SelectValue label="Jenis Carian" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="semua">Semua</SelectItem>
-            {dropdownUnits.map((unitValue) => (
-              <SelectItem key={unitValue.code} value={unitValue.code}>
-                {unitValue.codeName}
+            {JENIS_CARIAN_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+
         <Select
           size={'small'}
           variant="outline"
@@ -156,6 +163,25 @@ export default function SelectCarianDokumenWithStore({
             {dropdownJenisDokumen.map((jenisDokumenValue) => (
               <SelectItem key={jenisDokumenValue.id} value={jenisDokumenValue.code}>
                 {jenisDokumenValue.codeName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          size={'small'}
+          variant="outline"
+          value={selectedUnit}
+          onValueChange={handleUnitChange}
+        >
+          <SelectTrigger>
+            <SelectValue label="Unit" placeholder="Semua" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="semua">Semua</SelectItem>
+            {dropdownUnits.map((unitValue) => (
+              <SelectItem key={unitValue.code} value={unitValue.code}>
+                {unitValue.codeName}
               </SelectItem>
             ))}
           </SelectContent>
