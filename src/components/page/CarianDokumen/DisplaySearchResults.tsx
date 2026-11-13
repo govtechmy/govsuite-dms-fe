@@ -155,7 +155,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
           onDocumentLoad={handleDocumentLoad}
           isIndexing={pdfSearchState.isIndexing}
         />
-        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 border-y py-6 lg:h-full lg:w-[320px] lg:self-stretch lg:pl-6">
+        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 border-y py-3 lg:h-full lg:w-[358px] lg:self-stretch lg:pl-6">
           <RecordResultSearch onLazyLoad={onLazyLoad} />
 
           {/* <WordsResultSearch
