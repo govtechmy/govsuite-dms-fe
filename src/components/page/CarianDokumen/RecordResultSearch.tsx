@@ -6,9 +6,11 @@ import {
   SelectValue,
 } from '@/components/shared/SelectMydsFix'
 import { clx } from '@govtechmy/myds-react/utils'
+import { ChevronRightIcon } from '@govtechmy/myds-react/icon'
 import { useSearchStore } from '@/store/SearchStore'
 import { useRef, type UIEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import DocumentMetaTag from './DocumentMetaTag'
 
 const SCROLL_THRESHOLD = 40
 const LAZY_BATCH_SIZE = 10
@@ -71,41 +73,57 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
   }
 
   return (
-    <div className="flex w-full flex-col gap-3">
-      <div className="flex w-full items-center justify-center gap-6">
-        <p className="flex-1 text-body-md font-semibold text-txt-black-900">
-          {totalItems && totalItems > 0 ? `${totalItems} Rekod Ditemui` : 'Tiada '}
-        </p>
-        <Select size="small" variant="outline" value={sortBy} onValueChange={handleSortChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Terkini" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="desc">Terkini</SelectItem>
-            <SelectItem value="asc">Terdahulu</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <section className="flex w-full flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-white p-3 lg:h-[368px] lg:w-[334px] lg:shrink-0">
+      <div className="flex w-full flex-col gap-3 lg:min-h-0 lg:flex-1">
+        <div className="flex w-full items-center justify-center gap-6">
+          <p className="flex-1 text-body-md font-semibold text-txt-black-900">
+            {totalItems && totalItems > 0 ? `${totalItems} Rekod Ditemui` : 'Tiada '}
+          </p>
+          <Select size="small" variant="outline" value={sortBy} onValueChange={handleSortChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Terkini" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="desc">Terkini</SelectItem>
+              <SelectItem value="asc">Terdahulu</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Documents List */}
-      <div className="flex w-full flex-col overflow-hidden rounded-xl border border-otl-gray-200 bg-bg-dialog p-2 h-[300px]">
-        <div className="flex h-full flex-col gap-0 overflow-y-auto" onScroll={handleLazyLoadScroll}>
-          {documentRecords.map((record) => (
-            <button
-              key={record.documentId}
-              onClick={() => handleDocumentSelect(record.documentId)}
-              className={clx(
-                'flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left transition-colors',
-                selectedDocumentId === record.documentId
-                  ? 'bg-primary-600 text-txt-white'
-                  : 'text-txt-black-900 hover:bg-bg-washed'
-              )}
-            >
-              <p className="flex-1 truncate text-body-xs font-medium">{record.title}</p>
-            </button>
-          ))}
+        {/* Documents List */}
+        <div className="flex h-[300px] w-full flex-col overflow-hidden lg:h-auto lg:min-h-0 lg:flex-1">
+          <div className="min-h-0 flex-1 overflow-y-auto" onScroll={handleLazyLoadScroll}>
+            {documentRecords.map((record) => {
+              const isSelected = selectedDocumentId === record.documentId
+
+              return (
+                <button
+                  key={record.documentId}
+                  type="button"
+                  onClick={() => handleDocumentSelect(record.documentId)}
+                  aria-current={isSelected ? 'true' : undefined}
+                  className={clx(
+                    'flex w-full cursor-pointer items-center gap-2 border-b border-l-4 border-b-otl-gray-200 px-4 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fr-primary',
+                    isSelected
+                      ? 'rounded-md border-b-transparent border-l-primary-600 bg-bg-primary-50'
+                      : 'border-l-transparent hover:bg-bg-washed'
+                  )}
+                >
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <p className="line-clamp-2 text-body-xs font-semibold text-txt-primary">
+                      {record.title}
+                    </p>
+                    <DocumentMetaTag jenisDokumen="PlaceholderDokumen" tarikh="11/01/00" />
+                  </div>
+                  {isSelected && (
+                    <ChevronRightIcon className="size-5 shrink-0 text-txt-black-700" />
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

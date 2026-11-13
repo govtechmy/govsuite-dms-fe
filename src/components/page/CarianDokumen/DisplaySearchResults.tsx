@@ -142,7 +142,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
           onSearchStateChange={handleSearchStateChange}
           onDocumentLoad={handleDocumentLoad}
         />
-        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 py-6 lg:h-full lg:w-[320px] lg:self-stretch lg:pl-6 lg:ml-6">
+        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 pb-3 lg:h-full lg:w-[334px] lg:self-stretch lg:ml-6">
           <RecordResultSearch onLazyLoad={onLazyLoad} />
           <PageOccurrenceResultSearch />
 
