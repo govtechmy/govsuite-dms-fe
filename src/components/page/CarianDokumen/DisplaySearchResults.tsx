@@ -1,5 +1,6 @@
 import RecordResultSearch from './RecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
+import PageOccurrenceResultSearch from './PageOccurrenceResultSearch'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import type {
@@ -143,6 +144,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
         />
         <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 py-6 lg:h-full lg:w-[320px] lg:self-stretch lg:pl-6 lg:ml-6">
           <RecordResultSearch onLazyLoad={onLazyLoad} />
+          <PageOccurrenceResultSearch />
 
           {/* <WordsResultSearch
             keywordRecords={keywordRecords}
