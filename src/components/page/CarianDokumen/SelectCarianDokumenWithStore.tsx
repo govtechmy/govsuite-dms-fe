@@ -14,15 +14,12 @@ import { useSearchParams } from 'react-router-dom'
 
 interface SelectCarianDokumenWithStoreProps {
   showOnlyWhenSearchQuery?: boolean
-  resetPageOnFilterChange?: boolean
 }
 
-const SEARCH_LIMIT = '10'
 const DATE_FORMAT = 'dd/MM/yyyy'
 
 export default function SelectCarianDokumenWithStore({
   showOnlyWhenSearchQuery = false,
-  resetPageOnFilterChange = true,
 }: SelectCarianDokumenWithStoreProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const dropdownUnits = useSearchStore((state) => state.dropdownUnits)
@@ -48,11 +45,6 @@ export default function SelectCarianDokumenWithStore({
       params.delete('searchMode')
     }
 
-    if (resetPageOnFilterChange) {
-      params.set('page', '1')
-      params.set('limit', SEARCH_LIMIT)
-    }
-
     setSearchParams(params)
   }
 
@@ -64,11 +56,6 @@ export default function SelectCarianDokumenWithStore({
       params.set('jenisDokumen', normalizedValue)
     } else {
       params.delete('jenisDokumen')
-    }
-
-    if (resetPageOnFilterChange) {
-      params.set('page', '1')
-      params.set('limit', SEARCH_LIMIT)
     }
 
     setJenisDokumen(normalizedValue)
@@ -83,11 +70,6 @@ export default function SelectCarianDokumenWithStore({
       params.set('unit', normalizedValue)
     } else {
       params.delete('unit')
-    }
-
-    if (resetPageOnFilterChange) {
-      params.set('page', '1')
-      params.set('limit', SEARCH_LIMIT)
     }
 
     setUnit(normalizedValue)
@@ -111,11 +93,6 @@ export default function SelectCarianDokumenWithStore({
       params.delete('dateTo')
     }
 
-    if (resetPageOnFilterChange) {
-      params.set('page', '1')
-      params.set('limit', SEARCH_LIMIT)
-    }
-
     setDateRange(nextDateFrom, nextDateTo)
     setSearchParams(params)
   }
@@ -126,11 +103,6 @@ export default function SelectCarianDokumenWithStore({
     params.delete('unit')
     params.delete('dateFrom')
     params.delete('dateTo')
-
-    if (resetPageOnFilterChange) {
-      params.set('page', '1')
-      params.set('limit', SEARCH_LIMIT)
-    }
 
     setUnit('')
     setJenisDokumen('')

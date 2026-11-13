@@ -5,11 +5,7 @@ import SearchLoadingState from '@/components/page/CarianDokumen/SearchLoadingSta
 import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCarianDokumen'
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
-import {
-  getHybridSearchRecords,
-  getSearchRecordCarianDokumen,
-  type RecordSearchResponse,
-} from '@/services/catalog.svc'
+import { getHybridSearchRecords, getSearchRecordCarianDokumen } from '@/services/catalog.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
 import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -45,11 +41,10 @@ const FULLTEXT_LAZY_BATCH_SIZE = 2
 const HYBRID_LAZY_BATCH_SIZE = 10
 
 export default function CarianDokumenPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const isHybridSearch = searchParams.get('searchMode') === 'hibrid'
   const latestSearchRequestTokenRef = useRef(0)
   const hadSearchQueryRef = useRef(false)
-  const currentPageRef = useRef(1)
 
   const query = useSearchStore((state) => state.query)
   const jenisDokumen = useSearchStore((state) => state.jenisDokumen)
@@ -57,7 +52,6 @@ export default function CarianDokumenPage() {
   const dateFrom = useSearchStore((state) => state.dateFrom)
   const dateTo = useSearchStore((state) => state.dateTo)
   const sort = useSearchStore((state) => state.sort)
-  const pageNumber = useSearchStore((state) => state.pageNumber)
   const isLoadingSearch = useSearchStore((state) => state.isLoadingSearch)
   const documentRecords = useSearchStore((state) => state.documentRecords)
   const setFromSearchParams = useSearchStore((state) => state.setFromSearchParams)
@@ -71,144 +65,91 @@ export default function CarianDokumenPage() {
   const setDropdownJenisDokumen = useSearchStore((state) => state.setDropdownJenisDokumen)
   const resetSearchState = useSearchStore((state) => state.resetSearchState)
 
-  // TODO: the `append` path (load the next batch) has no caller while lazy loading
-  // is disabled; it is kept so scroll-to-load can be reconnected later.
-  const fetchAndSetDocumentRecords = useCallback(
-    async (options?: { append?: boolean }) => {
-      const append = options?.append ?? false
-      const nextPage = append ? currentPageRef.current + 1 : pageNumber
-      const requestToken = ++latestSearchRequestTokenRef.current
+  // Show the first batch right away, then keep fetching the rest in the background
+  const fetchAndSetDocumentRecords = useCallback(async () => {
+    const requestToken = ++latestSearchRequestTokenRef.current
 
-      if (!append) {
-        setSelectedKeywordId(null)
-        setIsLoadingSearch(true)
-      }
+    setSelectedKeywordId(null)
+    setIsLoadingSearch(true)
 
-      let hasShownFirstBatch = false
+    // Both search modes load batch by batch the same way; only the API call differs
+    const fetchBatch = (page: number) =>
+      isHybridSearch
+        ? getHybridSearchRecords({ query, page, limit: HYBRID_LAZY_BATCH_SIZE })
+        : getSearchRecordCarianDokumen({
+            query,
+            unit,
+            jenisDokumen,
+            dateFrom,
+            dateTo,
+            sort,
+            page,
+            limit: FULLTEXT_LAZY_BATCH_SIZE,
+          })
 
-      try {
-        // Hybrid: show the first batch right away, then keep fetching the rest in the background
-        if (isHybridSearch) {
-          let page = 1
-          let hasNextPage = true
+    let hasShownFirstBatch = false
 
-          while (hasNextPage) {
-            const batch = await getHybridSearchRecords({
-              query,
-              page,
-              limit: HYBRID_LAZY_BATCH_SIZE,
-            })
+    try {
+      let page = 1
+      let hasNextPage = true
 
-            if (requestToken !== latestSearchRequestTokenRef.current) {
-              return
-            }
+      while (hasNextPage) {
+        const batch = await fetchBatch(page)
 
-            hasNextPage = batch.meta.hasNextPage && batch.items.length > 0
+        if (requestToken !== latestSearchRequestTokenRef.current) {
+          return
+        }
 
-            if (page === 1) {
-              setSearchMeta(batch.meta)
-              setDocumentRecords(batch.items)
-              if (!batch.items.length) {
-                setDocumentInfo(null)
-              }
-              setIsLoadingSearch(false)
-              setIsFetchingMoreRecords(hasNextPage)
-              hasShownFirstBatch = true
-            } else {
-              const currentRecords = useSearchStore.getState().documentRecords
-              setDocumentRecords([...currentRecords, ...batch.items])
-            }
+        hasNextPage = batch.meta.hasNextPage && batch.items.length > 0
 
-            page += 1
+        if (page === 1) {
+          setSearchMeta(batch.meta)
+          setDocumentRecords(batch.items)
+          if (!batch.items.length) {
+            setDocumentInfo(null)
           }
-          return
-        }
-
-        const backendResponse: RecordSearchResponse = await getSearchRecordCarianDokumen({
-          query,
-          unit,
-          jenisDokumen,
-          dateFrom,
-          dateTo,
-          sort,
-          page: nextPage,
-          limit: FULLTEXT_LAZY_BATCH_SIZE,
-        })
-
-        if (requestToken !== latestSearchRequestTokenRef.current) {
-          return
-        }
-
-        // Page is past the last page (e.g. old link): go to the last page instead of showing no results
-        if (
-          backendResponse.items.length === 0 &&
-          backendResponse.meta.totalItems > 0 &&
-          backendResponse.meta.currentPage > backendResponse.meta.totalPages
-        ) {
-          setSearchParams(
-            (previousParams) => {
-              previousParams.set('page', String(backendResponse.meta.totalPages))
-              return previousParams
-            },
-            { replace: true }
-          )
-          return
-        }
-
-        currentPageRef.current = backendResponse.meta.currentPage || nextPage
-        setSearchMeta(backendResponse.meta)
-
-        const documents = backendResponse.items
-
-        if (append) {
-          const currentRecords = useSearchStore.getState().documentRecords
-          setDocumentRecords([...currentRecords, ...documents])
-          return
-        }
-
-        setDocumentRecords(documents)
-
-        if (!documents.length) {
-          setDocumentInfo(null)
-        }
-      } catch (error) {
-        if (requestToken !== latestSearchRequestTokenRef.current) {
-          return
-        }
-
-        console.error('Search error:', error)
-        // A later batch failing keeps the results already shown
-        if (!append && !hasShownFirstBatch) {
-          setDocumentRecords([])
-          setSearchMeta(null)
-        }
-      } finally {
-        if (!append && requestToken === latestSearchRequestTokenRef.current) {
           setIsLoadingSearch(false)
+          setIsFetchingMoreRecords(hasNextPage)
+          hasShownFirstBatch = true
+        } else {
+          const currentRecords = useSearchStore.getState().documentRecords
+          setDocumentRecords([...currentRecords, ...batch.items])
         }
-        if (requestToken === latestSearchRequestTokenRef.current) {
-          setIsFetchingMoreRecords(false)
-        }
+
+        page += 1
       }
-    },
-    [
-      dateFrom,
-      dateTo,
-      jenisDokumen,
-      pageNumber,
-      query,
-      sort,
-      setDocumentInfo,
-      setDocumentRecords,
-      setIsFetchingMoreRecords,
-      setIsLoadingSearch,
-      setSearchMeta,
-      setSearchParams,
-      setSelectedKeywordId,
-      unit,
-      isHybridSearch,
-    ]
-  )
+    } catch (error) {
+      if (requestToken !== latestSearchRequestTokenRef.current) {
+        return
+      }
+
+      console.error('Search error:', error)
+      // A later batch failing keeps the results already shown
+      if (!hasShownFirstBatch) {
+        setDocumentRecords([])
+        setSearchMeta(null)
+      }
+    } finally {
+      if (requestToken === latestSearchRequestTokenRef.current) {
+        setIsLoadingSearch(false)
+        setIsFetchingMoreRecords(false)
+      }
+    }
+  }, [
+    dateFrom,
+    dateTo,
+    jenisDokumen,
+    query,
+    sort,
+    setDocumentInfo,
+    setDocumentRecords,
+    setIsFetchingMoreRecords,
+    setIsLoadingSearch,
+    setSearchMeta,
+    setSelectedKeywordId,
+    unit,
+    isHybridSearch,
+  ])
 
   useEffect(() => {
     setFromSearchParams({
@@ -218,10 +159,6 @@ export default function CarianDokumenPage() {
       dateFrom: searchParams.get('dateFrom') || '',
       dateTo: searchParams.get('dateTo') || '',
       sort: searchParams.get('sort') || 'desc',
-      // TODO: `page` is kept in the URL only for pagination; when lazy loading replaces it,
-      // remove this read and every `params.set('page', ...)`, and track the batch in currentPageRef.
-      pageNumber: Math.max(1, Number(searchParams.get('page')) || 1),
-      pageSize: FULLTEXT_LAZY_BATCH_SIZE,
     })
   }, [searchParams, setFromSearchParams])
 
@@ -248,13 +185,16 @@ export default function CarianDokumenPage() {
         resetSearchState()
       }
       hadSearchQueryRef.current = false
-      currentPageRef.current = 1
       return
     }
 
     hadSearchQueryRef.current = true
-    currentPageRef.current = 1
-    void fetchAndSetDocumentRecords({ append: false })
+    void fetchAndSetDocumentRecords()
+
+    // Leaving the page or starting a new search stops the batches still being fetched
+    return () => {
+      latestSearchRequestTokenRef.current += 1
+    }
   }, [
     fetchAndSetDocumentRecords,
     dateFrom,

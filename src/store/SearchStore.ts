@@ -23,16 +23,9 @@ type SearchParamsPayload = {
   dateFrom: string
   dateTo: string
   sort: string
-  pageNumber: number
-  pageSize: number
 }
 
 const DEFAULT_SORT = 'desc'
-const DEFAULT_PAGE_NUMBER = 1
-const DEFAULT_PAGE_SIZE = 10
-
-const normalizePageNumber = (value: number) => Math.max(1, value || DEFAULT_PAGE_NUMBER)
-const normalizePageSize = (value: number) => Math.max(1, value || DEFAULT_PAGE_SIZE)
 
 let latestDocumentInfoRequestToken = 0
 
@@ -43,8 +36,6 @@ type SearchStore = {
   dateFrom: string
   dateTo: string
   sort: string
-  pageNumber: number
-  pageSize: number
   isLoadingSearch: boolean
   isFetchingMoreRecords: boolean
   documentRecords: RecordSearchItem[]
@@ -60,8 +51,6 @@ type SearchStore = {
   setUnit: (unit: string) => void
   setDateRange: (dateFrom: string, dateTo: string) => void
   setSort: (sort: string) => void
-  setPageNumber: (pageNumber: number) => void
-  setPageSize: (pageSize: number) => void
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
   setIsFetchingMoreRecords: (isFetchingMoreRecords: boolean) => void
   setDocumentRecords: (documentRecords: RecordSearchItem[]) => void
@@ -82,8 +71,6 @@ export const useSearchStore = create<SearchStore>((set) => ({
   dateFrom: '',
   dateTo: '',
   sort: DEFAULT_SORT,
-  pageNumber: DEFAULT_PAGE_NUMBER,
-  pageSize: DEFAULT_PAGE_SIZE,
   isLoadingSearch: false,
   isFetchingMoreRecords: false,
   documentRecords: [],
@@ -102,26 +89,13 @@ export const useSearchStore = create<SearchStore>((set) => ({
       dateFrom: payload.dateFrom,
       dateTo: payload.dateTo,
       sort: payload.sort || DEFAULT_SORT,
-      pageNumber: normalizePageNumber(payload.pageNumber),
-      pageSize: normalizePageSize(payload.pageSize),
     }),
 
-  setQuery: (query) => set({ query, pageNumber: DEFAULT_PAGE_NUMBER }),
-  setJenisDokumen: (jenisDokumen) => set({ jenisDokumen, pageNumber: DEFAULT_PAGE_NUMBER }),
-  setUnit: (unit) => set({ unit, pageNumber: DEFAULT_PAGE_NUMBER }),
-  setDateRange: (dateFrom, dateTo) =>
-    set({
-      dateFrom,
-      dateTo,
-      pageNumber: DEFAULT_PAGE_NUMBER,
-    }),
-  setSort: (sort) => set({ sort: sort || DEFAULT_SORT, pageNumber: DEFAULT_PAGE_NUMBER }),
-  setPageNumber: (pageNumber) => set({ pageNumber: normalizePageNumber(pageNumber) }),
-  setPageSize: (pageSize) =>
-    set({
-      pageSize: normalizePageSize(pageSize),
-      pageNumber: DEFAULT_PAGE_NUMBER,
-    }),
+  setQuery: (query) => set({ query }),
+  setJenisDokumen: (jenisDokumen) => set({ jenisDokumen }),
+  setUnit: (unit) => set({ unit }),
+  setDateRange: (dateFrom, dateTo) => set({ dateFrom, dateTo }),
+  setSort: (sort) => set({ sort: sort || DEFAULT_SORT }),
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
   setIsFetchingMoreRecords: (isFetchingMoreRecords) => set({ isFetchingMoreRecords }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
@@ -139,8 +113,6 @@ export const useSearchStore = create<SearchStore>((set) => ({
       dateFrom: '',
       dateTo: '',
       sort: DEFAULT_SORT,
-      pageNumber: DEFAULT_PAGE_NUMBER,
-      pageSize: DEFAULT_PAGE_SIZE,
       documentRecords: [],
       keywordRecords: null,
       selectedKeywordId: null,

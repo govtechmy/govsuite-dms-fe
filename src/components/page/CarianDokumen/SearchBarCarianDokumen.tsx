@@ -17,8 +17,6 @@ interface SearchBarCarianDokumenProps {
   className?: string
 }
 
-const SEARCH_LIMIT = '10'
-
 export default function SearchBarCarianDokumen({ className }: SearchBarCarianDokumenProps) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -36,8 +34,6 @@ export default function SearchBarCarianDokumen({ className }: SearchBarCarianDok
     params.delete('dateFrom')
     params.delete('dateTo')
     params.delete('sort')
-    params.set('page', '1')
-    params.set('limit', SEARCH_LIMIT)
   }
 
   useEffect(() => {
@@ -70,8 +66,6 @@ export default function SearchBarCarianDokumen({ className }: SearchBarCarianDok
 
     if (nextSearch) {
       params.set('search', nextSearch)
-      params.set('page', '1')
-      params.set('limit', SEARCH_LIMIT)
       setQuery(nextSearch)
     } else {
       clearSearchAndFilters(params)

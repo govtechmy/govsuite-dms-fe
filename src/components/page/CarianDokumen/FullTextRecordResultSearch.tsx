@@ -11,20 +11,15 @@ import DocumentMetaTag from './DocumentMetaTag'
 import { useSearchStore } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
 import { formatDateDisplay } from '@/utils/formatDate'
-import { AutoPagination } from '@govtechmy/myds-react/pagination'
-import type { CatalogListMeta, RecordSearchItem } from '@/services/catalog.svc'
-
-// TODO: only written to the URL `limit` in handleSortChange; nothing reads it back, the page
-// size comes from LAZY_BATCH_SIZE in pages/CarianDokumen.tsx. Remove both with lazy loading.
-const LAZY_BATCH_SIZE = 10
+import { Spinner } from '@govtechmy/myds-react/spinner'
+import type { RecordSearchItem } from '@/services/catalog.svc'
 
 interface FullTextRecordResultSearchProps {
   records: RecordSearchItem[]
   totalItems: number
   selectedDocumentId: string | null
   onRecordSelect: (record: RecordSearchItem) => void
-  meta: CatalogListMeta | null
-  onPaginationChange: (page: number) => void
+  isFetchingMore: boolean
 }
 
 export default function FullTextRecordResultSearch({
@@ -32,8 +27,7 @@ export default function FullTextRecordResultSearch({
   totalItems,
   selectedDocumentId,
   onRecordSelect,
-  meta,
-  onPaginationChange,
+  isFetchingMore,
 }: FullTextRecordResultSearchProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const sortBy = useSearchStore((state) => state.sort)
@@ -46,8 +40,6 @@ export default function FullTextRecordResultSearch({
     } else {
       params.delete('sort')
     }
-    params.set('page', '1')
-    params.set('limit', String(LAZY_BATCH_SIZE))
 
     setSort(value)
     setSearchParams(params)
@@ -56,8 +48,14 @@ export default function FullTextRecordResultSearch({
   return (
     <section className="flex h-[360px] w-full flex-col gap-3 rounded-xl border border-otl-gray-200 bg-bg-white p-3 lg:h-auto lg:min-h-0">
       <div className="flex w-full items-center gap-3 p-1">
-        <h2 className="flex-1 text-body-sm font-semibold text-txt-black-900">
+        <h2 className="flex flex-1 items-center gap-2 text-body-sm font-semibold text-txt-black-900">
           {totalItems} rekod ditemui
+          {isFetchingMore && (
+            <>
+              <Spinner size="small" />
+              <span className="sr-only">Memuatkan lagi</span>
+            </>
+          )}
         </h2>
         <Select size="small" variant="outline" value={sortBy} onValueChange={handleSortChange}>
           <SelectTrigger>
@@ -102,18 +100,6 @@ export default function FullTextRecordResultSearch({
           )
         })}
       </div>
-
-      {meta && meta.totalPages > 1 && (
-        <div className="flex shrink-0 justify-center border-t border-otl-gray-200 pt-3">
-          <AutoPagination
-            page={meta.currentPage}
-            limit={meta.pageSize}
-            count={meta.totalItems}
-            type="simple"
-            onPageChange={onPaginationChange}
-          />
-        </div>
-      )}
     </section>
   )
 }

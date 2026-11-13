@@ -21,7 +21,7 @@ import type { ProgressState } from '@/components/shared/ProgressResult'
 const MATCH_PAGES_PAGE_SIZE = 10
 
 export default function DisplaySearchResults() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const isHybridSearch = searchParams.get('searchMode') === 'hibrid'
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [selectedPageNumber, setSelectedPageNumber] = useState<number | null>(null)
@@ -132,16 +132,6 @@ export default function DisplaySearchResults() {
       setRecordSelection(selectedDocumentId, pageNumber)
     },
     [selectedDocumentId, setRecordSelection]
-  )
-
-  // Record list page lives in the URL so refresh and back navigation keep it
-  const handleRecordPageChange = useCallback(
-    (page: number) => {
-      const params = new URLSearchParams(searchParams)
-      params.set('page', String(page))
-      setSearchParams(params)
-    },
-    [searchParams, setSearchParams]
   )
 
   // Select the first result when nothing is selected or the selection is not in these results
@@ -344,8 +334,7 @@ export default function DisplaySearchResults() {
             totalItems={searchMeta?.totalItems ?? documentRecords.length}
             selectedDocumentId={selectedDocumentId}
             onRecordSelect={handleRecordSelect}
-            meta={searchMeta}
-            onPaginationChange={handleRecordPageChange}
+            isFetchingMore={isFetchingMoreRecords}
           />
           <PageResultSearch
             pages={matchPages}
