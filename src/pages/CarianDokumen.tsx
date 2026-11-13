@@ -37,7 +37,7 @@ export interface DocumentInfoResponse {
   }
 }
 
-const FULLTEXT_LAZY_BATCH_SIZE = 2
+const FULLTEXT_LAZY_BATCH_SIZE = 5
 const HYBRID_LAZY_BATCH_SIZE = 10
 
 export default function CarianDokumenPage() {

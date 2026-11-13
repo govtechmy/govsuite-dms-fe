@@ -58,6 +58,33 @@ const DEFAULT_CATALOG_LIST_META: CatalogListMeta = {
   hasPreviousPage: false,
 }
 
+// Uses the API meta when present; any missing field is worked out from the request and
+// totals, so a list loaded batch by batch does not stop early when hasNextPage is left out
+const buildListMeta = (
+  apiMeta: Partial<Record<keyof CatalogListMeta, unknown>>,
+  page: number,
+  limit: number,
+  itemCount: number
+): CatalogListMeta => {
+  const currentPage = Number(apiMeta.currentPage ?? page)
+  const pageSize = Number(apiMeta.pageSize ?? limit)
+  const totalItems = Number(apiMeta.totalItems ?? itemCount)
+  const totalPages = Number(
+    apiMeta.totalPages ?? Math.max(1, Math.ceil(totalItems / Math.max(1, pageSize)))
+  )
+
+  return {
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    hasNextPage:
+      typeof apiMeta.hasNextPage === 'boolean' ? apiMeta.hasNextPage : currentPage < totalPages,
+    hasPreviousPage:
+      typeof apiMeta.hasPreviousPage === 'boolean' ? apiMeta.hasPreviousPage : currentPage > 1,
+  }
+}
+
 export interface CatalogFolderDocumentResponse {
   folder: {
     items: CatalogFolderItem[]
@@ -559,7 +586,7 @@ export const getRecordMatchPages = async (input: {
 
     return {
       items,
-      meta: { ...DEFAULT_CATALOG_LIST_META, ...payload?.meta },
+      meta: buildListMeta(payload?.meta ?? {}, page, limit, items.length),
     }
   } catch (error) {
     console.error('Error fetching record match pages : ', error)
@@ -599,7 +626,7 @@ export const getHybridSearchRecords = async (input: {
     return {
       search: { keyword: String(payload?.search ?? input.query) },
       items,
-      meta: { ...DEFAULT_CATALOG_LIST_META, ...payload?.meta },
+      meta: buildListMeta(payload?.meta ?? {}, page, limit, items.length),
     }
   } catch (error) {
     console.error('Error fetching hybrid search records : ', error)

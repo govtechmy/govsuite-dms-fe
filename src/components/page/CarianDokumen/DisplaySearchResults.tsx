@@ -17,8 +17,8 @@ import {
 } from '@/services/catalog.svc'
 import type { ProgressState } from '@/components/shared/ProgressResult'
 
-// For pagination of "Muka Surat X" card
-const MATCH_PAGES_PAGE_SIZE = 10
+// Batch size when loading the "Muka Surat X" card
+const MATCH_PAGES_BATCH_SIZE = 10
 
 export default function DisplaySearchResults() {
   const [searchParams] = useSearchParams()
@@ -54,15 +54,7 @@ export default function DisplaySearchResults() {
   const [matchPagesFetchError, setMatchPagesFetchError] = useState<string | null>(null)
   const [matchPagesRecordId, setMatchPagesRecordId] = useState<string | null>(null)
   const [matchPagesMeta, setMatchPagesMeta] = useState<CatalogListMeta | null>(null)
-  const [matchPagesPageNumber, setMatchPagesPageNumber] = useState(1)
-  const [matchPagesPreviousRecordId, setMatchPagesPreviousRecordId] = useState(selectedDocumentId)
-
-  // A newly selected record starts from the first page of its match pages,
-  // reset during render so it is never fetched with the previous record's page
-  if (selectedDocumentId !== matchPagesPreviousRecordId) {
-    setMatchPagesPreviousRecordId(selectedDocumentId)
-    setMatchPagesPageNumber(1)
-  }
+  const [isFetchingMoreMatchPages, setIsFetchingMoreMatchPages] = useState(false)
 
   const navigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
@@ -156,7 +148,8 @@ export default function DisplaySearchResults() {
     }
   }, [selectedDocumentId, fetchDocumentInfo])
 
-  // Full text: load the pages of the selected record that contain the keyword
+  // Full text: load the pages of the selected record that contain the keyword,
+  // showing the first batch right away and fetching the rest in the background
   useEffect(() => {
     if (isHybridSearch || !selectedDocumentId || !previewSearchQuery) {
       return
@@ -170,26 +163,52 @@ export default function DisplaySearchResults() {
       setMatchPages(null)
       setMatchPagesMeta(null)
       setMatchPagesRecordId(null)
+      setIsFetchingMoreMatchPages(false)
+
+      let hasShownFirstBatch = false
 
       try {
-        const result = await getRecordMatchPages({
-          recordId: selectedDocumentId,
-          query: previewSearchQuery,
-          page: matchPagesPageNumber,
-          limit: MATCH_PAGES_PAGE_SIZE,
-        })
-        if (ignore) return
+        let page = 1
+        let hasNextPage = true
 
-        setMatchPages(result.items)
-        setMatchPagesMeta(result.meta)
-        setMatchPagesRecordId(selectedDocumentId)
-        setMatchPagesFetchState('success')
+        while (hasNextPage) {
+          const result = await getRecordMatchPages({
+            recordId: selectedDocumentId,
+            query: previewSearchQuery,
+            page,
+            limit: MATCH_PAGES_BATCH_SIZE,
+          })
+          if (ignore) return
+
+          hasNextPage = result.meta.hasNextPage && result.items.length > 0
+
+          if (page === 1) {
+            setMatchPages(result.items)
+            setMatchPagesMeta(result.meta)
+            setMatchPagesRecordId(selectedDocumentId)
+            setMatchPagesFetchState('success')
+            setIsFetchingMoreMatchPages(hasNextPage)
+            hasShownFirstBatch = true
+          } else {
+            setMatchPages((previousPages) => [...(previousPages ?? []), ...result.items])
+          }
+
+          page += 1
+        }
       } catch (error) {
         if (ignore) return
-        setMatchPagesFetchState('error')
-        setMatchPagesFetchError(
-          error instanceof Error ? error.message : 'Gagal memuatkan senarai muka surat.'
-        )
+        console.error('Match pages error:', error)
+        // A later batch failing keeps the pages already shown
+        if (!hasShownFirstBatch) {
+          setMatchPagesFetchState('error')
+          setMatchPagesFetchError(
+            error instanceof Error ? error.message : 'Gagal memuatkan senarai muka surat.'
+          )
+        }
+      } finally {
+        if (!ignore) {
+          setIsFetchingMoreMatchPages(false)
+        }
       }
     }
 
@@ -198,7 +217,7 @@ export default function DisplaySearchResults() {
     return () => {
       ignore = true
     }
-  }, [isHybridSearch, selectedDocumentId, previewSearchQuery, matchPagesPageNumber])
+  }, [isHybridSearch, selectedDocumentId, previewSearchQuery])
 
   // Full text: once the match pages of the selected record are loaded, keep the selected
   // page if it is one of them (e.g. after a refresh), otherwise select the first match
@@ -343,7 +362,7 @@ export default function DisplaySearchResults() {
             selectedPageNumber={selectedPageNumber}
             onPageSelect={handlePageSelect}
             meta={matchPagesMeta}
-            onPaginationChange={setMatchPagesPageNumber}
+            isFetchingMore={isFetchingMoreMatchPages}
           />
         </div>
       )}
