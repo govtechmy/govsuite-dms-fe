@@ -2,9 +2,10 @@ import RecordResultSearch from './RecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
 import PageOccurrenceResultSearch from './PageOccurrenceResultSearch'
 import HybridResultSearch from './HybridResultSearch'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import type {
+  PdfHighlightPassage,
   PdfPageNavigationRequest,
   PdfSearchNavigationRequest,
   PdfSearchState,
@@ -134,6 +135,18 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     setPageNavigationRequest({ page: selectedHybridPage, token: pageNavigationTokenRef.current })
   }, [documentInfo?.documentID, selectedHybridRecordId, selectedHybridPage])
 
+  // Highlight the matched snippet only once the selected record is the one being previewed.
+  const selectedHybridSnippet = selectedHybridRecord?.snippet
+  const isSelectedHybridDocumentShown =
+    !!selectedHybridRecordId && documentInfo?.documentID === selectedHybridRecordId
+  const highlightPassage = useMemo<PdfHighlightPassage | null>(
+    () =>
+      isSelectedHybridDocumentShown && selectedHybridPage && selectedHybridSnippet
+        ? { page: selectedHybridPage, text: selectedHybridSnippet }
+        : null,
+    [isSelectedHybridDocumentShown, selectedHybridPage, selectedHybridSnippet]
+  )
+
   // Handle search when keyword selection changes.
   useEffect(() => {
     if (!selectedKeywordId) return
@@ -161,6 +174,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
           searchKeyword={isHybridSearch ? '' : searchKeyword}
           navigationRequest={navigationRequest}
           pageNavigationRequest={pageNavigationRequest}
+          highlightPassage={highlightPassage}
           onSearchStateChange={handleSearchStateChange}
           onDocumentLoad={handleDocumentLoad}
         />

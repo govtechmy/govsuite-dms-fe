@@ -1,5 +1,6 @@
 import { Button } from '@govtechmy/myds-react/button'
 import PdfJsDocumentViewer, {
+  type PdfHighlightPassage,
   type PdfPageNavigationRequest,
   type PdfSearchNavigationRequest,
   type PdfSearchState,
@@ -16,6 +17,7 @@ interface PratontonSearchResultProps {
   searchKeyword: string
   navigationRequest?: PdfSearchNavigationRequest | null
   pageNavigationRequest?: PdfPageNavigationRequest | null
+  highlightPassage?: PdfHighlightPassage | null
   onSearchStateChange: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
 }
@@ -24,6 +26,7 @@ export default function PratontonSearchResult({
   searchKeyword,
   navigationRequest,
   pageNavigationRequest,
+  highlightPassage,
   onSearchStateChange,
   onDocumentLoad,
 }: PratontonSearchResultProps) {
@@ -175,6 +178,7 @@ export default function PratontonSearchResult({
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
             pageNavigationRequest={pageNavigationRequest}
+            highlightPassage={highlightPassage}
             onSearchStateChange={onSearchStateChange}
             onDocumentLoad={onDocumentLoad}
           />
