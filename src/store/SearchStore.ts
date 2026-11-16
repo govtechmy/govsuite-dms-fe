@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { CatalogListMeta } from '@/services/catalog.svc'
 import type { DropdownJenisDokumen, DropdownUnit } from '@/services/dropdown.svc'
 import { getPdfGarage } from '@/services/pdf.svc'
+import type { HybridSearchItem } from '@/services/search.svc'
 
 export interface DocumentRecord {
   documentId: string
@@ -58,6 +59,8 @@ type SearchStore = {
   isLoadingSearch: boolean
   documentRecords: DocumentRecord[]
   selectedDocumentId: string | null
+  hybridRecords: HybridSearchItem[]
+  selectedHybridKey: string | null
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
   documentInfo: DocumentInfo | null
@@ -76,6 +79,8 @@ type SearchStore = {
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
   setDocumentRecords: (documentRecords: DocumentRecord[]) => void
   setSelectedDocumentId: (selectedDocumentId: string | null) => void
+  setHybridRecords: (hybridRecords: HybridSearchItem[]) => void
+  setSelectedHybridKey: (selectedHybridKey: string | null) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void
   setDocumentInfo: (documentInfo: DocumentInfo | null) => void
@@ -99,6 +104,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   isLoadingSearch: false,
   documentRecords: [],
   selectedDocumentId: null,
+  hybridRecords: [],
+  selectedHybridKey: null,
   keywordRecords: null,
   selectedKeywordId: null,
   documentInfo: null,
@@ -139,6 +146,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
   setSelectedDocumentId: (selectedDocumentId) => set({ selectedDocumentId }),
+  setHybridRecords: (hybridRecords) => set({ hybridRecords }),
+  setSelectedHybridKey: (selectedHybridKey) => set({ selectedHybridKey }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
   setSelectedKeywordId: (selectedKeywordId) => set({ selectedKeywordId }),
   setDocumentInfo: (documentInfo) => set({ documentInfo }),
@@ -157,8 +166,10 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       pageNumber: DEFAULT_PAGE_NUMBER,
       pageSize: DEFAULT_PAGE_SIZE,
       documentRecords: [],
+      hybridRecords: [],
       keywordRecords: null,
       selectedDocumentId: null,
+      selectedHybridKey: null,
       selectedKeywordId: null,
       documentInfo: null,
       searchMeta: null,

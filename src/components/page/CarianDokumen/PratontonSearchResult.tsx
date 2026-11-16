@@ -1,5 +1,6 @@
 import { Button } from '@govtechmy/myds-react/button'
 import PdfJsDocumentViewer, {
+  type PdfPageNavigationRequest,
   type PdfSearchNavigationRequest,
   type PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
@@ -14,6 +15,7 @@ import extractBackendError from '@/utils/extractBackendError'
 interface PratontonSearchResultProps {
   searchKeyword: string
   navigationRequest?: PdfSearchNavigationRequest | null
+  pageNavigationRequest?: PdfPageNavigationRequest | null
   onSearchStateChange: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
 }
@@ -21,6 +23,7 @@ interface PratontonSearchResultProps {
 export default function PratontonSearchResult({
   searchKeyword,
   navigationRequest,
+  pageNavigationRequest,
   onSearchStateChange,
   onDocumentLoad,
 }: PratontonSearchResultProps) {
@@ -171,6 +174,7 @@ export default function PratontonSearchResult({
             fileUrl={documentInfo?.path || ''}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
+            pageNavigationRequest={pageNavigationRequest}
             onSearchStateChange={onSearchStateChange}
             onDocumentLoad={onDocumentLoad}
           />

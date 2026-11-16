@@ -1,16 +1,15 @@
 import RecordResultSearch from './RecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
 import PageOccurrenceResultSearch from './PageOccurrenceResultSearch'
+import HybridResultSearch from './HybridResultSearch'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import type {
+  PdfPageNavigationRequest,
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
-import getRelevanceDotClass from '@/utils/getRelevanceDotClass'
-import DocumentMetaTag from './DocumentMetaTag'
-import { clx } from '@govtechmy/myds-react/utils'
-import dataSampleHibrid from './hibridHtmlSample'
+import { getHybridSearchItemKey } from '@/services/search.svc'
 
 interface DisplaySearchResultsProps {
   onLazyLoad: () => void
@@ -23,6 +22,9 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
   const isHybridSearch = useSearchStore((state) => state.jenisCarian === 'hybrid')
+  const selectedHybridRecord = useSearchStore((state) =>
+    state.hybridRecords.find((record) => getHybridSearchItemKey(record) === state.selectedHybridKey)
+  )
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -34,6 +36,9 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     null
   )
   const navigationTokenRef = useRef(0)
+  const [pageNavigationRequest, setPageNavigationRequest] =
+    useState<PdfPageNavigationRequest | null>(null)
+  const pageNavigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const hasAutoSelectedRef = useRef(false)
@@ -118,6 +123,17 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     setSelectedKeywordId,
   ])
 
+  // Hybrid results point to a specific page; jump there once the matching document is shown.
+  const selectedHybridRecordId = selectedHybridRecord?.record_id
+  const selectedHybridPage = selectedHybridRecord?.page_number
+  useEffect(() => {
+    if (!selectedHybridRecordId || !selectedHybridPage) return
+    if (documentInfo?.documentID !== selectedHybridRecordId) return
+
+    pageNavigationTokenRef.current += 1
+    setPageNavigationRequest({ page: selectedHybridPage, token: pageNavigationTokenRef.current })
+  }, [documentInfo?.documentID, selectedHybridRecordId, selectedHybridPage])
+
   // Handle search when keyword selection changes.
   useEffect(() => {
     if (!selectedKeywordId) return
@@ -142,8 +158,9 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     <div className="flex h-full flex-col">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch lg:flex-row ml-6">
         <PratontonSearchResult
-          searchKeyword={searchKeyword}
+          searchKeyword={isHybridSearch ? '' : searchKeyword}
           navigationRequest={navigationRequest}
+          pageNavigationRequest={pageNavigationRequest}
           onSearchStateChange={handleSearchStateChange}
           onDocumentLoad={handleDocumentLoad}
         />
@@ -155,52 +172,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
           /> */}
 
           {isHybridSearch ? (
-            <div className="flex h-[560px] w-full flex-col gap-3 lg:h-full lg:min-h-0">
-              <h2 className="text-body-md font-semibold text-txt-black-900">
-                Hasil Carian ({dataSampleHibrid.data.meta.totalItems} rekod)
-              </h2>
-
-              {/* Temporary placeholder: dataSampleHibrid */}
-              <ul
-                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1"
-                aria-label="Senarai hasil carian"
-              >
-                {dataSampleHibrid.data.items.map((record) => {
-                  return (
-                    <li key={`${record.record_id}-${record.page_number}`}>
-                      <button
-                        type="button"
-                        className="relative flex w-full cursor-pointer flex-col gap-2 rounded-lg border border-otl-gray-200 bg-bg-white p-3 text-left transition-colors hover:bg-bg-washed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fr-primary"
-                      >
-                        <span className="flex items-center gap-1.5 self-end text-body-xs font-semibold text-txt-black-900">
-                          <span
-                            className={clx(
-                              'size-2 rounded-full',
-                              getRelevanceDotClass(record.relevance_score)
-                            )}
-                            aria-hidden="true"
-                          />
-                          <span className="sr-only">Skor relevan</span>
-                          {Math.round(record.relevance_score)}%
-                        </span>
-                        <p className="line-clamp-3 text-body-xs text-txt-black-700">
-                          {record.snippet}
-                        </p>
-                        <p className="line-clamp-2 text-body-sm font-semibold text-txt-primary underline underline-offset-2">
-                          {/* Temporary placeholder */}
-                          Title
-                        </p>
-                        <DocumentMetaTag
-                          jenisDokumen={'Dokumen'} //Temporary placeholder
-                          tarikh={'11/22/2000'} //Temporary placeholder
-                          mukaSurat={record.page_number}
-                        />
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
+            <HybridResultSearch onLazyLoad={onLazyLoad} />
           ) : (
             <>
               <RecordResultSearch onLazyLoad={onLazyLoad} />

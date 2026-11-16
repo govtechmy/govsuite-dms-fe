@@ -6,6 +6,7 @@ import SearchBarCarianDokumen from '@/components/page/CarianDokumen/SearchBarCar
 import DisplaySearchResults from '@/components/page/CarianDokumen/DisplaySearchResults'
 import SelectCarianDokumenWithStore from '@/components/page/CarianDokumen/SelectCarianDokumenWithStore'
 import { getSearchRecordCarianDokumen } from '@/services/catalog.svc'
+import { getHybridSearchItemKey, postHybridSearch } from '@/services/search.svc'
 import { getDropdownJenisDokumen, getDropdownUnits } from '@/services/dropdown.svc'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -49,6 +50,7 @@ export default function CarianDokumenPage() {
   const currentPageRef = useRef(1)
 
   const query = useSearchStore((state) => state.query)
+  const jenisCarian = useSearchStore((state) => state.jenisCarian)
   const jenisDokumen = useSearchStore((state) => state.jenisDokumen)
   const unit = useSearchStore((state) => state.unit)
   const dateFrom = useSearchStore((state) => state.dateFrom)
@@ -56,11 +58,14 @@ export default function CarianDokumenPage() {
   const sort = useSearchStore((state) => state.sort)
   const isLoadingSearch = useSearchStore((state) => state.isLoadingSearch)
   const documentRecords = useSearchStore((state) => state.documentRecords)
+  const hybridRecords = useSearchStore((state) => state.hybridRecords)
   const searchMeta = useSearchStore((state) => state.searchMeta)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const setFromSearchParams = useSearchStore((state) => state.setFromSearchParams)
   const setIsLoadingSearch = useSearchStore((state) => state.setIsLoadingSearch)
   const setDocumentRecords = useSearchStore((state) => state.setDocumentRecords)
+  const setHybridRecords = useSearchStore((state) => state.setHybridRecords)
+  const setSelectedHybridKey = useSearchStore((state) => state.setSelectedHybridKey)
   const setDocumentInfo = useSearchStore((state) => state.setDocumentInfo)
   const setSelectedDocumentId = useSearchStore((state) => state.setSelectedDocumentId)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
@@ -84,6 +89,42 @@ export default function CarianDokumenPage() {
       }
 
       try {
+        if (jenisCarian === 'hybrid') {
+          const hybridResponse = await postHybridSearch({
+            query,
+            page: nextPage,
+            limit: LAZY_BATCH_SIZE,
+          })
+
+          if (requestToken !== latestSearchRequestTokenRef.current) {
+            return
+          }
+
+          currentPageRef.current = hybridResponse.meta.currentPage || nextPage
+          setSearchMeta(hybridResponse.meta)
+
+          if (append) {
+            const currentRecords = useSearchStore.getState().hybridRecords
+            setHybridRecords([...currentRecords, ...hybridResponse.items])
+            return
+          }
+
+          setDocumentRecords([])
+          setHybridRecords(hybridResponse.items)
+
+          const firstItem = hybridResponse.items[0]
+          if (firstItem) {
+            setSelectedHybridKey(getHybridSearchItemKey(firstItem))
+            setSelectedDocumentId(firstItem.record_id)
+            await Promise.allSettled([fetchDocumentInfo(firstItem.record_id)])
+          } else {
+            setSelectedHybridKey(null)
+            setSelectedDocumentId(null)
+            setDocumentInfo(null)
+          }
+          return
+        }
+
         const backendResponse = await getSearchRecordCarianDokumen({
           query,
           unit,
@@ -113,6 +154,8 @@ export default function CarianDokumenPage() {
           return
         }
 
+        setHybridRecords([])
+        setSelectedHybridKey(null)
         setDocumentRecords(documents)
 
         if (documents.length > 0) {
@@ -130,6 +173,8 @@ export default function CarianDokumenPage() {
         console.error('Search error:', error)
         if (!append) {
           setDocumentRecords([])
+          setHybridRecords([])
+          setSelectedHybridKey(null)
           setSearchMeta(null)
         }
       } finally {
@@ -146,14 +191,17 @@ export default function CarianDokumenPage() {
       dateFrom,
       dateTo,
       fetchDocumentInfo,
+      jenisCarian,
       jenisDokumen,
       query,
       sort,
       setDocumentInfo,
       setDocumentRecords,
+      setHybridRecords,
       setIsLoadingSearch,
       setSearchMeta,
       setSelectedDocumentId,
+      setSelectedHybridKey,
       setSelectedKeywordId,
       unit,
     ]
@@ -228,6 +276,7 @@ export default function CarianDokumenPage() {
     fetchAndSetDocumentRecords,
     dateFrom,
     dateTo,
+    jenisCarian,
     query,
     resetSearchState,
     sort,
@@ -244,8 +293,10 @@ export default function CarianDokumenPage() {
     )
   }
 
+  const resultCount = jenisCarian === 'hybrid' ? hybridRecords.length : documentRecords.length
+
   // First-time search loading (centered) - no results yet
-  if (isLoadingSearch && documentRecords.length === 0) {
+  if (isLoadingSearch && resultCount === 0) {
     return (
       <RightSidePageLayoutWrapper className="flex flex-col items-center justify-center h-full">
         <SearchLoadingState />
@@ -268,7 +319,7 @@ export default function CarianDokumenPage() {
         <div className="flex flex-col items-center justify-center gap-4 py-12 h-full">
           <SearchLoadingState />
         </div>
-      ) : documentRecords.length === 0 ? (
+      ) : resultCount === 0 ? (
         <div className="flex flex-col items-center justify-center gap-4 py-12 h-full">
           <div className="text-body-sm text-txt-black-500 text-center max-w-md">
             Tiada dokumen ditemui. Sila lakukan carian semula.

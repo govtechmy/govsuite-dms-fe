@@ -318,11 +318,17 @@ export default function PdfJsDocumentViewer({
     })
   }, [matchesData.totalMatches, navigationRequest])
 
+  const isIndexing =
+    !hasIndexingTimedOut && (numPages === 0 || Object.keys(pageTextItems).length < numPages)
+
+  // Pages have no height until they are laid out, so wait for indexing to
+  // finish before scrolling; otherwise the jump lands near the first page.
   useEffect(() => {
     if (
       !pageNavigationRequest ||
       pageNavigationRequest.token === handledPageNavigationTokenRef.current ||
-      numPages === 0
+      numPages === 0 ||
+      isIndexing
     ) {
       return
     }
@@ -350,10 +356,7 @@ export default function PdfJsDocumentViewer({
     }, 1000)
 
     return () => clearTimeout(releaseTimeoutId)
-  }, [pageNavigationRequest, numPages])
-
-  const isIndexing =
-    !hasIndexingTimedOut && (numPages === 0 || Object.keys(pageTextItems).length < numPages)
+  }, [pageNavigationRequest, numPages, isIndexing])
 
   // Some documents contain pages whose text extraction never resolves, which
   // would otherwise leave isIndexing true forever. Force-complete indexing
