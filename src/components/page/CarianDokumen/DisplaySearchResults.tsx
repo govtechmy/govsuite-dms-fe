@@ -7,6 +7,11 @@ import type {
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
+import getRelevanceDotClass from '@/utils/getRelevanceDotClass'
+import DocumentMetaTag from './DocumentMetaTag'
+import { clx } from '@govtechmy/myds-react/utils'
+import dataSampleHibrid from './hibridHtmlSample'
+import { useSearchParams } from 'react-router-dom'
 
 interface DisplaySearchResultsProps {
   onLazyLoad: () => void
@@ -18,6 +23,9 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
+  const [searchParams] = useSearchParams()
+  // Temporary: jenisCarian is not yet written to the URL by SelectCarianDokumenWithStore
+  const isHybridSearch = searchParams.get('jenisCarian') === 'hybrid'
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -143,14 +151,65 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
           onDocumentLoad={handleDocumentLoad}
         />
         <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 pb-3 lg:h-full lg:w-[334px] lg:pb-0 lg:self-stretch lg:ml-6">
-          <RecordResultSearch onLazyLoad={onLazyLoad} />
-          <PageOccurrenceResultSearch />
-
           {/* <WordsResultSearch
             keywordRecords={keywordRecords}
             selectedKeywordId={selectedKeywordId}
             onKeywordSelect={onKeywordSelect}
           /> */}
+
+          {isHybridSearch ? (
+            <div className="flex h-[560px] w-full flex-col gap-3 lg:h-full lg:min-h-0">
+              <h2 className="text-body-md font-semibold text-txt-black-900">
+                Hasil Carian {dataSampleHibrid.data.meta.totalItems} rekod
+              </h2>
+
+              {/* Temporary placeholder: dataSampleHibrid */}
+              <ul
+                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1"
+                aria-label="Senarai hasil carian"
+              >
+                {dataSampleHibrid.data.items.map((record) => {
+                  return (
+                    <li key={`${record.record_id}-${record.page_number}`}>
+                      <button
+                        type="button"
+                        className="relative flex w-full cursor-pointer flex-col gap-2 rounded-lg border border-otl-gray-200 bg-bg-white p-3 text-left transition-colors hover:bg-bg-washed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fr-primary"
+                      >
+                        <span className="flex items-center gap-1.5 self-end text-body-xs font-semibold text-txt-black-900">
+                          <span
+                            className={clx(
+                              'size-2 rounded-full',
+                              getRelevanceDotClass(record.relevance_score)
+                            )}
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">Skor relevan</span>
+                          {Math.round(record.relevance_score)}%
+                        </span>
+                        <p className="line-clamp-3 text-body-xs text-txt-black-700">
+                          {record.snippet}
+                        </p>
+                        <p className="line-clamp-2 text-body-sm font-semibold text-txt-primary underline underline-offset-2">
+                          {/* Temporary placeholder */}
+                          Title
+                        </p>
+                        <DocumentMetaTag
+                          jenisDokumen={'Dokumen'} //Temporary placeholder
+                          tarikh={'11/22/2000'} //Temporary placeholder
+                          mukaSurat={record.page_number}
+                        />
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ) : (
+            <>
+              <RecordResultSearch onLazyLoad={onLazyLoad} />
+              <PageOccurrenceResultSearch />
+            </>
+          )}
         </div>
       </div>
 

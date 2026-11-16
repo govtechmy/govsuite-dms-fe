@@ -3,11 +3,12 @@ import { PdfIcon } from '@govtechmy/myds-react/icon'
 interface DocumentMetaTagProps {
   jenisDokumen: string
   tarikh: string
+  mukaSurat?: number
 }
 
-export default function DocumentMetaTag({ jenisDokumen, tarikh }: DocumentMetaTagProps) {
+export default function DocumentMetaTag({ jenisDokumen, tarikh, mukaSurat }: DocumentMetaTagProps) {
   return (
-    <div className="flex min-w-0 flex-nowrap items-center gap-1.5">
+    <div className="flex min-w-0 flex-nowrap items-center justify-center gap-1.5">
       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded bg-bg-washed h-6 px-1.5 text-[10px] font-semibold leading-none text-txt-black-700">
         <PdfIcon className="size-4" aria-hidden="true" />
         PDF
@@ -21,6 +22,11 @@ export default function DocumentMetaTag({ jenisDokumen, tarikh }: DocumentMetaTa
       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded bg-bg-washed h-6 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-txt-black-500">
         {tarikh}
       </span>
+      {mukaSurat !== undefined && (
+        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded bg-bg-washed h-6 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-txt-black-500">
+          Muka Surat {mukaSurat}
+        </span>
+      )}
     </div>
   )
 }
