@@ -8,8 +8,7 @@ import {
 import { Button } from '@govtechmy/myds-react/button'
 import { DateRangePicker } from '@govtechmy/myds-react/daterange-picker'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
-import { useSearchStore } from '@/store/SearchStore'
-import { useState } from 'react'
+import { useSearchStore, type JenisCarian } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
 
 interface SelectCarianDokumenWithStoreProps {
@@ -19,7 +18,7 @@ interface SelectCarianDokumenWithStoreProps {
 
 const SEARCH_LIMIT = '10'
 
-const JENIS_CARIAN_OPTIONS = [
+const JENIS_CARIAN_OPTIONS: { value: JenisCarian; label: string }[] = [
   { value: 'teks-penuh', label: 'Teks Penuh' },
   { value: 'hybrid', label: 'Hybrid' },
 ]
@@ -31,16 +30,31 @@ export default function SelectCarianDokumenWithStore({
   const [searchParams, setSearchParams] = useSearchParams()
   const dropdownUnits = useSearchStore((state) => state.dropdownUnits)
   const dropdownJenisDokumen = useSearchStore((state) => state.dropdownJenisDokumen)
+  const selectedJenisCarian = useSearchStore((state) => state.jenisCarian)
+  const setJenisCarian = useSearchStore((state) => state.setJenisCarian)
   const setJenisDokumen = useSearchStore((state) => state.setJenisDokumen)
   const setUnit = useSearchStore((state) => state.setUnit)
   const setDateRange = useSearchStore((state) => state.setDateRange)
   const hasSearchQuery = Boolean(searchParams.get('search')?.trim())
-  const [selectedJenisCarian, setSelectedJenisCarian] = useState(JENIS_CARIAN_OPTIONS[0].value)
 
   const selectedJenisDokumen = searchParams.get('jenisDokumen') || ''
   const selectedUnit = searchParams.get('unit') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
+
+  const handleJenisCarianChange = (value: string) => {
+    const params = new URLSearchParams(searchParams)
+    const nextJenisCarian: JenisCarian = value === 'hybrid' ? 'hybrid' : 'teks-penuh'
+
+    if (nextJenisCarian === 'hybrid') {
+      params.set('jenisCarian', nextJenisCarian)
+    } else {
+      params.delete('jenisCarian')
+    }
+
+    setJenisCarian(nextJenisCarian)
+    setSearchParams(params)
+  }
 
   const handleJenisDokumenChange = (value: string) => {
     const params = new URLSearchParams(searchParams)
@@ -135,7 +149,7 @@ export default function SelectCarianDokumenWithStore({
           size={'small'}
           variant="outline"
           value={selectedJenisCarian}
-          onValueChange={setSelectedJenisCarian}
+          onValueChange={handleJenisCarianChange}
         >
           <SelectTrigger>
             <SelectValue label="Jenis Carian" />

@@ -8,7 +8,7 @@ interface DocumentMetaTagProps {
 
 export default function DocumentMetaTag({ jenisDokumen, tarikh, mukaSurat }: DocumentMetaTagProps) {
   return (
-    <div className="flex min-w-0 flex-nowrap items-center justify-center gap-1.5">
+    <div className="flex min-w-0 flex-nowrap items-center gap-1.5">
       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded bg-bg-washed h-6 px-1.5 text-[10px] font-semibold leading-none text-txt-black-700">
         <PdfIcon className="size-4" aria-hidden="true" />
         PDF

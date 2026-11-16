@@ -21,8 +21,11 @@ export interface DocumentInfo {
   title?: string
 }
 
+export type JenisCarian = 'teks-penuh' | 'hybrid'
+
 type SearchParamsPayload = {
   query: string
+  jenisCarian: JenisCarian
   jenisDokumen: string
   unit: string
   dateFrom: string
@@ -32,6 +35,7 @@ type SearchParamsPayload = {
   pageSize: number
 }
 
+const DEFAULT_JENIS_CARIAN: JenisCarian = 'teks-penuh'
 const DEFAULT_SORT = 'desc'
 const DEFAULT_PAGE_NUMBER = 1
 const DEFAULT_PAGE_SIZE = 10
@@ -43,6 +47,7 @@ let latestDocumentInfoRequestToken = 0
 
 type SearchStore = {
   query: string
+  jenisCarian: JenisCarian
   jenisDokumen: string
   unit: string
   dateFrom: string
@@ -61,6 +66,7 @@ type SearchStore = {
   dropdownJenisDokumen: DropdownJenisDokumen[]
   setFromSearchParams: (payload: SearchParamsPayload) => void
   setQuery: (query: string) => void
+  setJenisCarian: (jenisCarian: JenisCarian) => void
   setJenisDokumen: (jenisDokumen: string) => void
   setUnit: (unit: string) => void
   setDateRange: (dateFrom: string, dateTo: string) => void
@@ -82,6 +88,7 @@ type SearchStore = {
 
 export const useSearchStore = create<SearchStore>((set, get) => ({
   query: '',
+  jenisCarian: DEFAULT_JENIS_CARIAN,
   jenisDokumen: '',
   unit: '',
   dateFrom: '',
@@ -102,6 +109,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setFromSearchParams: (payload) =>
     set({
       query: payload.query,
+      jenisCarian: payload.jenisCarian,
       jenisDokumen: payload.jenisDokumen,
       unit: payload.unit,
       dateFrom: payload.dateFrom,
@@ -112,6 +120,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     }),
 
   setQuery: (query) => set({ query, pageNumber: DEFAULT_PAGE_NUMBER }),
+  setJenisCarian: (jenisCarian) => set({ jenisCarian }),
   setJenisDokumen: (jenisDokumen) => set({ jenisDokumen, pageNumber: DEFAULT_PAGE_NUMBER }),
   setUnit: (unit) => set({ unit, pageNumber: DEFAULT_PAGE_NUMBER }),
   setDateRange: (dateFrom, dateTo) =>
@@ -139,6 +148,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   resetSearchState: () =>
     set({
       query: '',
+      jenisCarian: DEFAULT_JENIS_CARIAN,
       jenisDokumen: '',
       unit: '',
       dateFrom: '',

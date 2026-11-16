@@ -11,7 +11,6 @@ import getRelevanceDotClass from '@/utils/getRelevanceDotClass'
 import DocumentMetaTag from './DocumentMetaTag'
 import { clx } from '@govtechmy/myds-react/utils'
 import dataSampleHibrid from './hibridHtmlSample'
-import { useSearchParams } from 'react-router-dom'
 
 interface DisplaySearchResultsProps {
   onLazyLoad: () => void
@@ -23,9 +22,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
-  const [searchParams] = useSearchParams()
-  // Temporary: jenisCarian is not yet written to the URL by SelectCarianDokumenWithStore
-  const isHybridSearch = searchParams.get('jenisCarian') === 'hybrid'
+  const isHybridSearch = useSearchStore((state) => state.jenisCarian === 'hybrid')
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -160,7 +157,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
           {isHybridSearch ? (
             <div className="flex h-[560px] w-full flex-col gap-3 lg:h-full lg:min-h-0">
               <h2 className="text-body-md font-semibold text-txt-black-900">
-                Hasil Carian {dataSampleHibrid.data.meta.totalItems} rekod
+                Hasil Carian ({dataSampleHibrid.data.meta.totalItems} rekod)
               </h2>
 
               {/* Temporary placeholder: dataSampleHibrid */}

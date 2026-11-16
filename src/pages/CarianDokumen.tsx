@@ -182,6 +182,7 @@ export default function CarianDokumenPage() {
   useEffect(() => {
     setFromSearchParams({
       query: searchParams.get('search')?.trim() || '',
+      jenisCarian: searchParams.get('jenisCarian') === 'hybrid' ? 'hybrid' : 'teks-penuh',
       jenisDokumen: searchParams.get('jenisDokumen') || '',
       unit: searchParams.get('unit') || '',
       dateFrom: searchParams.get('dateFrom') || '',
