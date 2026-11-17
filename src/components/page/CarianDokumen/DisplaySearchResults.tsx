@@ -1,11 +1,16 @@
 import RecordResultSearch from './RecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import PageOccurrenceResultSearch from './PageOccurrenceResultSearch'
+import HybridResultSearch from './HybridResultSearch'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
 import type {
+  PdfHighlightPassage,
+  PdfPageNavigationRequest,
   PdfSearchNavigationRequest,
   PdfSearchState,
 } from '@/components/shared/PdfJsDocumentViewer'
+import { getHybridSearchItemKey } from '@/services/search.svc'
 
 interface DisplaySearchResultsProps {
   onLazyLoad: () => void
@@ -17,6 +22,10 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
   const setSelectedKeywordId = useSearchStore((state) => state.setSelectedKeywordId)
+  const isHybridSearch = useSearchStore((state) => state.jenisCarian === 'hybrid')
+  const selectedHybridRecord = useSearchStore((state) =>
+    state.hybridRecords.find((record) => getHybridSearchItemKey(record) === state.selectedHybridKey)
+  )
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -28,6 +37,9 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     null
   )
   const navigationTokenRef = useRef(0)
+  const [pageNavigationRequest, setPageNavigationRequest] =
+    useState<PdfPageNavigationRequest | null>(null)
+  const pageNavigationTokenRef = useRef(0)
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const hasAutoSelectedRef = useRef(false)
@@ -65,14 +77,6 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const handleDocumentLoad = useCallback(() => {
     setIsPdfLoaded((previousIsPdfLoaded) => (previousIsPdfLoaded ? previousIsPdfLoaded : true))
   }, [])
-
-  const handlePreviousMatch = useCallback(() => {
-    queueNavigationRequest('previous')
-  }, [queueNavigationRequest])
-
-  const handleNextMatch = useCallback(() => {
-    queueNavigationRequest('next')
-  }, [queueNavigationRequest])
 
   useEffect(() => {
     setSearchKeyword((previousSearchKeyword) =>
@@ -120,6 +124,29 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     setSelectedKeywordId,
   ])
 
+  // Hybrid results point to a specific page; jump there once the matching document is shown.
+  const selectedHybridRecordId = selectedHybridRecord?.record_id
+  const selectedHybridPage = selectedHybridRecord?.page_number
+  useEffect(() => {
+    if (!selectedHybridRecordId || !selectedHybridPage) return
+    if (documentInfo?.documentID !== selectedHybridRecordId) return
+
+    pageNavigationTokenRef.current += 1
+    setPageNavigationRequest({ page: selectedHybridPage, token: pageNavigationTokenRef.current })
+  }, [documentInfo?.documentID, selectedHybridRecordId, selectedHybridPage])
+
+  // Highlight the matched snippet only once the selected record is the one being previewed.
+  const selectedHybridSnippet = selectedHybridRecord?.snippet
+  const isSelectedHybridDocumentShown =
+    !!selectedHybridRecordId && documentInfo?.documentID === selectedHybridRecordId
+  const highlightPassage = useMemo<PdfHighlightPassage | null>(
+    () =>
+      isSelectedHybridDocumentShown && selectedHybridPage && selectedHybridSnippet
+        ? { page: selectedHybridPage, text: selectedHybridSnippet }
+        : null,
+    [isSelectedHybridDocumentShown, selectedHybridPage, selectedHybridSnippet]
+  )
+
   // Handle search when keyword selection changes.
   useEffect(() => {
     if (!selectedKeywordId) return
@@ -142,27 +169,30 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch lg:flex-row">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch lg:flex-row ml-6">
         <PratontonSearchResult
-          searchKeyword={searchKeyword}
-          onSearchKeywordChange={setSearchKeyword}
-          currentMatchIndex={pdfSearchState.currentMatchIndex}
-          totalMatches={pdfSearchState.totalMatches}
-          onPreviousMatch={handlePreviousMatch}
-          onNextMatch={handleNextMatch}
+          searchKeyword={isHybridSearch ? '' : searchKeyword}
           navigationRequest={navigationRequest}
+          pageNavigationRequest={pageNavigationRequest}
+          highlightPassage={highlightPassage}
           onSearchStateChange={handleSearchStateChange}
           onDocumentLoad={handleDocumentLoad}
-          isIndexing={pdfSearchState.isIndexing}
         />
-        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 border-y py-6 lg:h-full lg:w-[320px] lg:self-stretch lg:pl-6">
-          <RecordResultSearch onLazyLoad={onLazyLoad} />
-
+        <div className="flex min-h-0 w-full shrink-0 flex-col items-center gap-6 pb-3 lg:h-full lg:w-[334px] lg:pb-0 lg:self-stretch lg:ml-6">
           {/* <WordsResultSearch
             keywordRecords={keywordRecords}
             selectedKeywordId={selectedKeywordId}
             onKeywordSelect={onKeywordSelect}
           /> */}
+
+          {isHybridSearch ? (
+            <HybridResultSearch onLazyLoad={onLazyLoad} />
+          ) : (
+            <>
+              <RecordResultSearch onLazyLoad={onLazyLoad} />
+              <PageOccurrenceResultSearch />
+            </>
+          )}
         </div>
       </div>
 

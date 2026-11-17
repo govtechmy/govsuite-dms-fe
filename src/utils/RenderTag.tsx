@@ -28,6 +28,12 @@ export function renderStatusTag(statusTag: string) {
         {NormalizeWord(tag)}
       </Tag>
     )
+  } else if (tag === 'DILULUSKAN') {
+    return (
+      <Tag mode="pill" size="small" variant="primary">
+        {NormalizeWord(tag)}
+      </Tag>
+    )
   } else {
     return (
       <Tag mode="pill" size="small" variant="danger">

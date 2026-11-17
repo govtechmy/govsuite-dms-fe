@@ -15,6 +15,11 @@ type ItemMatch = {
 
 type MatchesByPage = Record<number, Record<number, ItemMatch[]>>
 
+type TextRange = {
+  start: number
+  end: number
+}
+
 type TextLayerSuccessPayload = {
   items: unknown[]
 }
@@ -42,11 +47,17 @@ export type PdfPageNavigationRequest = {
   token: number
 }
 
+export type PdfHighlightPassage = {
+  page: number
+  text: string
+}
+
 interface PdfJsDocumentViewerProps {
   fileUrl: string
   searchKeyword?: string
   navigationRequest?: PdfSearchNavigationRequest | null
   pageNavigationRequest?: PdfPageNavigationRequest | null
+  highlightPassage?: PdfHighlightPassage | null
   onSearchStateChange?: (state: PdfSearchState) => void
   onDocumentLoad?: () => void
   onPageChange?: (currentPage: number, totalPages: number) => void
@@ -71,9 +82,29 @@ const extractTextItems = (items: unknown[]): string[] => {
   })
 }
 
-const renderHighlightedText = (text: string, matches?: ItemMatch[]) => {
+const renderHighlightedText = (
+  text: string,
+  matches?: ItemMatch[],
+  passageRanges?: TextRange[]
+) => {
   if (!matches || matches.length === 0) {
-    return escapeHtml(text)
+    if (!passageRanges || passageRanges.length === 0) {
+      return escapeHtml(text)
+    }
+
+    let passageCursor = 0
+    let passageResult = ''
+
+    for (const range of passageRanges) {
+      passageResult += escapeHtml(text.slice(passageCursor, range.start))
+      passageResult += `<mark class="pdf-passage-match" data-pdf-passage-match="true">${escapeHtml(
+        text.slice(range.start, range.end)
+      )}</mark>`
+      passageCursor = range.end
+    }
+
+    passageResult += escapeHtml(text.slice(passageCursor))
+    return passageResult
   }
 
   let cursor = 0
@@ -91,11 +122,181 @@ const renderHighlightedText = (text: string, matches?: ItemMatch[]) => {
   return result
 }
 
+// ---------------------------------------------------------------------------
+// FUZZY PASSAGE MATCHING (approximate, not exact)
+// ---------------------------------------------------------------------------
+// Passage text (e.g. a search snippet) rarely matches the PDF text layer
+// character-for-character: words get split across items, whitespace and
+// quotes differ, OCR introduces noise, and the backend may join lines from
+// different parts of the page in a different order. So the passage is located
+// approximately rather than with a plain string search:
+//
+//   1. Normalise  – keep only letters and digits, lowercased (NFKC), on both
+//                   the passage and the page text.
+//   2. Exact try  – if the normalised passage appears as-is, use that.
+//   3. Chunk      – otherwise split the passage into fixed-size chunks and look
+//                   for each chunk on the page independently.
+//   4. Cluster    – group found chunks that sit close together on the page and
+//                   discard lone chunks (likely coincidental matches).
+//   5. Threshold  – accept only if the clusters cover enough of the passage.
+//   6. Map back   – translate normalised positions back to text-layer items and
+//                   widen the edges to whole words for a clean highlight.
+//
+// Because of this, the highlight may be slightly shorter/longer than the
+// snippet, or absent if the page text differs too much.
+
+// Size of each piece the passage is split into for partial matching.
+const PASSAGE_CHUNK_LENGTH = 20
+// A cluster needs at least this many found chunks to count as a real match.
+const PASSAGE_MIN_CLUSTER_CHUNKS = 2
+// Fraction of the passage that must be found before anything is highlighted.
+const PASSAGE_MIN_COVERAGE = 0.6
+const NON_ALPHANUMERIC_PATTERN = /[^\p{L}\p{N}]/u
+
+// Fuzzy step 1: reduce text to comparable characters only (letters/digits,
+// lowercased) so spacing, punctuation and quote styles are ignored.
+const normalizePassageChars = (value: string) =>
+  Array.from(value.normalize('NFKC').toLocaleLowerCase()).filter(
+    (char) => !NON_ALPHANUMERIC_PATTERN.test(char)
+  )
+
+// Fuzzy steps 2–5: find where the (already normalised) passage sits inside the
+// (already normalised) page text. Returns ranges in normalised-text positions.
+const findPassageRanges = (pageText: string, passage: string): TextRange[] => {
+  // Fuzzy step 2: cheap exact match first; most clean PDFs succeed here.
+  const exactIndex = pageText.indexOf(passage)
+  if (exactIndex >= 0) {
+    return [{ start: exactIndex, end: exactIndex + passage.length }]
+  }
+
+  // Short passages are too ambiguous to match partially.
+  if (passage.length < PASSAGE_CHUNK_LENGTH * PASSAGE_MIN_CLUSTER_CHUNKS) {
+    return []
+  }
+
+  // Fuzzy step 3: search each chunk on its own, so noise in one part of the
+  // passage doesn't prevent the rest from matching.
+  const foundChunks: TextRange[] = []
+  for (let offset = 0; offset < passage.length; offset += PASSAGE_CHUNK_LENGTH) {
+    const chunk = passage.slice(offset, offset + PASSAGE_CHUNK_LENGTH)
+    const chunkIndex = chunk.length === PASSAGE_CHUNK_LENGTH ? pageText.indexOf(chunk) : -1
+    if (chunkIndex >= 0) {
+      foundChunks.push({ start: chunkIndex, end: chunkIndex + chunk.length })
+    }
+  }
+  foundChunks.sort((first, second) => first.start - second.start)
+
+  // Fuzzy step 4: chunks at most one chunk apart belong to the same cluster; lone chunks are
+  // treated as coincidental matches elsewhere on the page and ignored.
+  const clusters: { range: TextRange; chunkCount: number }[] = []
+  for (const chunk of foundChunks) {
+    const lastCluster = clusters[clusters.length - 1]
+    if (lastCluster && chunk.start - lastCluster.range.end <= PASSAGE_CHUNK_LENGTH) {
+      lastCluster.range.end = Math.max(lastCluster.range.end, chunk.end)
+      lastCluster.chunkCount += 1
+    } else {
+      clusters.push({ range: { ...chunk }, chunkCount: 1 })
+    }
+  }
+
+  // Fuzzy step 5: only highlight if enough of the passage was found; otherwise
+  // the match is too weak to trust and nothing is highlighted.
+  const keptClusters = clusters.filter(
+    (cluster) => cluster.chunkCount >= PASSAGE_MIN_CLUSTER_CHUNKS
+  )
+  const matchedLength = keptClusters.reduce(
+    (total, cluster) => total + cluster.chunkCount * PASSAGE_CHUNK_LENGTH,
+    0
+  )
+
+  return matchedLength >= passage.length * PASSAGE_MIN_COVERAGE
+    ? keptClusters.map((cluster) => cluster.range)
+    : []
+}
+
+// Entry point for fuzzy passage matching on one page. Returns, per text-layer
+// item index, the character ranges to wrap in <mark>, or null if no match.
+const findPassageItemRanges = (
+  pageItems: string[],
+  passage: string
+): Record<number, TextRange[]> | null => {
+  const normalizedPassage = normalizePassageChars(passage).join('')
+  if (!normalizedPassage) {
+    return null
+  }
+
+  // Build the normalised page text, remembering for every kept character which
+  // item and offset it came from, so fuzzy matches can be mapped back later.
+  let pageText = ''
+  const sourcePositions: { itemIndex: number; offset: number }[] = []
+
+  pageItems.forEach((itemText, itemIndex) => {
+    Array.from(itemText).forEach((char, offset) => {
+      normalizePassageChars(char).forEach((normalizedChar) => {
+        pageText += normalizedChar
+        sourcePositions.push({ itemIndex, offset })
+      })
+    })
+  })
+
+  const ranges = findPassageRanges(pageText, normalizedPassage)
+  if (ranges.length === 0) {
+    return null
+  }
+
+  // Fuzzy step 6: convert each normalised range back into original text-layer
+  // item ranges (a single match may span several items).
+  const itemRanges: Record<number, TextRange[]> = {}
+
+  for (const range of ranges) {
+    const rangeByItem: Record<number, TextRange> = {}
+    for (let index = range.start; index < range.end; index += 1) {
+      const { itemIndex, offset } = sourcePositions[index]
+      const itemRange = rangeByItem[itemIndex]
+      rangeByItem[itemIndex] = itemRange
+        ? { start: itemRange.start, end: offset + 1 }
+        : { start: offset, end: offset + 1 }
+    }
+
+    // Chunk matches can start or stop mid-word; widen the edges to whole words.
+    const firstItem = sourcePositions[range.start]
+    const lastItem = sourcePositions[range.end - 1]
+    const firstText = pageItems[firstItem.itemIndex]
+    const lastText = pageItems[lastItem.itemIndex]
+    const wordStart = firstText.slice(0, firstItem.offset).search(/\S+$/)
+    const wordEnd = lastText.slice(lastItem.offset).search(/\s/)
+
+    if (wordStart >= 0) {
+      rangeByItem[firstItem.itemIndex].start = wordStart
+    }
+    rangeByItem[lastItem.itemIndex].end = wordEnd >= 0 ? lastItem.offset + wordEnd : lastText.length
+
+    Object.entries(rangeByItem).forEach(([itemIndex, itemRange]) => {
+      const index = Number(itemIndex)
+      itemRanges[index] = [...(itemRanges[index] ?? []), itemRange]
+    })
+  }
+
+  // Word-widened ranges from neighbouring clusters may overlap within an item.
+  Object.values(itemRanges).forEach((rangesInItem) => {
+    rangesInItem.sort((first, second) => first.start - second.start)
+    for (let index = rangesInItem.length - 1; index > 0; index -= 1) {
+      if (rangesInItem[index].start <= rangesInItem[index - 1].end) {
+        rangesInItem[index - 1].end = Math.max(rangesInItem[index - 1].end, rangesInItem[index].end)
+        rangesInItem.splice(index, 1)
+      }
+    }
+  })
+
+  return itemRanges
+}
+
 export default function PdfJsDocumentViewer({
   fileUrl,
   searchKeyword = '',
   navigationRequest,
   pageNavigationRequest,
+  highlightPassage,
   onSearchStateChange,
   onDocumentLoad,
   onPageChange,
@@ -124,6 +325,7 @@ export default function PdfJsDocumentViewer({
   const lastActiveMatchElementsRef = useRef<HTMLElement[]>([])
   const lastNavigationActionRef = useRef<PdfSearchNavigationRequest['action'] | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
+  const handledPassageKeyRef = useRef<string | null>(null)
 
   const normalizedKeyword = searchKeyword.trim().toLocaleLowerCase()
 
@@ -229,6 +431,19 @@ export default function PdfJsDocumentViewer({
     }
   }, [normalizedKeyword, numPages, pageTextItems])
 
+  const passagePage = highlightPassage?.page
+  const passageText = highlightPassage?.text
+  const passagePageItems = passagePage ? pageTextItems[passagePage] : undefined
+  // Fuzzy-matched passage highlight ranges for the target page (see
+  // findPassageItemRanges); recomputed only when that page's text or the passage changes.
+  const passageItemRanges = useMemo(() => {
+    if (!passageText || !passagePageItems || passagePageItems.length === 0) {
+      return null
+    }
+
+    return findPassageItemRanges(passagePageItems, passageText)
+  }, [passagePageItems, passageText])
+
   const customTextRenderer = useCallback(
     (item: CustomTextRenderPayload) => {
       const itemIndex = typeof item.itemIndex === 'number' ? item.itemIndex : -1
@@ -238,10 +453,12 @@ export default function PdfJsDocumentViewer({
         itemIndex >= 0 && pageNumber > 0
           ? matchesData.matchesByPage[pageNumber]?.[itemIndex]
           : undefined
+      const itemPassageRanges =
+        itemIndex >= 0 && pageNumber === passagePage ? passageItemRanges?.[itemIndex] : undefined
 
-      return renderHighlightedText(text, itemMatches)
+      return renderHighlightedText(text, itemMatches, itemPassageRanges)
     },
-    [matchesData.matchesByPage]
+    [matchesData.matchesByPage, passageItemRanges, passagePage]
   )
 
   useEffect(() => {
@@ -318,11 +535,17 @@ export default function PdfJsDocumentViewer({
     })
   }, [matchesData.totalMatches, navigationRequest])
 
+  const isIndexing =
+    !hasIndexingTimedOut && (numPages === 0 || Object.keys(pageTextItems).length < numPages)
+
+  // Pages have no height until they are laid out, so wait for indexing to
+  // finish before scrolling; otherwise the jump lands near the first page.
   useEffect(() => {
     if (
       !pageNavigationRequest ||
       pageNavigationRequest.token === handledPageNavigationTokenRef.current ||
-      numPages === 0
+      numPages === 0 ||
+      isIndexing
     ) {
       return
     }
@@ -350,10 +573,7 @@ export default function PdfJsDocumentViewer({
     }, 1000)
 
     return () => clearTimeout(releaseTimeoutId)
-  }, [pageNavigationRequest, numPages])
-
-  const isIndexing =
-    !hasIndexingTimedOut && (numPages === 0 || Object.keys(pageTextItems).length < numPages)
+  }, [pageNavigationRequest, numPages, isIndexing])
 
   // Some documents contain pages whose text extraction never resolves, which
   // would otherwise leave isIndexing true forever. Force-complete indexing
@@ -428,6 +648,30 @@ export default function PdfJsDocumentViewer({
     })
     lastNavigationActionRef.current = null
   }, [currentMatchIndex, normalizedKeyword, textLayerRenderTick])
+
+  // Scroll the highlighted passage into view once per passage, after layout has
+  // settled (indexing done) and its text layer has rendered the <mark>s.
+  useEffect(() => {
+    const container = viewportRef.current
+    if (!container || !passageItemRanges || !passagePage || isIndexing) {
+      return
+    }
+
+    const passageKey = `${fileUrl}|${passagePage}|${passageText}`
+    if (handledPassageKeyRef.current === passageKey) {
+      return
+    }
+
+    const firstPassageElement = pageRefs.current[passagePage]?.querySelector(
+      '[data-pdf-passage-match]'
+    )
+    if (!(firstPassageElement instanceof HTMLElement)) {
+      return
+    }
+
+    handledPassageKeyRef.current = passageKey
+    firstPassageElement.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' })
+  }, [fileUrl, isIndexing, passageItemRanges, passagePage, passageText, textLayerRenderTick])
 
   useEffect(() => {
     const container = viewportRef.current
@@ -598,7 +842,7 @@ export default function PdfJsDocumentViewer({
                   pageRefs.current[pageNumber] = pageElement
                 }}
                 data-page-number={pageNumber}
-                className="mx-auto w-fit rounded-md border border-otl-gray-200 bg-bg-white"
+                className="mx-auto w-fit overflow-hidden rounded-md border border-otl-gray-200 bg-bg-white"
               >
                 <Page
                   pageNumber={pageNumber}

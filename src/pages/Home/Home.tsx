@@ -24,6 +24,7 @@ type RingkasanEksekutifCardInfo = {
   dokumenTidakDiluluskan: number
   dokumenDraf: number
   dokumenDiluluskan: number
+  dokumenDiterbitkan: number
 }
 
 type RingkasanYearRange = {
@@ -39,6 +40,7 @@ const INITIAL_RINGKASAN_CARD_INFO: RingkasanEksekutifCardInfo = {
   dokumenTidakDiluluskan: 0,
   dokumenDraf: 0,
   dokumenDiluluskan: 0,
+  dokumenDiterbitkan: 0,
 }
 
 const INITIAL_RINGKASAN_YEAR_RANGE: RingkasanYearRange = {
@@ -51,7 +53,10 @@ const mapSummaryToRingkasanCardInfo = (summary: ExecutiveSummary): RingkasanEkse
   perlukanKelulusan: summary.totalInReview,
   dokumenTidakDiluluskan: summary.totalDisapproved,
   dokumenDraf: summary.totalDrafts,
+  // TODO: once backend returns totalApproved, swap to the commented line below
   dokumenDiluluskan: summary.totalPublished,
+  // dokumenDiluluskan: summary.totalApproved,
+  dokumenDiterbitkan: summary.totalPublished,
 })
 
 export default function HomePage() {

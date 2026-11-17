@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { CatalogListMeta } from '@/services/catalog.svc'
 import type { DropdownJenisDokumen, DropdownUnit } from '@/services/dropdown.svc'
 import { getPdfGarage } from '@/services/pdf.svc'
+import type { HybridSearchItem } from '@/services/search.svc'
 
 export interface DocumentRecord {
   documentId: string
@@ -21,8 +22,11 @@ export interface DocumentInfo {
   title?: string
 }
 
+export type JenisCarian = 'teks-penuh' | 'hybrid'
+
 type SearchParamsPayload = {
   query: string
+  jenisCarian: JenisCarian
   jenisDokumen: string
   unit: string
   dateFrom: string
@@ -32,6 +36,7 @@ type SearchParamsPayload = {
   pageSize: number
 }
 
+const DEFAULT_JENIS_CARIAN: JenisCarian = 'teks-penuh'
 const DEFAULT_SORT = 'desc'
 const DEFAULT_PAGE_NUMBER = 1
 const DEFAULT_PAGE_SIZE = 10
@@ -43,6 +48,7 @@ let latestDocumentInfoRequestToken = 0
 
 type SearchStore = {
   query: string
+  jenisCarian: JenisCarian
   jenisDokumen: string
   unit: string
   dateFrom: string
@@ -53,6 +59,8 @@ type SearchStore = {
   isLoadingSearch: boolean
   documentRecords: DocumentRecord[]
   selectedDocumentId: string | null
+  hybridRecords: HybridSearchItem[]
+  selectedHybridKey: string | null
   keywordRecords: KeywordRecord | null
   selectedKeywordId: string | null
   documentInfo: DocumentInfo | null
@@ -61,6 +69,7 @@ type SearchStore = {
   dropdownJenisDokumen: DropdownJenisDokumen[]
   setFromSearchParams: (payload: SearchParamsPayload) => void
   setQuery: (query: string) => void
+  setJenisCarian: (jenisCarian: JenisCarian) => void
   setJenisDokumen: (jenisDokumen: string) => void
   setUnit: (unit: string) => void
   setDateRange: (dateFrom: string, dateTo: string) => void
@@ -70,6 +79,8 @@ type SearchStore = {
   setIsLoadingSearch: (isLoadingSearch: boolean) => void
   setDocumentRecords: (documentRecords: DocumentRecord[]) => void
   setSelectedDocumentId: (selectedDocumentId: string | null) => void
+  setHybridRecords: (hybridRecords: HybridSearchItem[]) => void
+  setSelectedHybridKey: (selectedHybridKey: string | null) => void
   setKeywordRecords: (keywordRecords: KeywordRecord | null) => void
   setSelectedKeywordId: (selectedKeywordId: string | null) => void
   setDocumentInfo: (documentInfo: DocumentInfo | null) => void
@@ -82,6 +93,7 @@ type SearchStore = {
 
 export const useSearchStore = create<SearchStore>((set, get) => ({
   query: '',
+  jenisCarian: DEFAULT_JENIS_CARIAN,
   jenisDokumen: '',
   unit: '',
   dateFrom: '',
@@ -92,6 +104,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   isLoadingSearch: false,
   documentRecords: [],
   selectedDocumentId: null,
+  hybridRecords: [],
+  selectedHybridKey: null,
   keywordRecords: null,
   selectedKeywordId: null,
   documentInfo: null,
@@ -102,6 +116,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setFromSearchParams: (payload) =>
     set({
       query: payload.query,
+      jenisCarian: payload.jenisCarian,
       jenisDokumen: payload.jenisDokumen,
       unit: payload.unit,
       dateFrom: payload.dateFrom,
@@ -112,6 +127,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     }),
 
   setQuery: (query) => set({ query, pageNumber: DEFAULT_PAGE_NUMBER }),
+  setJenisCarian: (jenisCarian) => set({ jenisCarian }),
   setJenisDokumen: (jenisDokumen) => set({ jenisDokumen, pageNumber: DEFAULT_PAGE_NUMBER }),
   setUnit: (unit) => set({ unit, pageNumber: DEFAULT_PAGE_NUMBER }),
   setDateRange: (dateFrom, dateTo) =>
@@ -130,6 +146,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   setIsLoadingSearch: (isLoadingSearch) => set({ isLoadingSearch }),
   setDocumentRecords: (documentRecords) => set({ documentRecords }),
   setSelectedDocumentId: (selectedDocumentId) => set({ selectedDocumentId }),
+  setHybridRecords: (hybridRecords) => set({ hybridRecords }),
+  setSelectedHybridKey: (selectedHybridKey) => set({ selectedHybridKey }),
   setKeywordRecords: (keywordRecords) => set({ keywordRecords }),
   setSelectedKeywordId: (selectedKeywordId) => set({ selectedKeywordId }),
   setDocumentInfo: (documentInfo) => set({ documentInfo }),
@@ -139,6 +157,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   resetSearchState: () =>
     set({
       query: '',
+      jenisCarian: DEFAULT_JENIS_CARIAN,
       jenisDokumen: '',
       unit: '',
       dateFrom: '',
@@ -147,8 +166,10 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       pageNumber: DEFAULT_PAGE_NUMBER,
       pageSize: DEFAULT_PAGE_SIZE,
       documentRecords: [],
+      hybridRecords: [],
       keywordRecords: null,
       selectedDocumentId: null,
+      selectedHybridKey: null,
       selectedKeywordId: null,
       documentInfo: null,
       searchMeta: null,

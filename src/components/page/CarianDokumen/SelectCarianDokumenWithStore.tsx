@@ -8,7 +8,7 @@ import {
 import { Button } from '@govtechmy/myds-react/button'
 import { DateRangePicker } from '@govtechmy/myds-react/daterange-picker'
 import { ReloadIcon } from '@govtechmy/myds-react/icon'
-import { useSearchStore } from '@/store/SearchStore'
+import { useSearchStore, type JenisCarian } from '@/store/SearchStore'
 import { useSearchParams } from 'react-router-dom'
 
 interface SelectCarianDokumenWithStoreProps {
@@ -18,6 +18,11 @@ interface SelectCarianDokumenWithStoreProps {
 
 const SEARCH_LIMIT = '10'
 
+const JENIS_CARIAN_OPTIONS: { value: JenisCarian; label: string }[] = [
+  { value: 'teks-penuh', label: 'Teks Penuh' },
+  { value: 'hybrid', label: 'Hybrid' },
+]
+
 export default function SelectCarianDokumenWithStore({
   showOnlyWhenSearchQuery = false,
   resetPageOnFilterChange = true,
@@ -25,6 +30,8 @@ export default function SelectCarianDokumenWithStore({
   const [searchParams, setSearchParams] = useSearchParams()
   const dropdownUnits = useSearchStore((state) => state.dropdownUnits)
   const dropdownJenisDokumen = useSearchStore((state) => state.dropdownJenisDokumen)
+  const selectedJenisCarian = useSearchStore((state) => state.jenisCarian)
+  const setJenisCarian = useSearchStore((state) => state.setJenisCarian)
   const setJenisDokumen = useSearchStore((state) => state.setJenisDokumen)
   const setUnit = useSearchStore((state) => state.setUnit)
   const setDateRange = useSearchStore((state) => state.setDateRange)
@@ -34,6 +41,20 @@ export default function SelectCarianDokumenWithStore({
   const selectedUnit = searchParams.get('unit') || ''
   const dateFrom = searchParams.get('dateFrom') || ''
   const dateTo = searchParams.get('dateTo') || ''
+
+  const handleJenisCarianChange = (value: string) => {
+    const params = new URLSearchParams(searchParams)
+    const nextJenisCarian: JenisCarian = value === 'hybrid' ? 'hybrid' : 'teks-penuh'
+
+    if (nextJenisCarian === 'hybrid') {
+      params.set('jenisCarian', nextJenisCarian)
+    } else {
+      params.delete('jenisCarian')
+    }
+
+    setJenisCarian(nextJenisCarian)
+    setSearchParams(params)
+  }
 
   const handleJenisDokumenChange = (value: string) => {
     const params = new URLSearchParams(searchParams)
@@ -127,21 +148,21 @@ export default function SelectCarianDokumenWithStore({
         <Select
           size={'small'}
           variant="outline"
-          value={selectedUnit}
-          onValueChange={handleUnitChange}
+          value={selectedJenisCarian}
+          onValueChange={handleJenisCarianChange}
         >
           <SelectTrigger>
-            <SelectValue label="Unit" placeholder="Semua" />
+            <SelectValue label="Jenis Carian" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="semua">Semua</SelectItem>
-            {dropdownUnits.map((unitValue) => (
-              <SelectItem key={unitValue.code} value={unitValue.code}>
-                {unitValue.codeName}
+            {JENIS_CARIAN_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+
         <Select
           size={'small'}
           variant="outline"
@@ -156,6 +177,25 @@ export default function SelectCarianDokumenWithStore({
             {dropdownJenisDokumen.map((jenisDokumenValue) => (
               <SelectItem key={jenisDokumenValue.id} value={jenisDokumenValue.code}>
                 {jenisDokumenValue.codeName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          size={'small'}
+          variant="outline"
+          value={selectedUnit}
+          onValueChange={handleUnitChange}
+        >
+          <SelectTrigger>
+            <SelectValue label="Unit" placeholder="Semua" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="semua">Semua</SelectItem>
+            {dropdownUnits.map((unitValue) => (
+              <SelectItem key={unitValue.code} value={unitValue.code}>
+                {unitValue.codeName}
               </SelectItem>
             ))}
           </SelectContent>

@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { NavbarMydsLogin } from './NavbarMyds'
 import MastheadMyds from './MastheadMyds'
+import FooterRahsia from './FooterRahsia'
 
 export default function LayoutLogin() {
   return (
@@ -12,6 +13,7 @@ export default function LayoutLogin() {
       <div className="flex-1 overflow-y-auto mx-auto w-full">
         <Outlet />
       </div>
+      <FooterRahsia />
     </div>
   )
 }
