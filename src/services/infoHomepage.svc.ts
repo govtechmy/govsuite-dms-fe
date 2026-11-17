@@ -31,6 +31,7 @@ export interface ExecutiveSummary {
   totalRecords: number
   totalInReview: number
   totalDisapproved: number
+  totalApproved: number
   totalPublished: number
   totalDrafts: number
 }
@@ -176,6 +177,7 @@ export const getRingkasanEksekutif = async (year: string): Promise<RingkasanEkse
       totalRecords?: unknown
       totalInReview?: unknown
       totalDisapproved?: unknown
+      totalApproved?: unknown
       totalPublished?: unknown
       totalDrafts?: unknown
     }
@@ -189,6 +191,7 @@ export const getRingkasanEksekutif = async (year: string): Promise<RingkasanEkse
         totalInReview: typeof summaryRaw?.totalInReview === 'number' ? summaryRaw.totalInReview : 0,
         totalDisapproved:
           typeof summaryRaw?.totalDisapproved === 'number' ? summaryRaw.totalDisapproved : 0,
+        totalApproved: typeof summaryRaw?.totalApproved === 'number' ? summaryRaw.totalApproved : 0,
         totalPublished:
           typeof summaryRaw?.totalPublished === 'number' ? summaryRaw.totalPublished : 0,
         totalDrafts: typeof summaryRaw?.totalDrafts === 'number' ? summaryRaw.totalDrafts : 0,

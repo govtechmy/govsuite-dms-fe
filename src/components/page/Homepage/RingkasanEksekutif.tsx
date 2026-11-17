@@ -15,6 +15,7 @@ interface RingkasanEksekutifCardInfo {
   dokumenTidakDiluluskan: number | string
   dokumenDraf: number | string
   dokumenDiluluskan: number | string
+  dokumenDiterbitkan: number | string
 }
 
 interface RingkasanEksekutifProps {
@@ -127,6 +128,12 @@ export default function RingkasanEksekutif({
           onClick={() => {
             navigateWithSelectedYear('diluluskan')
           }}
+        />
+        <RingkasanEksekutifCard
+          key="dokumen-diterbitkan"
+          label="Dokumen Diterbitkan"
+          value={cardInfo.dokumenDiterbitkan}
+          variant="published"
         />
       </div>
     </div>
