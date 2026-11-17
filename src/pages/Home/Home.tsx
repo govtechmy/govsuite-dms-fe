@@ -53,7 +53,9 @@ const mapSummaryToRingkasanCardInfo = (summary: ExecutiveSummary): RingkasanEkse
   perlukanKelulusan: summary.totalInReview,
   dokumenTidakDiluluskan: summary.totalDisapproved,
   dokumenDraf: summary.totalDrafts,
-  dokumenDiluluskan: summary.totalApproved,
+  // TODO: once backend returns totalApproved, swap to the commented line below
+  dokumenDiluluskan: summary.totalPublished,
+  // dokumenDiluluskan: summary.totalApproved,
   dokumenDiterbitkan: summary.totalPublished,
 })
 

@@ -129,12 +129,13 @@ export default function RingkasanEksekutif({
             navigateWithSelectedYear('diluluskan')
           }}
         />
-        <RingkasanEksekutifCard
+        {/* TODO: enable once backend returns totalApproved (Diluluskan) separately from totalPublished (Diterbitkan) */}
+        {/* <RingkasanEksekutifCard
           key="dokumen-diterbitkan"
           label="Dokumen Diterbitkan"
           value={cardInfo.dokumenDiterbitkan}
           variant="published"
-        />
+        /> */}
       </div>
     </div>
   )
