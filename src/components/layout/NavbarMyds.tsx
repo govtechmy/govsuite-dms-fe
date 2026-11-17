@@ -16,16 +16,12 @@ import LogoutConfirmModal from '../shared/LogoutConfirmModal'
 export function NavbarMydsLogin() {
   return (
     <Navbar>
-      <div className="flex flex-col items-start">
-        <p className="text-body-md leading-none font-semibold font-heading text-txt-black-900">
-          RAHSIA
-        </p>
-        <div className="flex gap-2.5 items-center justify-center">
-          <JataNegaraIcon />
-          <div className="text-lg leading-[26px] font-semibold font-heading">GOVSuiteDMS</div>
-          {/* hide until finalize design */}
-          {/* <Tag variant="primary">ADMIN</Tag> */}
-        </div>
+      <div className="flex gap-2.5 items-center justify-center">
+        <JataNegaraIcon />
+        <div className="text-lg leading-[26px] font-semibold font-heading">GOVSuiteDMS</div>
+        <Tag variant="danger">RAHSIA</Tag>
+        {/* hide until finalize design */}
+        {/* <Tag variant="primary">ADMIN</Tag> */}
       </div>
     </Navbar>
   )
@@ -50,15 +46,11 @@ export function NavbarMyds() {
       />
       {/* Top Navbar */}
       <Navbar className="z-10">
-        <div className="flex flex-col items-start">
-          <p className="text-body-md leading-none font-semibold font-heading text-txt-black-900">
-            RAHSIA
-          </p>
-          <div className="flex gap-2.5 items-center justify-center">
-            <JataNegaraIcon />
-            <div className="text-lg leading-[26px] font-semibold font-heading">GOVSuiteDMS</div>
-            <Tag variant="primary">ADMIN</Tag>
-          </div>
+        <div className="flex gap-2.5 items-center justify-center">
+          <JataNegaraIcon />
+          <div className="text-lg leading-[26px] font-semibold font-heading">GOVSuiteDMS</div>
+          <Tag variant="danger">RAHSIA</Tag>
+          <Tag variant="primary">ADMIN</Tag>
         </div>
 
         {/* Desktop Navigation */}
