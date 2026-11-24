@@ -1,20 +1,51 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 
-// How long the content stays hidden after the PrintScreen key, even if the window keeps focus.
-const PRINT_SCREEN_HIDE_MS = 1500
+const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock'])
+
+const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent)
+
+// - interaction: window blurred, tab hidden, capture shortcut or PrintScreen. Cleared only by a
+//   click or key press in the page, so captures that finish later (area selection, timers) still
+//   see black.
+// - pointer: mouse has left the page; cleared when it comes back.
+type HideReason = 'interaction' | 'pointer'
+
+const isEditable = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+
+/**
+ * Whether the held modifiers can be the start of a screenshot / recording shortcut. The browser
+ * receives modifier keydowns before the OS consumes the final key, so hiding here wins the race.
+ *
+ * - All: any two or more modifiers (Cmd+Shift+3/4/5/6, Win+Shift+S, Ctrl+Shift / Ctrl+Alt tools).
+ * - macOS: Ctrl or Option alone (custom hotkeys). Option is skipped while typing in a field,
+ *   since it is used to enter special characters.
+ * - Windows / Linux: Win/Super or Alt alone (Win+PrtScn, Win+G, Alt+PrtScn).
+ *
+ * Shift alone, Cmd alone (macOS) and Ctrl alone (Windows / Linux) are deliberately excluded so
+ * typing and copying text keep working.
+ */
+const isCaptureCombo = (event: KeyboardEvent | MouseEvent) => {
+  const { ctrlKey, altKey, metaKey, shiftKey } = event
+  if ([ctrlKey, altKey, metaKey, shiftKey].filter(Boolean).length >= 2) return true
+  if (isMac) return ctrlKey || (altKey && !isEditable(event.target))
+  return metaKey || altKey
+}
 
 interface CaptureGuardProps {
   children: ReactNode
 }
 
 /**
- * Hides its children whenever the window loses focus or the tab is hidden (e.g. a snipping
- * tool takes over), on PrintScreen, and when printing. This is a deterrent only: it cannot
- * stop OS-level screenshots or screen recording.
+ * Hides its children whenever a screen capture is likely: the window loses focus or the tab is
+ * hidden (e.g. a snipping tool takes over), a capture shortcut is held, PrintScreen is pressed,
+ * the mouse leaves the page, or the page is printed. This is a deterrent only: it cannot stop
+ * every OS-level screenshot or screen recording.
  *
  * The hidden state is toggled directly on the DOM (not through React state) so the blackout
- * paints as early as possible, and uses `visibility: hidden` so the PDF layout, scroll
- * position and page tracking are preserved.
+ * paints as early as possible, and uses `visibility: hidden` so the PDF layout, scroll position
+ * and page tracking are preserved.
  */
 export function CaptureGuard({ children }: CaptureGuardProps) {
   const guardRef = useRef<HTMLDivElement>(null)
@@ -23,52 +54,83 @@ export function CaptureGuard({ children }: CaptureGuardProps) {
     const guard = guardRef.current
     if (!guard) return
 
-    let printScreenTimeoutId: number | undefined
+    const root = document.documentElement
+    const reasons = new Set<HideReason>()
 
-    const setHidden = (hidden: boolean) => {
-      guard.dataset.captureHidden = String(hidden)
+    const render = () => {
+      guard.dataset.captureHidden = String(reasons.size > 0)
     }
 
-    const syncWithFocus = () => {
-      if (printScreenTimeoutId !== undefined) return
-      setHidden(document.visibilityState !== 'visible' || !document.hasFocus())
+    const hide = (reason: HideReason) => {
+      reasons.add(reason)
+      render()
     }
 
-    const handleBlur = () => setHidden(true)
+    const reveal = (reason: HideReason) => {
+      reasons.delete(reason)
+      render()
+    }
+
+    const revealOnInteraction = () => {
+      if (document.visibilityState === 'visible' && document.hasFocus()) reveal('interaction')
+    }
+
+    const handleBlur = () => hide('interaction')
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') hide('interaction')
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase()
       if ((event.ctrlKey || event.metaKey) && (key === 'p' || key === 's')) {
         event.preventDefault()
       }
+
+      if (event.key === 'PrintScreen' || isCaptureCombo(event)) {
+        hide('interaction')
+      } else if (!MODIFIER_KEYS.has(event.key)) {
+        revealOnInteraction()
+      }
     }
 
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key !== 'PrintScreen') return
-
-      setHidden(true)
+      hide('interaction')
       navigator.clipboard?.writeText('').catch(() => {})
-      window.clearTimeout(printScreenTimeoutId)
-      printScreenTimeoutId = window.setTimeout(() => {
-        printScreenTimeoutId = undefined
-        syncWithFocus()
-      }, PRINT_SCREEN_HIDE_MS)
     }
 
-    syncWithFocus()
+    // Uses the click's own modifier flags rather than tracked key state, because the OS can swallow
+    // modifier keyups after a shortcut fires.
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!isCaptureCombo(event)) revealOnInteraction()
+    }
+
+    const handlePointerLeave = () => hide('pointer')
+    const handlePointerEnter = () => reveal('pointer')
+
+    if (document.visibilityState !== 'visible' || !document.hasFocus()) {
+      hide('interaction')
+    } else {
+      render()
+    }
+
     window.addEventListener('blur', handleBlur)
-    window.addEventListener('focus', syncWithFocus)
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
-    document.addEventListener('visibilitychange', syncWithFocus)
+    window.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    root.addEventListener('mouseleave', handlePointerLeave)
+    root.addEventListener('mouseenter', handlePointerEnter)
 
     return () => {
-      window.clearTimeout(printScreenTimeoutId)
       window.removeEventListener('blur', handleBlur)
-      window.removeEventListener('focus', syncWithFocus)
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
-      document.removeEventListener('visibilitychange', syncWithFocus)
+      window.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      root.removeEventListener('mouseleave', handlePointerLeave)
+      root.removeEventListener('mouseenter', handlePointerEnter)
     }
   }, [])
 
