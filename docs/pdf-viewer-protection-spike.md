@@ -373,15 +373,55 @@ Doesn't apply because:
 - **Breaks R1:** users must be able to copy text.
 - Image-only pages can still be screenshotted, so they don't solve R2 or R3.
 
-#### 3.3.5 Temporal noise / frame interleaving (flicker trick)
+#### 3.3.5 Camera deterrent: invisible to the eye, visible to a camera (closed)
 
-Each page is drawn as two noise frames that alternate at the display refresh rate. The eye blends them into the document; a single screenshot shows only noise.
+**Goal:** the reader sees the normal page, but a phone photo or video of the screen is spoiled ("you can watch it but cannot record it"). Anything the reader can see (flicker, shimmer, tint, noise) counts as a failure.
 
-Doesn't apply because:
+**Result: not achievable for our viewer.** Every approach was either visible to the eye or had no effect on the phone camera. All prototypes have been removed; the viewer is unchanged.
 
-- **Visible flicker** and a **photosensitive seizure risk**, which is not acceptable for a government system (accessibility).
-- A 60fps recording can be averaged back into the readable document.
-- Heavy on CPU/GPU and unreliable on low-end machines.
+**Trials (2026-11-26):**
+
+| #   | Approach                                                                                            | Basis                                                                  | Result                                                                                                                                                                        |
+| --- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Flicker A/B: page ± noise on alternating frames                                                     | Temporal noise                                                         | ❌ A single frame (screenshot / photo) still shows the text; averaging frames gives the clean page.                                                                           |
+| 2   | Motion noise: page drawn as noise, text noise moves (incl. dynamic and opposite-motion backgrounds) | Motion-defined text                                                    | ❌ Screenshots and photos only show noise, but normal readers can't read the page either.                                                                                     |
+| 3   | Full noise on 1 of every 3 frames over the normal page                                              | Frame injection                                                        | ❌ Too flickery (20Hz full-page flashing; also a photosensitive seizure risk).                                                                                                |
+| 4   | Equal-luminance colour alternation over the page                                                    | Kaleido (MobiCom 2015)                                                 | ❌ Visible tint; not wanted.                                                                                                                                                  |
+| 5   | 1-pixel black / white complementary speckle                                                         | Temporal noise                                                         | ❌ Visible shimmer on 60Hz; fine speckle is blurred away by phone optics.                                                                                                     |
+| 6   | CRT-style rolling dark / light bands                                                                | Rolling-shutter banding                                                | ❌ Visible shimmer on 60Hz.                                                                                                                                                   |
+| 7   | Static grating of 1-pixel columns in two equal-luminance colours                                    | mID (USENIX Security 2021)                                             | ❌ Invisible to the eye, but **no effect on iPhone 13 Pro / 13 Pro Max photos** (iPhones merge frames and suppress moiré; high-DPI pixels are finer than the phone resolves). |
+| 8   | TPVM: page ± a tiled warning, brightness, 120Hz+ only                                               | TPVM / Kaleido                                                         | ❌ Visible to the eye on a 120Hz monitor.                                                                                                                                     |
+| 9   | TPVM with equal-luminance colour, 120Hz+ only                                                       | Kaleido                                                                | ❌ Colour flicker visible to the eye on a 120Hz monitor.                                                                                                                      |
+| 10  | TPVM with CIELAB lightness ±ΔL at ΔE00 ≈ 2, adapted per pixel and reduced in smooth regions         | ChromaCode (MobiCom 2018) — the published "fully imperceptible" method | ❌ Still visible to the eye on a 120Hz monitor.                                                                                                                               |
+
+**Test setup for 8–10:** MacBook Pro M1 with an external 120Hz monitor, Chrome, measured 120 frames per second and 0 dropped frames. So the browser's frame rate was not the cause.
+
+**Why it is visible at 120Hz:** at 120Hz the two frames alternate at 60Hz, which is not enough for this content:
+
+- **A bright, full-page white document raises the eye's flicker threshold.** The flicker rate the eye can still see rises with brightness (Ferry–Porter law) and with the size of the flickering area; Kaleido cites about 90Hz for large fields. Peripheral vision is also more sensitive to flicker than the centre.
+- **Eye movements reveal it (phantom array effect).** During a saccade, consecutive frames land on different parts of the retina, so frame A and frame B are seen side by side instead of fused. This is visible far above the normal flicker threshold.
+- **LCD response time.** Pixels take several milliseconds to change, and rising and falling transitions differ, so the two frames don't cancel exactly.
+- **Content.** The published systems (Kaleido, ChromaCode, InFrame) were evaluated on films and games. ChromaCode's own data shows plain, bright regions expose flicker most and textured, darker, moving content hides it. A static white document with black text is the worst case.
+
+**Why not on 60Hz monitors at all:** a 60Hz display can only alternate at 30Hz, below the eye's brightness flicker threshold; no frame-based technique can be invisible there. Most office monitors are 60Hz.
+
+**What a working implementation would need:** frame-exact rendering in a native app (not a browser), displays of about 240Hz or more, per-panel colour calibration, and content that hides flicker. Even then the phantom array effect remains. Not viable for a browser-based document viewer.
+
+**Real-world anti-camera techniques checked:**
+
+| Technique                                                 | Where it's used                                                                | Fit                                                                                                   |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Visible dynamic watermark (name, ID, time)                | Fasoo Smart Screen, Digify, DocSend, Papermark, Microsoft Purview              | ✅ Industry standard: deters and traces. For us this is R5 (server-side).                             |
+| Webcam detects a phone aimed at the screen, then locks it | AnySecura Visual Sentinel                                                      | ⚠️ Browser-feasible (webcam + on-device model); needs a webcam, user permission and new dependencies. |
+| Invisible screen-shooting-resilient watermark             | Research (IEEE TIFS 2019, ScreenMark 2024)                                     | ⚠️ Possible later, for tracing cropped photos.                                                        |
+| Temporal modulation (TPVM, Kaleido, ChromaCode)           | Research and patents; no commercial deployment found                           | ❌ Tried (trials 8–10): visible on 120Hz, impossible on 60Hz.                                         |
+| Moiré grating                                             | mID (USENIX Security 2021)                                                     | ❌ Tried (trial 7): no effect on iPhone.                                                              |
+| Infrared emitters                                         | Sharp / NII cinema prototype (IR LEDs behind the screen)                       | ❌ Hardware; a monitor can't emit IR and phones filter it.                                            |
+| Pulsed light against HDR fusion                           | FLASH (arXiv 2026): external 2–20W strobe darkened 50% of iPhone 16 Pro photos | ❌ External, visibly flashing strobe; not possible from a display.                                    |
+
+**Conclusion:** cameras are answered by traceability, not by blocking: the burned-in per-user watermark (R5), optionally with webcam phone detection.
+
+Sources: [Kaleido (MobiCom 2015)](https://www.sigmobile.org/mobicom/2015/papers/p372-zhangA.pdf), [ChromaCode (MobiCom 2018)](https://www.cs.purdue.edu/homes/chunyi/pubs/mobicom18-zhang.pdf), [Temporal Psychovisual Modulation](https://arxiv.org/pdf/1201.1601), [mID (USENIX Security 2021)](https://www.usenix.org/conference/usenixsecurity21/presentation/cheng-yushi), [LiShield](https://sigmobile.org/grav/research-highlight/lishield), [FLASH](https://arxiv.org/html/2609.37742v1), [Fasoo Smart Screen](https://en.fasoo.ai/products/fasoo-smart-screen/), [AnySecura Visual Sentinel](https://hk.anysecura.com/news/anysecura-visual-data-leak-prevention.html).
 
 #### 3.3.6 Spotlight mode (reading lens)
 
@@ -453,6 +493,7 @@ Sources:
 - **DRM is not chosen.** It is the only way to get a true black capture, but its licences are a recurring cost that won't be approved. It also conflicts with R1, can't be used in the pdf.js viewer, and doesn't cover Linux or Chrome on macOS (§3.1).
 - A desktop app (Electron or Tauri) only protects reliably on **Windows**. Neither supports Linux, and on macOS 15+ ScreenCaptureKit-based recorders still capture the window (§3.3.1).
 - Everything browser-only is a deterrent: the interim measures in §2.
+- **Phone cameras can't be defeated invisibly.** Ten trials of camera-deterrent techniques (temporal noise, moiré, TPVM, Kaleido, ChromaCode) were either visible to the eye — even on a 120Hz monitor — or had no effect on iPhone photos (§3.3.5). Cameras are answered by the burned-in watermark (R5).
 
 ---
 
