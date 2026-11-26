@@ -6,7 +6,7 @@
 | **Status**       | In progress. Interim measure merged in [PR #139](https://github.com/govtechmy/govsuite-dms-fe/pull/139) (govsuitedms-690) |
 | **Scope**        | Document viewer in `govsuite-dms-fe` (`PdfJsDocumentViewer`)                                                              |
 | **Covers**       | R2 (screenshot → black) and R3 (screen recording → black)                                                                 |
-| **Last updated** | 2026-11-24                                                                                                                |
+| **Last updated** | 2026-11-26                                                                                                                |
 
 ---
 
@@ -112,31 +112,27 @@ Legend: ✅ Covered · ⚠️ Partial · ❌ Not covered · ❓ Unknown until te
 | PrintScreen straight to clipboard / file                                                     | TC-01            | The browser gets the key event only after the OS has captured the screen.           | Only DRM (§3.1)                                                                 |
 | Shortcut-based screenshot overlays (Win+Shift+S, Win 11 PrintScreen, Cmd+Shift+3/4/5, GNOME) | TC-02, 03, 06–09 | The blackout depends on a focus change, which happens too late or not at all.       | Capture-shortcut blackout (§2.3 #1); see §2.4                                   |
 | Third-party screenshot tool hotkeys                                                          | TC-05            | Global hotkey, no focus change.                                                     | Capture-shortcut blackout if the hotkey uses Cmd+Shift / Ctrl+Shift / Win / Alt |
-| Recordings and screen shares running while the user reads in the tab                         | TC-10–16         | Once the browser has focus again there's no signal that a recording is in progress. | Spotlight + idle blackout (§2.3 #4–5) limit it; DRM blocks it                   |
+| Recordings and screen shares running while the user reads in the tab                         | TC-10–16         | Once the browser has focus again there's no signal that a recording is in progress. | Idle blackout (§2.3 #4) only catches unattended ones; DRM blocks it             |
 | Phone camera                                                                                 | TC-24            | Outside the computer.                                                               | Not solvable by the viewer (traceable via R5)                                   |
 
 ### 2.3 Further interim measures (extend `CaptureGuard`)
 
 More patches on top of PR #139. They plug more holes for the screenshot tools civil servants actually use, but the approach stays the same, so the bucket still leaks.
 
-**Implemented (screenshots, R2):**
+**Implemented:**
 
 | #   | Change                                                                                                                                                                                                      | Defeats                                                                                                                                                  |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | **Capture-shortcut blackout:** black out the moment the start of a capture shortcut is held: any two or more modifiers on every platform; Ctrl or Option alone on macOS; Win or Alt alone on Windows/Linux. | Cmd+Shift+3/4/5/6, Win+Shift+S, Win+PrtScn, Alt+PrtScn, Win+Alt+PrtScn, Win+G, Win+Alt+R, third-party and custom hotkeys that use these modifiers (§2.4) |
 | 2   | **Click to reveal:** after focus loss, a capture shortcut or PrintScreen, the PDF stays black until the user clicks or presses a key in the page (no automatic reveal when focus comes back).               | Area selection that takes a few seconds (Cmd+Shift+4), timed / delayed captures (Cmd+Shift+5 timer, Snipping Tool delay)                                 |
 | 3   | **Pointer-leave blackout:** black out while the mouse is outside the page; shown again when it returns.                                                                                                     | Clicking a menu-bar or system-tray capture app, a browser extension button, or moving to another monitor                                                 |
+| 4   | **Idle blackout:** black out after 30s with no mouse, touch, scroll or keyboard input; any input brings it back.                                                                                            | Unattended recordings or timed captures left running on an open document                                                                                 |
 
 How it works: the browser receives modifier keydowns (Cmd, Win, Alt/Option, Shift, Ctrl) **before** the OS takes the final key (3, 4, S, PrtScn), so the page is already black when the capture happens. Three single modifiers are deliberately **not** treated as capture shortcuts: Shift (typing), Cmd on macOS and Ctrl on Windows/Linux (copy, R1). Option alone is ignored while typing in a text field on macOS.
 
 Side effects (by design): any shortcut with these modifiers (e.g. Cmd+Shift+T, Alt+Left) also blacks out the PDF until the next click, and so does parking the mouse outside the browser window.
 
-**Still proposed (recordings, R3):**
-
-| #   | Addition                                                                                                                                            | Defeats                                                 | Notes                                                                                                  |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 4   | **Idle blackout:** black out after about 10s with no input                                                                                          | Unattended "start recording and scroll" setups          | Any input brings the document back.                                                                    |
-| 5   | **Spotlight mode:** only a band of a few lines around the cursor is readable; the rest is blurred or black (CSS `mask-image` following the pointer) | Recordings and screen shares already running in the tab | Limits video the most. Costs reading comfort, so to be decided: always on, or a toggle. R1 unaffected. |
+**Rejected:** spotlight mode (only a strip around the cursor readable), because it conflicts with the GovSuite UI requirements (§3.3.6).
 
 ### 2.4 Screenshot edge cases (macOS and Windows)
 
@@ -333,8 +329,8 @@ _All ✅/❌ entries are from vendor documentation and have not been tested, bec
 | PrintScreen (direct to file / clipboard)           | R2          | Captured                                                           | Captured                                          | Black on L1 / SL3000 machines |
 | Cmd+Shift+3/4/5 (macOS)                            | R2          | Depends on focus timing                                            | Black (modifier hold)                             | Black in Safari only          |
 | Xbox Game Bar (Win+Alt+R)                          | R3          | Black while the overlay has focus                                  | Black (modifier hold + blur)                      | Black on L1 / SL3000 machines |
-| OBS / Snipping Tool video started from another app | R3          | Black while the other app has focus; visible once the user returns | Spotlight band only + idle blackout               | Black on L1 / SL3000 machines |
-| Teams / Meet / Chrome tab share                    | R3          | Visible                                                            | Spotlight band only                               | Black on L1 / SL3000 machines |
+| OBS / Snipping Tool video started from another app | R3          | Black while the other app has focus; visible once the user returns | Visible while the user reads; idle blackout only  | Black on L1 / SL3000 machines |
+| Teams / Meet / Chrome tab share                    | R3          | Visible                                                            | Visible                                           | Black on L1 / SL3000 machines |
 | Any capture on Linux                               | R2, R3      | As above                                                           | As above                                          | Captured (no hardware DRM)    |
 | Phone camera                                       | R2, R3      | Visible                                                            | Visible                                           | Visible                       |
 
@@ -387,6 +383,66 @@ Doesn't apply because:
 - A 60fps recording can be averaged back into the readable document.
 - Heavy on CPU/GPU and unreliable on low-end machines.
 
+#### 3.3.6 Spotlight mode (reading lens)
+
+Only a strip of a few lines around the cursor is readable; the rest of the page is blurred or black. A recording or screen share running while the user reads would only capture that strip.
+
+Not chosen because:
+
+- **It conflicts with the GovSuite UI requirements:** users can't see the full page while reading.
+- It only makes a full capture tedious (sweep the cursor down every page), not impossible.
+
+### 3.4 Real-world comparison
+
+How products that protect documents in the browser handle screenshots and recording (from vendor documentation, November 2026).
+
+#### Script-based protection in a normal browser (same approach as ours)
+
+| Product                     | What it does                                                                                                    | Their own disclaimer                                                              |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Dropbox DocSend, "Standard" | Blacks out the document when the cursor moves off it                                                            | "Can't guarantee that users won't take screenshots, screen recordings, or photos" |
+| Dropbox DocSend, "Strict"   | Everything black except a horizontal strip under the cursor (spotlight mode)                                    | Same, and "significantly restricts the viewing experience"                        |
+| Digify Screen Shield        | Shows only part of the page with a watermarked filter; blocks "most screenshot shortcuts and plugins"           | "Some system-level methods may not always be preventable"                         |
+| Vitrium                     | Blurs the viewer when the browser isn't focused                                                                 | —                                                                                 |
+| Papermark                   | Blocks the main screenshot shortcuts, blurs, warns, **logs the attempt, notifies the owner, can revoke access** | "Does not work in 100% of cases"                                                  |
+
+#### Approaches beyond a normal browser tab (real black capture)
+
+| Approach                   | Example                                                                                                                                    | Catch for us                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Browser-vendor enforcement | Microsoft Edge + Purview sensitivity labels: screen capture blocked for labelled PDFs in the OneDrive / SharePoint viewer (since Aug 2026) | Edge only, Microsoft 365 / Purview labels only, Microsoft's own viewer only. Can't be used for our viewer. |
+| Enterprise browser         | Prisma Browser (Palo Alto Networks' managed browser): blurs content on capture attempts                                                    | Paid; Linux not supported; doesn't block screen sharing                                                    |
+| DRM                        | Safari FairPlay, Widevine (how streaming video goes black)                                                                                 | Recurring licence; already rejected (§3.1)                                                                 |
+| Installed secure viewer    | Locklizard Safeguard: an app that disables the operating system's screen-capture functions                                                 | Paid, needs installing. Locklizard itself says browser-only prevention isn't possible without DRM.         |
+
+#### How ours compares with the script-based products
+
+| Feature                                             | Real-world products        | Ours                                        |
+| --------------------------------------------------- | -------------------------- | ------------------------------------------- |
+| Black out when the browser loses focus              | Vitrium, Papermark         | ✅ PR #139                                  |
+| Black out when the cursor leaves                    | DocSend Standard           | ✅ §2.3 #3                                  |
+| Block screenshot shortcuts                          | Digify, Papermark          | ✅ §2.3 #1                                  |
+| Idle blackout                                       | —                          | ✅ §2.3 #4                                  |
+| Stay black until click                              | —                          | ✅ §2.3 #2                                  |
+| Spotlight / strip under the cursor                  | DocSend Strict, Digify     | ⛔ Rejected (conflicts with the UI, §3.3.6) |
+| Log capture attempts / notify owner / revoke access | Papermark                  | ❌ Missing                                  |
+| Dynamic watermark                                   | Every vendor recommends it | ❌ Missing (planned as R5, server-side)     |
+
+**Conclusion:** our capture blackout is at least on par with the commercial script-based products, and the industry treats this level as a deterrent, not a guarantee. The two things they all pair it with, which we don't have yet:
+
+1. **Logging capture attempts to the audit trail.** PrintScreen can't be stopped, but "user X pressed PrintScreen on document Y" can be recorded. Needs a small backend endpoint.
+2. **A per-user watermark burned in on the server (R5).** Makes any capture that gets through traceable.
+
+Sources:
+
+- [Dropbox DocSend: screenshot protection](https://help.dropbox.com/share/dropbox-docsend-screenshot-protection)
+- [Digify: Screen Shield](https://digify.com/screenshot-protection.html)
+- [Vitrium: screen capture prevention](https://www.vitrium.com/blog/screen-capture-prevention)
+- [Papermark: screenshot protection](https://www.papermark.com/screenshot-protection.md)
+- [MC1409303: Edge enforces screen capture restrictions for sensitivity-labelled PDFs](https://mc.merill.net/message/MC1409303)
+- [Prisma Browser: screenshot control](https://docs.paloaltonetworks.com/prisma-browser/administration/manage-prisma-browser-policy-profiles/configure-prisma-browser-data-controls/configure-data-leak-prevention/screenshot)
+- [Locklizard: stopping screen sharing and recording](https://locklizard.com/document-security-blog/stop-screen-sharing)
+
 ---
 
 ## 4. Spike findings
@@ -413,7 +469,7 @@ Stay with the browser viewer. Ship the interim measures (PR #139 + §2.3) and ac
 | R1 copy text, on every platform                                                                                                                        | PrintScreen on its own, and third-party tools bound to it (W-01, W-11)                                                             |
 | All built-in macOS shortcuts: Cmd+Shift+3/4/5/6 and clipboard variants, including area selection and timers (M-01–M-08)                                | Hotkeys with no modifier, or only Shift / Cmd (macOS) / Ctrl (Windows): incl. Shift+PrtScn, Ctrl+PrtScn, F-keys (M-19, W-10, W-20) |
 | Windows shortcuts with Win or Alt: Win+Shift+S, Win+PrtScn, Alt+PrtScn, Win+Alt+PrtScn, Win+G (W-03–W-07)                                              | Macros and dedicated screenshot keys that send all keys at once (M-14)                                                             |
-| Capture apps opened from Start, Dock, Spotlight, tray or Terminal, including delayed / timer captures (M-09, M-10, W-08, W-09, W-13)                   | Recordings and screen shares already running while the user reads; spotlight mode (§2.3 #5) only limits them to a small band       |
+| Capture apps opened from Start, Dock, Spotlight, tray or Terminal, including delayed / timer captures (M-09, M-10, W-08, W-09, W-13)                   | Recordings and screen shares already running while the user reads (TC-10–16); idle blackout only catches unattended ones           |
 | Third-party and custom hotkeys using two+ modifiers, Ctrl/Option (macOS) or Win/Alt (Windows); browser extensions (M-11, M-13, M-15, M-16, W-12, W-16) | Background and remote capture: Windows Recall, remote desktop, screen sharing (M-18, W-18, W-19)                                   |
 | Switching tab or app, print, save, right-click                                                                                                         | Windows 11 PrintScreen overlay, DevTools screenshot, Google Lens, menu-bar tools, tablet buttons: unknown until tested             |
 | Windows, macOS and Linux, all browsers                                                                                                                 | Phone camera                                                                                                                       |
@@ -490,5 +546,5 @@ Whatever is chosen, PrintScreen-to-file on uncovered platforms and phone cameras
 ### Next steps
 
 1. **Stakeholders choose** between A alone and A + C.
-2. **Option A:** screenshot coverage (§2.3 #1–3) is implemented; test it against §2.4. For recordings, decide on idle blackout and whether spotlight mode (§2.3 #4–5) is always on or a toggle.
+2. **Option A:** screenshot coverage (§2.3 #1–3) is implemented; test it against §2.4. Idle blackout (§2.3 #4, 30s) is implemented. Recordings running while the user reads stay uncovered at browser level.
 3. **If C is chosen:** a short follow-up spike on the desktop reader: browser-to-app hand-off and login, installer and auto-update, and IT rollout to government PCs.

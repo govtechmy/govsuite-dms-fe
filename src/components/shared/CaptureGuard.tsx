@@ -1,5 +1,8 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 
+// How long without any mouse, touch or keyboard input before the content is hidden.
+const IDLE_HIDE_MS = 30_000
+
 const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock'])
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent)
@@ -8,7 +11,8 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent)
 //   click or key press in the page, so captures that finish later (area selection, timers) still
 //   see black.
 // - pointer: mouse has left the page; cleared when it comes back.
-type HideReason = 'interaction' | 'pointer'
+// - idle: no input for IDLE_HIDE_MS (e.g. an unattended recording); cleared by any input.
+type HideReason = 'interaction' | 'pointer' | 'idle'
 
 const isEditable = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
@@ -40,7 +44,7 @@ interface CaptureGuardProps {
 /**
  * Hides its children whenever a screen capture is likely: the window loses focus or the tab is
  * hidden (e.g. a snipping tool takes over), a capture shortcut is held, PrintScreen is pressed,
- * the mouse leaves the page, or the page is printed. This is a deterrent only: it cannot stop
+ * the mouse leaves the page, there is no input for a while, or the page is printed. This is a deterrent only: it cannot stop
  * every OS-level screenshot or screen recording.
  *
  * The hidden state is toggled directly on the DOM (not through React state) so the blackout
@@ -56,6 +60,7 @@ export function CaptureGuard({ children }: CaptureGuardProps) {
 
     const root = document.documentElement
     const reasons = new Set<HideReason>()
+    let idleTimeoutId: number | undefined
 
     const render = () => {
       guard.dataset.captureHidden = String(reasons.size > 0)
@@ -71,6 +76,12 @@ export function CaptureGuard({ children }: CaptureGuardProps) {
       render()
     }
 
+    const resetIdle = () => {
+      reveal('idle')
+      window.clearTimeout(idleTimeoutId)
+      idleTimeoutId = window.setTimeout(() => hide('idle'), IDLE_HIDE_MS)
+    }
+
     const revealOnInteraction = () => {
       if (document.visibilityState === 'visible' && document.hasFocus()) reveal('interaction')
     }
@@ -82,6 +93,7 @@ export function CaptureGuard({ children }: CaptureGuardProps) {
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      resetIdle()
       const key = event.key.toLowerCase()
       if ((event.ctrlKey || event.metaKey) && (key === 'p' || key === 's')) {
         event.preventDefault()
@@ -103,12 +115,14 @@ export function CaptureGuard({ children }: CaptureGuardProps) {
     // Uses the click's own modifier flags rather than tracked key state, because the OS can swallow
     // modifier keyups after a shortcut fires.
     const handlePointerDown = (event: PointerEvent) => {
+      resetIdle()
       if (!isCaptureCombo(event)) revealOnInteraction()
     }
 
     const handlePointerLeave = () => hide('pointer')
     const handlePointerEnter = () => reveal('pointer')
 
+    resetIdle()
     if (document.visibilityState !== 'visible' || !document.hasFocus()) {
       hide('interaction')
     } else {
@@ -119,15 +133,20 @@ export function CaptureGuard({ children }: CaptureGuardProps) {
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
     window.addEventListener('pointerdown', handlePointerDown)
+    window.addEventListener('pointermove', resetIdle)
+    window.addEventListener('wheel', resetIdle, { passive: true })
     document.addEventListener('visibilitychange', handleVisibilityChange)
     root.addEventListener('mouseleave', handlePointerLeave)
     root.addEventListener('mouseenter', handlePointerEnter)
 
     return () => {
+      window.clearTimeout(idleTimeoutId)
       window.removeEventListener('blur', handleBlur)
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('pointermove', resetIdle)
+      window.removeEventListener('wheel', resetIdle)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       root.removeEventListener('mouseleave', handlePointerLeave)
       root.removeEventListener('mouseenter', handlePointerEnter)
