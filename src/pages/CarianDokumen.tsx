@@ -146,6 +146,9 @@ export default function CarianDokumenPage() {
         const documents = backendResponse.items.map((item) => ({
           documentId: item.recordId,
           title: item.title,
+          recordDate: item.recordDate,
+          documentProfileName: item.documentProfileName,
+          fileExtension: item.fileExtension,
         }))
 
         if (append) {

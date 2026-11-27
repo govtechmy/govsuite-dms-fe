@@ -101,6 +101,7 @@ export default function HybridResultSearch({ onLazyLoad }: HybridResultSearchPro
                   {record.title}
                 </p>
                 <DocumentMetaTag
+                  fileExtension={record.file?.extension ?? ''}
                   jenisDokumen={record.documentProfileName}
                   tarikh={formatISODateString(record.recordDate)}
                   mukaSurat={record.page_number}

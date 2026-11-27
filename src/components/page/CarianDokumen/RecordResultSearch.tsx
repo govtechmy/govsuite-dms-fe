@@ -10,6 +10,7 @@ import { ChevronRightIcon } from '@govtechmy/myds-react/icon'
 import { useSearchStore } from '@/store/SearchStore'
 import { useRef, type UIEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { formatISODateString } from '@/utils/formatDate'
 import DocumentMetaTag from './DocumentMetaTag'
 
 const SCROLL_THRESHOLD = 40
@@ -113,7 +114,11 @@ export default function RecordResultSearch({ onLazyLoad }: RecordResultSearchPro
                     <p className="line-clamp-2 text-body-xs font-semibold text-txt-primary">
                       {record.title}
                     </p>
-                    <DocumentMetaTag jenisDokumen="PlaceholderDokumen" tarikh="11/01/00" />
+                    <DocumentMetaTag
+                      fileExtension={record.fileExtension}
+                      jenisDokumen={record.documentProfileName}
+                      tarikh={formatISODateString(record.recordDate)}
+                    />
                   </div>
                   {isSelected && (
                     <ChevronRightIcon className="size-5 shrink-0 text-txt-black-700" />

@@ -7,6 +7,9 @@ import type { HybridSearchItem } from '@/services/search.svc'
 export interface DocumentRecord {
   documentId: string
   title: string
+  recordDate: string
+  documentProfileName: string
+  fileExtension: string
 }
 
 export interface KeywordRecord {

@@ -77,6 +77,9 @@ export interface CatalogSearchResponse {
 export interface RecordSearchItem {
   recordId: string
   title: string
+  recordDate: string
+  documentProfileName: string
+  fileExtension: string
 }
 
 export interface RecordSearchResponse {
@@ -403,10 +406,19 @@ export const getSearchRecordCarianDokumen = async ({
     const response = await authAxios.get(url)
     const payload = response.data?.data ?? response.data ?? {}
     const items: RecordSearchItem[] = Array.isArray(payload?.items)
-      ? payload.items.map((item: { recordId?: string; title?: string }) => ({
-          recordId: String(item?.recordId ?? ''),
-          title: String(item?.title ?? ''),
-        }))
+      ? payload.items.map(
+          (
+            item: Partial<Omit<RecordSearchItem, 'fileExtension'>> & {
+              file?: { extension?: string }
+            }
+          ) => ({
+            recordId: String(item?.recordId ?? ''),
+            title: String(item?.title ?? ''),
+            recordDate: String(item?.recordDate ?? ''),
+            documentProfileName: String(item?.documentProfileName ?? ''),
+            fileExtension: String(item?.file?.extension ?? ''),
+          })
+        )
       : []
     const apiMeta = payload?.meta ?? {}
     const currentPage = Number(apiMeta.currentPage ?? page)
@@ -438,6 +450,54 @@ export const getSearchRecordCarianDokumen = async ({
     }
   } catch (error) {
     console.error('Error fetching searched catalog items : ', error)
+    throw error
+  }
+}
+
+export interface RecordKeywordPage {
+  pageNumber: number
+  occurrences: number
+}
+
+export interface RecordKeywordPagesResponse {
+  items: RecordKeywordPage[]
+  meta: CatalogListMeta
+}
+
+export const getRecordPagesByKeyword = async ({
+  recordId,
+  query,
+  page = 1,
+  limit = 100,
+}: {
+  recordId: string
+  query: string
+  page?: number
+  limit?: number
+}): Promise<RecordKeywordPagesResponse> => {
+  const params = new URLSearchParams({
+    search: query,
+    page: String(page),
+    limit: String(limit),
+  })
+  const url = `${getEnv('VITE_API_BASE_URL')}/record/search/${encodeURIComponent(recordId)}?${params.toString()}`
+
+  try {
+    const response = await authAxios.get(url)
+    const payload = response.data?.data ?? response.data ?? {}
+    const items: RecordKeywordPage[] = Array.isArray(payload?.items)
+      ? payload.items.map((item: Partial<RecordKeywordPage>) => ({
+          pageNumber: Number(item?.pageNumber ?? 0),
+          occurrences: Number(item?.occurrences ?? 0),
+        }))
+      : []
+
+    return {
+      items,
+      meta: { ...DEFAULT_CATALOG_LIST_META, ...payload?.meta },
+    }
+  } catch (error) {
+    console.error('Error fetching record pages by keyword : ', error)
     throw error
   }
 }

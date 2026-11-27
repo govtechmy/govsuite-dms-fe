@@ -14,6 +14,7 @@ import { getFavoriteStatus, postToggleFavorite } from '@/services/kegemaran.svc'
 import extractBackendError from '@/utils/extractBackendError'
 
 interface PratontonSearchResultProps {
+  fileUrl: string
   searchKeyword: string
   navigationRequest?: PdfSearchNavigationRequest | null
   pageNavigationRequest?: PdfPageNavigationRequest | null
@@ -23,6 +24,7 @@ interface PratontonSearchResultProps {
 }
 
 export default function PratontonSearchResult({
+  fileUrl,
   searchKeyword,
   navigationRequest,
   pageNavigationRequest,
@@ -174,7 +176,7 @@ export default function PratontonSearchResult({
       <div className="h-full min-h-0 w-full overflow-hidden rounded-lg border border-otl-gray-200 bg-bg-black-50">
         <div className="h-full min-h-0 overflow-auto">
           <PdfJsDocumentViewer
-            fileUrl={documentInfo?.path || ''}
+            fileUrl={fileUrl}
             searchKeyword={searchKeyword}
             navigationRequest={navigationRequest}
             pageNavigationRequest={pageNavigationRequest}
