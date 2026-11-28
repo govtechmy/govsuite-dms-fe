@@ -1,6 +1,6 @@
 import RecordResultSearch from './RecordResultSearch'
 import PratontonSearchResult from './PratontonSearchResult'
-import PageOccurrenceResultSearch from './PageOccurrenceResultSearch'
+import PageOccurrenceResultSearch, { type OccurrenceSelection } from './PageOccurrenceResultSearch'
 import HybridResultSearch from './HybridResultSearch'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchStore } from '@/store/SearchStore'
@@ -18,6 +18,7 @@ interface DisplaySearchResultsProps {
 
 export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResultsProps) {
   const previewSearchQuery = useSearchStore((state) => state.query)
+  const selectedDocumentId = useSearchStore((state) => state.selectedDocumentId)
   const keywordRecords = useSearchStore((state) => state.keywordRecords)
   const selectedKeywordId = useSearchStore((state) => state.selectedKeywordId)
   const documentInfo = useSearchStore((state) => state.documentInfo)
@@ -26,6 +27,19 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const selectedHybridRecord = useSearchStore((state) =>
     state.hybridRecords.find((record) => getHybridSearchItemKey(record) === state.selectedHybridKey)
   )
+
+  const [occurrenceSelection, setOccurrenceSelection] = useState<OccurrenceSelection | null>(null)
+  const lastOccurrenceJumpRef = useRef('')
+
+  // Ignore a selection left over from a previous record or query until the new one arrives.
+  const activeOccurrence =
+    !isHybridSearch &&
+    occurrenceSelection?.recordId === selectedDocumentId &&
+    occurrenceSelection.query === previewSearchQuery
+      ? occurrenceSelection
+      : null
+  // Teks Penuh previews only the selected occurrence's page; Hybrid previews the full document.
+  const viewerFileUrl = isHybridSearch ? documentInfo?.path || '' : activeOccurrence?.pageUrl || ''
 
   const [searchKeyword, setSearchKeyword] = useState(previewSearchQuery)
   const [pdfSearchState, setPdfSearchState] = useState<PdfSearchState>({
@@ -43,7 +57,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
   const lastSearchRef = useRef<string>('')
   const [isPdfLoaded, setIsPdfLoaded] = useState(false)
   const hasAutoSelectedRef = useRef(false)
-  const lastDocumentIdRef = useRef<string>('')
+  const lastFileUrlRef = useRef<string>('')
 
   // Get the keyword text from keyword record
   const keyword = keywordRecords?.keyword || ''
@@ -84,11 +98,10 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     )
   }, [previewSearchQuery])
 
-  // Reset refs when document changes (new search or different document selected)
+  // Reset refs when the previewed file changes (new document, or another occurrence page)
   useEffect(() => {
-    const currentDocId = documentInfo?.documentID || ''
-    if (currentDocId && currentDocId !== lastDocumentIdRef.current) {
-      lastDocumentIdRef.current = currentDocId
+    if (viewerFileUrl && viewerFileUrl !== lastFileUrlRef.current) {
+      lastFileUrlRef.current = viewerFileUrl
       hasAutoSelectedRef.current = false
       lastSearchRef.current = ''
       setIsPdfLoaded(false)
@@ -100,7 +113,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
       setNavigationRequest(null)
       navigationTokenRef.current = 0
     }
-  }, [documentInfo?.documentID])
+  }, [viewerFileUrl])
 
   // Auto-select first keyword only after the first match has been indexed.
   useEffect(() => {
@@ -122,6 +135,27 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     pdfSearchState.totalMatches,
     selectedKeywordId,
     setSelectedKeywordId,
+  ])
+
+  // Highlight the selected occurrence once its page has been indexed by the viewer.
+  useEffect(() => {
+    if (!activeOccurrence || !isPdfLoaded || pdfSearchState.isIndexing) return
+    if (pdfSearchState.totalMatches === 0) return
+
+    const jumpKey = `${activeOccurrence.pageUrl}|${activeOccurrence.occurrenceInPage}`
+    if (lastOccurrenceJumpRef.current === jumpKey) return
+
+    lastOccurrenceJumpRef.current = jumpKey
+    queueNavigationRequest(
+      'jump',
+      Math.min(activeOccurrence.occurrenceInPage, pdfSearchState.totalMatches) - 1
+    )
+  }, [
+    activeOccurrence,
+    isPdfLoaded,
+    pdfSearchState.isIndexing,
+    pdfSearchState.totalMatches,
+    queueNavigationRequest,
   ])
 
   // Hybrid results point to a specific page; jump there once the matching document is shown.
@@ -171,6 +205,7 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
     <div className="flex h-full flex-col">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch lg:flex-row ml-6">
         <PratontonSearchResult
+          fileUrl={viewerFileUrl}
           searchKeyword={isHybridSearch ? '' : searchKeyword}
           navigationRequest={navigationRequest}
           pageNavigationRequest={pageNavigationRequest}
@@ -190,7 +225,15 @@ export default function DisplaySearchResults({ onLazyLoad }: DisplaySearchResult
           ) : (
             <>
               <RecordResultSearch onLazyLoad={onLazyLoad} />
-              <PageOccurrenceResultSearch />
+              {selectedDocumentId && (
+                <PageOccurrenceResultSearch
+                  key={`${selectedDocumentId}-${previewSearchQuery}`}
+                  recordId={selectedDocumentId}
+                  query={previewSearchQuery}
+                  selectedOccurrence={activeOccurrence?.occurrence ?? null}
+                  onOccurrenceSelect={setOccurrenceSelection}
+                />
+              )}
             </>
           )}
         </div>

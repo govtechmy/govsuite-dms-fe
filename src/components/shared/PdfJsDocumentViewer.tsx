@@ -4,6 +4,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { apiAuthHeaders } from '@/services/http'
+import { CaptureGuard } from '@/components/shared/CaptureGuard'
 
 pdfjs.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.js`
 
@@ -822,45 +823,47 @@ export default function PdfJsDocumentViewer({
   }
 
   return (
-    <div ref={viewportRef} className="w-full p-3">
-      <Document
-        file={pdfFile}
-        onLoadSuccess={handleDocumentLoadSuccess}
-        loading={
-          <div className="flex w-full items-center justify-center py-8 text-body-sm text-txt-black-500">
-            Dokumen sedang dimuatkan...
+    <CaptureGuard>
+      <div ref={viewportRef} className="w-full p-3">
+        <Document
+          file={pdfFile}
+          onLoadSuccess={handleDocumentLoadSuccess}
+          loading={
+            <div className="flex w-full items-center justify-center py-8 text-body-sm text-txt-black-500">
+              Dokumen sedang dimuatkan...
+            </div>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: numPages }, (_, pageIndex) => {
+              const pageNumber = pageIndex + 1
+              return (
+                <div
+                  key={pageNumber}
+                  ref={(pageElement) => {
+                    pageRefs.current[pageNumber] = pageElement
+                  }}
+                  data-page-number={pageNumber}
+                  className="mx-auto w-fit overflow-hidden rounded-md border border-otl-gray-200 bg-bg-white"
+                >
+                  <Page
+                    pageNumber={pageNumber}
+                    width={pageWidth}
+                    renderTextLayer
+                    renderAnnotationLayer
+                    onGetTextSuccess={(textContent) =>
+                      handlePageTextSuccess(pageNumber, textContent as TextLayerSuccessPayload)
+                    }
+                    onGetTextError={() => handlePageTextError(pageNumber)}
+                    customTextRenderer={customTextRenderer}
+                    onRenderTextLayerSuccess={handleTextLayerRenderSuccess}
+                  />
+                </div>
+              )
+            })}
           </div>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: numPages }, (_, pageIndex) => {
-            const pageNumber = pageIndex + 1
-            return (
-              <div
-                key={pageNumber}
-                ref={(pageElement) => {
-                  pageRefs.current[pageNumber] = pageElement
-                }}
-                data-page-number={pageNumber}
-                className="mx-auto w-fit overflow-hidden rounded-md border border-otl-gray-200 bg-bg-white"
-              >
-                <Page
-                  pageNumber={pageNumber}
-                  width={pageWidth}
-                  renderTextLayer
-                  renderAnnotationLayer
-                  onGetTextSuccess={(textContent) =>
-                    handlePageTextSuccess(pageNumber, textContent as TextLayerSuccessPayload)
-                  }
-                  onGetTextError={() => handlePageTextError(pageNumber)}
-                  customTextRenderer={customTextRenderer}
-                  onRenderTextLayerSuccess={handleTextLayerRenderSuccess}
-                />
-              </div>
-            )
-          })}
-        </div>
-      </Document>
-    </div>
+        </Document>
+      </div>
+    </CaptureGuard>
   )
 }
